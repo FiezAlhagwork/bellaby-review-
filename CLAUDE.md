@@ -1,3 +1,5 @@
+@AGENTS.md
+
 # CLAUDE.md — bellaby-web-design
 
 ## ما هذا المشروع
@@ -55,17 +57,17 @@
 
 ## التقنيات
 
-| المجال | المكتبة | ملاحظات |
-|---|---|---|
-| الإطار | Next.js 16 (App Router) + TypeScript strict | كل الصفحات صفحات رسم |
-| Memoization | React Compiler (مفعّل) | لا `useMemo` ولا `useCallback` ولا `memo` يدوياً |
-| التنسيق | Tailwind CSS v4 | الـ theme في `@theme` داخل `src/styles/globals.css`، ولا `tailwind.config` |
-| السلوك المعقّد | Base UI (`@base-ui/react`) | داخل `components/ui` فقط، والشكل كله منّا |
-| الأيقونات | `@phosphor-icons/react` | |
-| دمج الـ classes | `clsx` + `tailwind-merge` | `cn()` في `lib/cn.ts`، وكل مكوّن يدمج به `className` |
-| الأنواع من العقد | `openapi-typescript` | تُولَّد من `openapi.yml` |
-| الرسوم البيانية | Recharts | داخل `components/data` فقط |
-| الخط | IBM Plex Sans Arabic | مؤقت حتى يصل خط الهوية (انظر «الخط») |
+| المجال | المكتبة | الإصدار | ملاحظات |
+|---|---|---|---|
+| الإطار | Next.js (App Router) + TypeScript strict | `next` 16.4.5 · `typescript` 5.9.3 | كل الصفحات صفحات رسم |
+| Memoization | React Compiler (مفعّل) | `babel-plugin-react-compiler` 1.0.0 | لا `useMemo` ولا `useCallback` ولا `memo` يدوياً |
+| التنسيق | Tailwind CSS v4 | `tailwindcss` 4.3.5 · `@tailwindcss/turbopack` 4.3.5 | الـ theme في `@theme` داخل `src/styles/globals.css`، ولا `tailwind.config` |
+| السلوك المعقّد | Base UI (`@base-ui/react`) | 1.9.0 | داخل `components/ui` فقط، والشكل كله منّا |
+| الأيقونات | `@phosphor-icons/react` | 2.1.10 | |
+| دمج الـ classes | `clsx` + `tailwind-merge` | 2.1.1 · 3.7.0 | `cn()` في `lib/cn.ts`، وكل مكوّن يدمج به `className` |
+| الأنواع من العقد | `openapi-typescript` | 7.13.0 (dev) | تُولَّد من `openapi.yml` |
+| الرسوم البيانية | Recharts | 3.10.1 | داخل `components/data` فقط |
+| الخط | IBM Plex Sans Arabic | — | مؤقت حتى يصل خط الهوية (انظر «الخط») |
 
 - تُثبّت كل حزمة بإصدار دقيق (بلا `^` ولا `~`)، ويُسجَّل الإصدار في هذا الجدول. لا `npm update` ولا `npm audit fix --force`.
 - **نفس الإصدارات ستُثبّت في مشروع الإنتاج**، فلا تُضاف حزمة لا يحتاجها الإنتاج.
