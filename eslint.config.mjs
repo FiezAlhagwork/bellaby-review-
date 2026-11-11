@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // مرجع React Native من مشروع آخر، لا يُبنى ولا يُفحص.
+    "docs/**",
   ]),
 ]);
 

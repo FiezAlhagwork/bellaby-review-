@@ -127,13 +127,14 @@
 | | `accent` | `neutral-700` | الإبراز الثانوي: الرقم الأهم في اللوحة، شارة «جديد» |
 | | `accent-soft` | `neutral-100` | |
 | **الحالة** | `success` `success-soft` `warning` `warning-soft` `danger` `danger-soft` `info` `info-soft` | 3.3 | الحالات والتنبيهات فقط |
+| | `danger-hover` · `danger-pressed` | `#991B1B` · `#7F1D1D` | الزر `danger` عند التمرير والضغط |
 | **الرسوم** | `chart-1` … `chart-5` | `neutral-900` · `neutral-600` · `neutral-400` · `info` · `warning` | سلاسل الرسوم البيانية بالترتيب |
 | | `chart-target` | `danger` | خط الهدف في الرسم |
 
 ### 3.6 التباين
 
 - النص الثانوي `fg-muted` على `surface`: 5.3:1، وعلى `bg`: 4.9:1. **لا يوضع على `surface-sunken`** (4.47:1). النص على `surface-sunken` بلون `fg` أو `neutral-700` (6.5:1).
-- `fg` على `surface`: 15.1:1، وعلى `bg`: 13.9:1. والنص الأبيض على `danger`: 6.5:1.
+- `fg` على `surface`: 15.1:1، وعلى `bg`: 13.9:1. والنص الأبيض على `danger`: 6.5:1، وعلى `danger-hover`: 8.3:1، وعلى `danger-pressed`: 10.0:1.
 - `fg-subtle` و`fg-disabled` **ليسا للنص المقروء**.
 - كل زوج حالة (نص على `*-soft`) أعلى من 4.5:1.
 - **في المرحلة 2:** كل لون هوية جديد يُفحص قبل اعتماده، ويُكتب تباينه بجانبه هنا.
@@ -146,6 +147,7 @@
 
 - **IBM Plex Sans Arabic**، مؤقت حتى يصل خط الهوية. الأوزان: 400 و500 و600 و700.
 - يُعرَّف بـ `@font-face` باسم العائلة الحقيقي `"IBM Plex Sans Arabic"`، لا `next/font`، حتى يطابقه Figma عند الالتقاط.
+- **خطا الهوية (المرحلة 2، لاتينيان فقط):** وُصف خطا الهوية بنوعيهما: Soft / Chunky Serif وRetro / Friendly Serif. اعتُمد لهما من Google Fonts: **Fraunces** (600 و700) للشعار والعناوين اللاتينية الكبيرة، و**Young Serif** (400) للعناوين الفرعية اللاتينية، وملفاتهما (المجموعة اللاتينية) في `public/fonts/`. الـ tokens: `font-brand` و`font-brand-accent`. **لا يدعمان العربية**، فالعربية كلها تبقى بالخط الأساسي. لا يُطبَّقان على أي مكوّن في المرحلة 1.
 - token واحد: `font-sans`. والوزن بـ `font-normal` و`font-medium` و`font-semibold` و`font-bold`.
 
 ### 4.2 سلّم الأحجام · الويب
@@ -318,7 +320,7 @@
 | `primary` | خلفية `primary`، نص `on-primary` | الإجراء الأهم في الشاشة أو النافذة. **واحد فقط في كل منطقة** |
 | `secondary` | خلفية `surface`، حد `border-strong`، نص `fg` | الإجراءات الأخرى |
 | `ghost` | بلا خلفية ولا حد، نص `fg` | إجراءات ثانوية في شريط أو جدول |
-| `danger` | خلفية `danger`، نص أبيض | إجراء لا رجعة فيه أو قرار سلبي: رفض، إيقاف، تعطيل |
+| `danger` | خلفية `danger` (`danger-hover` عند التمرير و`danger-pressed` عند الضغط)، نص أبيض | إجراء لا رجعة فيه أو قرار سلبي: رفض، إيقاف، تعطيل |
 | `danger-ghost` | بلا خلفية، نص `danger` | رابط خطر ثانوي: «إلغاء الطلب» |
 
 | الحجم | الارتفاع | الخط | الاستعمال |
@@ -904,10 +906,16 @@
 @font-face { font-family: "IBM Plex Sans Arabic"; font-weight: 500; font-display: swap; src: url("/fonts/IBMPlexSansArabic-Medium.ttf") format("truetype"); }
 @font-face { font-family: "IBM Plex Sans Arabic"; font-weight: 600; font-display: swap; src: url("/fonts/IBMPlexSansArabic-SemiBold.ttf") format("truetype"); }
 @font-face { font-family: "IBM Plex Sans Arabic"; font-weight: 700; font-display: swap; src: url("/fonts/IBMPlexSansArabic-Bold.ttf") format("truetype"); }
+@font-face { font-family: "Fraunces"; font-weight: 600; font-display: swap; src: url("/fonts/Fraunces-SemiBold.woff2") format("woff2"); }
+@font-face { font-family: "Fraunces"; font-weight: 700; font-display: swap; src: url("/fonts/Fraunces-Bold.woff2") format("woff2"); }
+@font-face { font-family: "Young Serif"; font-weight: 400; font-display: swap; src: url("/fonts/YoungSerif-Regular.woff2") format("woff2"); }
 
 @theme {
   /* ── الخط ── */
   --font-sans: "IBM Plex Sans Arabic", system-ui, sans-serif;
+  /* خطا الهوية (لاتينيان فقط، المرحلة 2): Fraunces سيريف ناعم عريض للشعار والعناوين الكبيرة، وYoung Serif سيريف ريترو ودود للعناوين الفرعية. لا يُستعملان في المرحلة 1. */
+  --font-brand: "Fraunces", Georgia, serif;
+  --font-brand-accent: "Young Serif", Georgia, serif;
 
   /* ── نقاط التحوّل (container queries) ── */
   --container-tablet: 48rem;    /* @tablet:  من 768 */
@@ -935,6 +943,8 @@
   --color-warning-soft: #FFFBEB;
   --color-danger: #B91C1C;
   --color-danger-soft: #FEF2F2;
+  --color-danger-hover: #991B1B;
+  --color-danger-pressed: #7F1D1D;
   --color-info: #1D4ED8;
   --color-info-soft: #EFF6FF;
 

@@ -320,6 +320,9 @@ npm run gen:api      # openapi.yml ← src/lib/api/schema.d.ts
 
 - **في الداتا:**
   - أي مكتبة بيانات أو شبكة أو حالة: axios، TanStack Query، Zustand، Redux، react-hook-form، zod.
+    - المقصود: ألا تُضاف إلى `package.json`، وألا تُستورد في `src/`.
+    - التبعيات غير المباشرة لا تُحسب ولا تُزال: `zod` يأتي مع `eslint-config-next`، و`redux` مع Recharts.
+    - للتحقق: `npm ls zod redux` يجب ألا يُظهرهما إلا تحت هاتين الحزمتين.
   - أي اتصال بخادم، وServer Actions.
   - حقل أو حالة أو صلاحية أو رمز خطأ غير موجود في العقد.
   - الحساب على المبالغ.

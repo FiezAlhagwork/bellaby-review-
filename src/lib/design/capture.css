@@ -1,0 +1,47 @@
+/*
+ * وضع الالتقاط (FIGMA.md 1.2): ما لا تستطيع أصناف Tailwind المنطقية قوله وهي في LTR.
+ * يُحمَّل من app/layout.tsx بعد globals.css، ولا يُنقل للإنتاج. جزء من lib/design.
+ * يعمل تحت أي عنصر يحمل data-capture="true": <html> (?capture=1) أو CaptureScope (/capture-test).
+ */
+
+/* نفس ترتيب الطبقات في Tailwind، فتبقى هذه القواعد في base وتتغلّب عليها الـ utilities. */
+@layer theme, base, components, utilities;
+
+@layer base {
+  /* الاتجاه LTR يجعل المحاذاة الافتراضية يساراً، والمحاذاة الصريحة لليمين (البداية بصرياً). */
+  [data-capture="true"] {
+    text-align: right;
+  }
+
+  /* النص العربي يبقى بقاعدة RTL: ترتيب الأرقام والأقواس والترقيم داخل السطر كما في الوضع العادي.
+     فقط للعناصر التي لا عناصر داخلها، فلا يتأثر اتجاه صفوف flex. وما له dir صريح (حقل لاتيني) يبقى. */
+  [data-capture="true"] :not(:has(*)):not([dir]) {
+    direction: rtl;
+  }
+}
+
+/* خارج الطبقات عمداً: يتغلّب على utilities لأن start وend تنقلبان في LTR. */
+[data-capture="true"] .text-start {
+  text-align: right;
+}
+
+[data-capture="true"] .text-end {
+  text-align: left;
+}
+
+/* الحقل اللاتيني (dir="ltr"): start وend فيه فيزيائيان أصلاً (يسار ويمين) ولا ينقلبان بقلب الصفحة، فيبقيان كما هما. */
+[data-capture="true"] [dir="ltr"].text-start {
+  text-align: left;
+}
+
+[data-capture="true"] [dir="ltr"].text-end {
+  text-align: right;
+}
+
+/* الحركة تتوقف في الالتقاط: كل العناصر في حالتها النهائية (DESIGN.md 7). وإلا التُقط الدوار والـ Skeleton في منتصف الحركة. */
+[data-capture="true"] *,
+[data-capture="true"] *::before,
+[data-capture="true"] *::after {
+  animation: none !important;
+  transition: none !important;
+}

@@ -4,10 +4,16 @@
 @font-face { font-family: "IBM Plex Sans Arabic"; font-weight: 500; font-display: swap; src: url("/fonts/IBMPlexSansArabic-Medium.ttf") format("truetype"); }
 @font-face { font-family: "IBM Plex Sans Arabic"; font-weight: 600; font-display: swap; src: url("/fonts/IBMPlexSansArabic-SemiBold.ttf") format("truetype"); }
 @font-face { font-family: "IBM Plex Sans Arabic"; font-weight: 700; font-display: swap; src: url("/fonts/IBMPlexSansArabic-Bold.ttf") format("truetype"); }
+@font-face { font-family: "Fraunces"; font-weight: 600; font-display: swap; src: url("/fonts/Fraunces-SemiBold.woff2") format("woff2"); }
+@font-face { font-family: "Fraunces"; font-weight: 700; font-display: swap; src: url("/fonts/Fraunces-Bold.woff2") format("woff2"); }
+@font-face { font-family: "Young Serif"; font-weight: 400; font-display: swap; src: url("/fonts/YoungSerif-Regular.woff2") format("woff2"); }
 
 @theme {
   /* ── الخط ── */
   --font-sans: "IBM Plex Sans Arabic", system-ui, sans-serif;
+  /* خطا الهوية (لاتينيان فقط، المرحلة 2): Fraunces سيريف ناعم عريض للشعار والعناوين الكبيرة، وYoung Serif سيريف ريترو ودود للعناوين الفرعية. لا يُستعملان في المرحلة 1. */
+  --font-brand: "Fraunces", Georgia, serif;
+  --font-brand-accent: "Young Serif", Georgia, serif;
 
   /* ── نقاط التحوّل (container queries) ── */
   --container-tablet: 48rem;    /* @tablet:  من 768 */
@@ -35,6 +41,8 @@
   --color-warning-soft: #FFFBEB;
   --color-danger: #B91C1C;
   --color-danger-soft: #FEF2F2;
+  --color-danger-hover: #991B1B;
+  --color-danger-pressed: #7F1D1D;
   --color-info: #1D4ED8;
   --color-info-soft: #EFF6FF;
 

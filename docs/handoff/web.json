@@ -1,0 +1,266 @@
+{
+  "screens": {
+    "G01": {
+      "id": "G01",
+      "name": "تسجيل الدخول",
+      "group": "shared",
+      "design_source": {
+        "view": "src/features/auth/views/SignInView.tsx",
+        "page": "src/app/shared/g01-sign-in/page.tsx"
+      },
+      "route": "/sign-in",
+      "api": [
+        {
+          "id": "clerkSignIn",
+          "method": "CLERK",
+          "path": "Sign in with Google",
+          "note": "مصادقة Clerk بحساب Google، ثم يُطلب /me بجلسة Clerk"
+        },
+        {
+          "id": "getMe",
+          "method": "GET",
+          "path": "/me",
+          "success": {
+            "status": 200,
+            "model": "Me"
+          },
+          "errors": [
+            {
+              "status": 403,
+              "codes": [
+                "account_not_provisioned",
+                "account_disabled",
+                "email_blocked"
+              ]
+            }
+          ]
+        }
+      ],
+      "view_props": {
+        "status": "SignInStatus ← حالة المحاولة: idle قبل الضغط، signing-in بين الضغط ونهاية Clerk وGET /me، rejected مع code من رد GET /me",
+        "onGoogleSignIn": "يبدأ دخول Clerk بـ Google"
+      },
+      "permissions": [],
+      "components": [
+        "Card",
+        "Button(loading)",
+        "Banner(danger)"
+      ],
+      "states": [
+        {
+          "key": "G01-default",
+          "label": "الافتراضي",
+          "drawn": true,
+          "when": {
+            "ui": "فتح صفحة الدخول بلا جلسة"
+          },
+          "ui": [
+            "الشعار نصاً «Bellaby» وجملة وزر «الدخول بحساب Google»"
+          ]
+        },
+        {
+          "key": "G01-signing-in",
+          "label": "جارٍ الدخول",
+          "drawn": true,
+          "when": {
+            "ui": "ضغط زر Google حتى انتهاء Clerk وGET /me"
+          },
+          "ui": [
+            "الزر loading بلا استجابة",
+            "نص «جارٍ التحقق من الحساب…»"
+          ]
+        },
+        {
+          "key": "G01-not-allowed",
+          "label": "بريد غير مسجّل",
+          "drawn": true,
+          "when": {
+            "api": "getMe",
+            "status": 403,
+            "codes": [
+              "account_not_provisioned"
+            ]
+          },
+          "ui": [
+            "Banner danger بعنوان «الدخول مرفوض» ونص الرمز من error-messages.ts",
+            "يُسجَّل حدث أمني ويظهر لـ IT (I09)"
+          ]
+        },
+        {
+          "key": "G01-account-disabled",
+          "label": "حساب معطّل",
+          "drawn": true,
+          "when": {
+            "api": "getMe",
+            "status": 403,
+            "codes": [
+              "account_disabled"
+            ]
+          },
+          "ui": [
+            "Banner danger بنص الرمز"
+          ]
+        },
+        {
+          "key": "G01-blocked",
+          "label": "بريد محظور",
+          "drawn": true,
+          "when": {
+            "api": "getMe",
+            "status": 403,
+            "codes": [
+              "email_blocked"
+            ]
+          },
+          "ui": [
+            "Banner danger بنص الرمز"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "نجاح الدخول",
+          "to": "G02",
+          "pass": {}
+        }
+      ],
+      "after_mutation": [],
+      "notes": [
+        "لا تسجيل ذاتي: الحساب يضيفه IT (SCREENS.md G01).",
+        "رمز رفض غير معروف يعرض النص العام من fallbackErrorMessage."
+      ]
+    },
+    "G02": {
+      "id": "G02",
+      "name": "إطار اللوحة",
+      "group": "shared",
+      "design_source": {
+        "view": "src/components/layout/DashboardShell.tsx",
+        "page": "src/app/shared/g02-dashboard-frame/page.tsx"
+      },
+      "route": "layout يغلّف كل صفحات /dashboard",
+      "api": [
+        {
+          "id": "getMe",
+          "method": "GET",
+          "path": "/me",
+          "success": {
+            "status": 200,
+            "model": "Me"
+          }
+        },
+        {
+          "id": "listNotifications",
+          "method": "GET",
+          "path": "/notifications",
+          "note": "عدد غير المقروء للجرس"
+        },
+        {
+          "id": "getPendingDecisions",
+          "method": "GET",
+          "path": "/me/pending-decisions",
+          "note": "عدد «بانتظار قراري»، للمستخدم الذي يقرر فقط"
+        }
+      ],
+      "view_props": {
+        "navigation": "{ roleName: me.role.name, groups: navigationFor(me.permissions, { pending: pendingCount }), profileHref }  (config/navigation.ts)",
+        "user": "{ name: me.name, roleName: me.role.name }",
+        "activeKey": "من المسار الحالي (key عنصر القائمة)",
+        "delegation": "me.active_delegation ⇒ { kind: delegate, to } ؛ والمدير التنفيذي الذي فوّض ⇒ { kind: delegator, delegateName, to, onEnd } (المصدر سؤال مفتوح للباك)",
+        "unreadCount": "عدد غير المقروء من /notifications",
+        "pendingCount": "عدد /me/pending-decisions، وبلا قيمة لمن لا يقرر فلا يظهر الزر"
+      },
+      "permissions": [],
+      "components": [
+        "DashboardShell",
+        "Sidebar",
+        "Topbar",
+        "Breadcrumbs",
+        "NavDrawer",
+        "Banner(delegation)"
+      ],
+      "states": [
+        {
+          "key": "G02-default",
+          "label": "الوكيل",
+          "drawn": true,
+          "when": {
+            "data": "me بدور الوكيل"
+          },
+          "ui": [
+            "قائمة الوكيل بمجموعات: المخزون، المبيعات، حسابي"
+          ]
+        },
+        {
+          "key": "G02-executive",
+          "label": "المدير التنفيذي",
+          "drawn": true,
+          "when": {
+            "data": "me.permissions تحوي dashboard.executive"
+          },
+          "ui": [
+            "قائمة المدير التنفيذي",
+            "زر «بانتظار قراري» بعدده في الشريط العلوي وعدده بجانب العنصر"
+          ]
+        },
+        {
+          "key": "G02-delegate-active",
+          "label": "مفوَّض",
+          "drawn": true,
+          "when": {
+            "data": "me.active_delegation != null"
+          },
+          "ui": [
+            "Banner info «أنت مفوَّض عن المدير التنفيذي حتى …»"
+          ]
+        },
+        {
+          "key": "G02-delegation-given",
+          "label": "فوّضتُ غيري",
+          "drawn": true,
+          "when": {
+            "data": "المدير التنفيذي وله تفويض ممنوح"
+          },
+          "ui": [
+            "Banner info «فوّضت … حتى …» مع زر «إنهاء التفويض»"
+          ]
+        },
+        {
+          "key": "G02-tablet",
+          "label": "تابلت",
+          "drawn": true,
+          "when": {
+            "ui": "عرض الحاوية بين 768 و1280"
+          },
+          "ui": [
+            "قائمة مصغّرة 72 بأيقونات وtooltip، وتتوسع فوق المحتوى بزر القائمة"
+          ]
+        },
+        {
+          "key": "G02-mobile-drawer",
+          "label": "موبايل · القائمة مفتوحة",
+          "drawn": true,
+          "when": {
+            "ui": "ضغط زر القائمة والعرض تحت 768"
+          },
+          "ui": [
+            "NavDrawer بعرض 300 من البداية"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "click عنصر قائمة",
+          "to": "item.screen",
+          "pass": {}
+        }
+      ],
+      "after_mutation": [
+        "invalidate getMe عند إنهاء التفويض"
+      ],
+      "notes": [
+        "القائمة بالصلاحيات لا بالأدوار (config/navigation.ts). 29 مفتاحاً مؤقتاً تنتظر تأكيد الباك: docs/backend-requests.md."
+      ]
+    }
+  }
+}
