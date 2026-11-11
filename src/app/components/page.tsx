@@ -8,7 +8,7 @@ import { BannerSection, DialogSection, ToastSection } from "./OverlaySections";
 import { CardSection, DrawerSection, FloatingSection, PersonSection, TabsSection } from "./SurfaceSections";
 import { LayoutPrimitivesSection, ShellSection } from "./LayoutSections";
 import { ChartSection, DataTableSection, FilterBarSection, KpiSection, PaginationSection } from "./DataSections";
-import { BatchSection, LineItemsSection } from "./StockSections";
+import { BatchEntrySection, BatchSection, LineItemsSection } from "./StockSections";
 import { ActivitySection, DecisionSection, NotificationSection, StageSection } from "./ProcessSections";
 import { BadgeSection, SkeletonSection, SpinnerSection, StatusBadgeSection } from "./DisplaySections";
 import { DatePickerSection, DateRangePickerSection, MonthPickerSection } from "./DateSections";
@@ -58,6 +58,7 @@ const sections: readonly { id: string; node: ReactNode }[] = [
   { id: "chart", node: <ChartSection /> },
   { id: "batch", node: <BatchSection /> },
   { id: "line-items", node: <LineItemsSection /> },
+  { id: "batch-entry", node: <BatchEntrySection /> },
   { id: "stage", node: <StageSection /> },
   { id: "activity", node: <ActivitySection /> },
   { id: "decision", node: <DecisionSection /> },

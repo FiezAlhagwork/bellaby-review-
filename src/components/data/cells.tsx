@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import type { BatchRef, Money } from "@/lib/api/types";
-import { formatDate, formatDateTime, formatMoney, formatQuantity } from "@/lib/format";
+import { formatDate, formatDateShort, formatDateTime, formatMoney, formatQuantity, formatTime } from "@/lib/format";
 import { BatchChip } from "./BatchChip";
 import { StatusBadge } from "./StatusBadge";
 import type { StatusEntity, StatusOf } from "./status-map";
@@ -44,6 +44,21 @@ export function DateCell({ value }: { value: string | null | undefined }) {
 /** تاريخ ووقت `9 تشرين الثاني 2026 · 14:05` بتوقيت دمشق. */
 export function DateTimeCell({ value }: { value: string | null | undefined }) {
   return value ? <span className="whitespace-nowrap">{formatDateTime(value)}</span> : <span className="text-fg-muted">{EMPTY}</span>;
+}
+
+/** `10/11/2026` فوق `14:05`: عمود ضيق بسطرين للجداول الكثيفة (الحركات، سجل الإدخال). */
+export function DateTimeStackCell({ value }: { value: string | null | undefined }) {
+  if (!value) return <span className="text-fg-muted">{EMPTY}</span>;
+  return (
+    <span className="flex min-w-0 flex-col">
+      <span dir="ltr" className="block truncate text-end text-body text-fg">
+        {formatDateShort(value)}
+      </span>
+      <span dir="ltr" className="block text-end text-caption text-fg-muted">
+        {formatTime(value)}
+      </span>
+    </span>
+  );
 }
 
 type StatusCellProps<Entity extends StatusEntity> = { entity: Entity; status: StatusOf<Entity> };

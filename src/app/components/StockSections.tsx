@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { BatchChip } from "@/components/data/BatchChip";
+import { BatchEntryEditor, type BatchEntryLine, type BatchEntryNotice } from "@/components/data/BatchEntryEditor";
 import { LineItemsEditor, type EditorLine } from "@/components/data/LineItemsEditor";
 import { StockLine } from "@/components/data/StockLine";
 import { stockBatches, stockItems } from "@/mocks/stock";
@@ -109,6 +110,62 @@ export function LineItemsSection() {
                 { id: "b", itemId: 2, batchId: 41, quantity: 60 },
               ]}
             />
+          </HostFrame>
+        </div>
+      </GalleryGroup>
+    </GallerySection>
+  );
+}
+
+const entryItemOptions = stockItems.map((item) => ({ value: String(item.id), label: item.name }));
+
+const entryFilled: BatchEntryLine[] = [
+  { id: "a", itemId: "1", batchNo: "LOT-2705-A", expiryDate: "2027-05-20", quantity: 480 },
+  { id: "b", itemId: "3", batchNo: "LOT-2705-S", expiryDate: "2027-04-02", quantity: 240 },
+];
+
+const entryNoticed: BatchEntryLine[] = [
+  { id: "a", itemId: "1", batchNo: "LOT-2510-D", expiryDate: "2026-10-30", quantity: 60 },
+  { id: "b", itemId: "2", batchNo: "LOT-2612-Z", expiryDate: "2026-12-20", quantity: 120 },
+  { id: "c", itemId: "1", batchNo: "LOT-2701-B", expiryDate: "2027-03-01", quantity: 100 },
+  { id: "d", itemId: "1", batchNo: "LOT-2701-B", expiryDate: "2027-04-01", quantity: 100 },
+];
+
+const entryNotices: Record<string, BatchEntryNotice> = {
+  a: { kind: "danger", text: "لا يُدخل منتهٍ" },
+  b: { kind: "warning", text: "ينتهي بعد 40 يوماً: يحتاج تأكيداً" },
+  c: { kind: "info", text: "الدفعة موجودة بالتاريخ نفسه: تُضاف الكمية للدفعة" },
+  d: { kind: "danger", text: "رقم الدفعة مسجّل بتاريخ انتهاء مختلف، راجع العلبة" },
+};
+
+function LiveEntry({ start, ...rest }: { start: BatchEntryLine[] } & Partial<React.ComponentProps<typeof BatchEntryEditor>>) {
+  const [lines, setLines] = useState<BatchEntryLine[]>(start);
+  return <BatchEntryEditor today={TODAY} itemOptions={entryItemOptions} {...rest} lines={lines} onChange={setLines} />;
+}
+
+export function BatchEntrySection() {
+  return (
+    <GallerySection
+      name="BatchEntryEditor"
+      title="محرّر إدخال الدفعات"
+      usage="لإدخال بضاعة جديدة: كل سطر صنف ورقم دفعة (لاتيني، حتى 50) وتاريخ انتهاء وكمية. يختلف عن LineItemsEditor الذي يختار من دفعات موجودة. الملاحظات تحت السطر يحسبها الأب (منتهٍ danger، قريب الانتهاء warning، دفعة موجودة info، تعارض تاريخ danger)، وأخطاء الخادم تحته بمفاتيح العقد. السطر الأخير لا يُحذف. من التابلت إلى ما دون المكتب وعلى الموبايل كل سطر بطاقة (الصنف بعرض كامل، وتحته الدفعة والتاريخ والكمية)."
+    >
+      <GalleryGroup title="الحالات (حية)">
+        <div className="flex flex-col gap-8">
+          <HostFrame label="مكتب: سطر فارغ" widthClass={DESKTOP}>
+            <LiveEntry start={[{ id: "a", itemId: null, batchNo: "", expiryDate: null, quantity: null }]} />
+          </HostFrame>
+          <HostFrame label="مكتب: سطران معبّآن" widthClass={DESKTOP}>
+            <LiveEntry start={entryFilled} />
+          </HostFrame>
+          <HostFrame label="مكتب: الملاحظات الأربع (منتهٍ · قريب · موجودة · تعارض) وخطأ خادم" widthClass={DESKTOP}>
+            <LiveEntry start={entryNoticed} notices={entryNotices} errors={{ "lines.1.quantity": "الكمية يجب ألا تقل عن 1" }} />
+          </HostFrame>
+          <HostFrame label="معطّل (أثناء الإرسال)" widthClass={DESKTOP}>
+            <LiveEntry start={entryFilled} disabled />
+          </HostFrame>
+          <HostFrame label="موبايل: كل سطر بطاقة" widthClass={MOBILE}>
+            <LiveEntry start={entryNoticed.slice(0, 2)} notices={entryNotices} />
           </HostFrame>
         </div>
       </GalleryGroup>

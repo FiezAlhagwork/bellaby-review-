@@ -7,7 +7,6 @@ import { ReviewStage, type ReviewSize } from "./ReviewStage";
 import { screenHref, type CatalogMatch } from "./screen-catalog";
 import type { ScreenDefinition, ScreenState } from "./ScreenStates";
 import { StateStepper } from "./StateStepper";
-import { isSystemState } from "./systemStates";
 
 // غلاف الشاشة للزبون (وضع المراجعة): شريط علوي، أزرار الحالات (حالات الشاشة ثم حالات النظام) مع السابق والتالي،
 // مبدّل المقاس، شرح الشاشة، ثم الشاشة نفسها بعرض حقيقي متجاوب داخل ReviewStage. الشاشة لا تعرف أنها داخل غلاف.
@@ -55,8 +54,8 @@ export function ReviewShell({ screen, state, size, match, keepReviewParam, child
   const { summary, audience } = match.screen;
 
   const shown = screen.states.filter((candidate) => !candidate.reviewHidden || candidate.key === state.key);
-  const screenStates = shown.filter((candidate) => !isSystemState(candidate.key));
-  const systemStates = shown.filter((candidate) => isSystemState(candidate.key));
+  const screenStates = shown.filter((candidate) => !candidate.system);
+  const systemStates = shown.filter((candidate) => candidate.system);
   const ordered = [...screenStates, ...systemStates];
   const index = ordered.findIndex((candidate) => candidate.key === state.key);
 

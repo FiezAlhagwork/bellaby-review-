@@ -2,7 +2,7 @@
 
 import { ArrowsLeftRight, MagnifyingGlass } from "@phosphor-icons/react";
 import { BatchChip } from "@/components/data/BatchChip";
-import { QuantityCell, StatusCell, TextCell } from "@/components/data/cells";
+import { DateTimeStackCell, QuantityCell, StatusCell, TextCell } from "@/components/data/cells";
 import { DataTable, type DataTableColumn } from "@/components/data/DataTable";
 import { FilterBar, type ActiveFilter } from "@/components/data/FilterBar";
 import { Pagination, type PaginationMeta } from "@/components/data/Pagination";
@@ -15,7 +15,7 @@ import { Field } from "@/components/ui/Field";
 import type { Option } from "@/components/ui/OptionList";
 import type { BatchRef, ItemRef, Location, StockMovement } from "@/lib/api/types";
 import { dayLabel, type IsoDate } from "@/lib/calendar";
-import { formatDateShort, formatTime, isolate } from "@/lib/format";
+import { isolate } from "@/lib/format";
 import type { Loadable } from "@/lib/loadable";
 
 /** الفلاتر كما يرسلها العقد: `location_id` و`item_id` و`batch_id` و`from` و`to`. تغيّرها يعيد الأب إلى الصفحة الأولى. */
@@ -47,21 +47,6 @@ type StockMovementsViewProps = {
   today: IsoDate;
   onRetry?: () => void;
 };
-
-/** `10/11/2026` فوق `14:05`: عمود ضيق بسطرين (التاريخ المختصر للجداول الكثيفة). */
-function TimeCell({ value }: { value: string | undefined }) {
-  if (!value) return <TextCell value={null} />;
-  return (
-    <span className="flex min-w-0 flex-col">
-      <span dir="ltr" className="block truncate text-end text-body text-fg">
-        {formatDateShort(value)}
-      </span>
-      <span dir="ltr" className="block text-end text-caption text-fg-muted">
-        {formatTime(value)}
-      </span>
-    </span>
-  );
-}
 
 /** «من» و«إلى» بسطرين، والطرف الفارغ (تالف، إدخال) لا يُكتب. */
 function RouteCell({ from, to }: { from: string | undefined; to: string | undefined }) {
@@ -126,7 +111,7 @@ export function StockMovementsView({ movements, locations, items, batches, filte
   ];
 
   const columns: DataTableColumn<StockMovement>[] = [
-    { key: "occurred_at", header: "الوقت", cell: (row) => <TimeCell value={row.occurred_at} />, width: "w-28", priority: "high" },
+    { key: "occurred_at", header: "الوقت", cell: (row) => <DateTimeStackCell value={row.occurred_at} />, width: "w-28", priority: "high" },
     { key: "kind", header: "النوع", cell: (row) => (row.kind ? <StatusCell entity="stockMovementKind" status={row.kind} /> : <TextCell value={null} />), width: "w-32", priority: "high", role: "status" },
     {
       key: "item",

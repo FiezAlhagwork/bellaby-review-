@@ -816,6 +816,474 @@
         "فلتر الفترة: من/إلى تاريخان بتوقيت دمشق (ضمني) كما في وصف المعامل.",
         "من صف الأرصدة (W02) يُمرَّر item_id وbatch_id (والموقع اختياري)."
       ]
+    },
+    "W04": {
+      "id": "W04",
+      "name": "إدخال بضاعة",
+      "group": "warehouse",
+      "design_source": {
+        "view": "src/features/stock/views/StockReceiptFormView.tsx",
+        "page": "src/app/warehouse/w04-intake/page.tsx"
+      },
+      "route": "/dashboard/warehouse/intake/new",
+      "api": [
+        {
+          "id": "createStockReceipt",
+          "method": "POST",
+          "path": "/stock-receipts",
+          "request": {
+            "location_id": "form.locationId",
+            "note": "form.note",
+            "confirm_near_expiry": "form.confirmNearExpiry",
+            "lines": "form.lines → [{ item_id, batch_no (trim), expiry_date, quantity }]"
+          },
+          "success": {
+            "status": 201,
+            "model": "StockReceipt"
+          },
+          "errors": [
+            {
+              "status": 422,
+              "codes": [
+                "validation_failed",
+                "batch_expired",
+                "batch_expiry_mismatch",
+                "near_expiry_confirmation_required"
+              ]
+            }
+          ],
+          "note": "صلاحية stock.receive"
+        },
+        {
+          "id": "listLocations",
+          "method": "GET",
+          "path": "/locations",
+          "request": {
+            "type": "WAREHOUSE"
+          },
+          "success": {
+            "status": 200,
+            "model": "Location[]"
+          }
+        },
+        {
+          "id": "listItems",
+          "method": "GET",
+          "path": "/items",
+          "request": {
+            "is_active": true
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<Item>"
+          },
+          "note": "خيارات الصنف (q من الخادم للقوائم الكبيرة)"
+        },
+        {
+          "id": "listBatches",
+          "method": "GET",
+          "path": "/batches",
+          "request": {
+            "item_id": "سطر الصنف المختار"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<Batch>"
+          },
+          "note": "يُطلب لكل صنف يُختار في الأسطر، للتحقق المسبق من الرقم. يحتاج فلتر batch_no (docs/backend-requests.md §7)"
+        },
+        {
+          "id": "getExpiryAlertDays",
+          "method": "GET",
+          "path": "/settings (مقترح)",
+          "success": {
+            "status": 200,
+            "model": "expiry_alert_days"
+          },
+          "note": "غير موجود للوجستي في العقد: docs/backend-requests.md §7"
+        }
+      ],
+      "view_props": {
+        "options": "Loadable<{ locations, items }> ← listLocations وlistItems",
+        "batches": "Record<String(itemId), Loadable<BatchRef[]>> ← listBatches لكل صنف في الأسطر",
+        "form": "{ locationId, note, lines[{ id, itemId, batchNo, expiryDate, quantity }], confirmNearExpiry } حالة الصفحة",
+        "onFormChange": "يحدّث الحالة ويمسح errors",
+        "errors": "errors من 422 validation_failed كما هي",
+        "submitError": "code من 422 آخر (batch_expired…)",
+        "submitting": "حالة طلب createStockReceipt",
+        "saved": "StockReceipt من 201 (يُعرض الملخص)",
+        "today": "اليوم بتوقيت دمشق",
+        "expiryAlertDays": "getExpiryAlertDays (الافتراضي 60)",
+        "onSubmit": "createStockReceipt بالنموذج بأسماء العقد",
+        "onCancel": "العودة إلى W05",
+        "onReceiveAnother": "يفرّغ النموذج",
+        "onOpenLog": "التنقل إلى W05",
+        "onRetry": "يعيد جلب الخيارات"
+      },
+      "permissions": [
+        "stock.receive"
+      ],
+      "components": [
+        "PageHeader",
+        "Card",
+        "Grid",
+        "Field",
+        "Select",
+        "Textarea",
+        "BatchEntryEditor",
+        "Banner",
+        "Checkbox",
+        "Button",
+        "Badge",
+        "BatchChip",
+        "Skeleton",
+        "ErrorState",
+        "ForbiddenState"
+      ],
+      "states": [
+        {
+          "key": "W04-empty",
+          "label": "فارغ",
+          "drawn": true,
+          "when": {
+            "data": "نموذج جديد"
+          },
+          "ui": [
+            "سطر واحد فارغ",
+            "زر «إدخال» معطّل وسببه ظاهر تحته"
+          ]
+        },
+        {
+          "key": "W04-filled",
+          "label": "معبّأ",
+          "drawn": true,
+          "when": {
+            "data": "موقع وأسطر كاملة سليمة"
+          },
+          "ui": [
+            "الزر مفعّل"
+          ]
+        },
+        {
+          "key": "W04-expired",
+          "label": "منتهٍ",
+          "drawn": true,
+          "when": {
+            "data": "expiry_date < اليوم (يُحسب محلياً، والخادم يرفض بـ batch_expired)"
+          },
+          "ui": [
+            "«لا يُدخل منتهٍ» تحت السطر",
+            "الزر معطّل"
+          ]
+        },
+        {
+          "key": "W04-near-expiry",
+          "label": "قريب الانتهاء",
+          "drawn": true,
+          "when": {
+            "data": "days_to_expiry ≤ expiry_alert_days"
+          },
+          "ui": [
+            "تحذير تحت السطر",
+            "Banner warning مع Checkbox التأكيد (confirm_near_expiry)",
+            "الزر معطّل حتى التأكيد"
+          ]
+        },
+        {
+          "key": "W04-batch-exists",
+          "label": "دفعة موجودة",
+          "drawn": true,
+          "when": {
+            "data": "batch_no موجود لهذا الصنف بالتاريخ نفسه"
+          },
+          "ui": [
+            "«تُضاف الكمية للدفعة»",
+            "الإدخال مسموح"
+          ]
+        },
+        {
+          "key": "W04-batch-mismatch",
+          "label": "تعارض تاريخ",
+          "drawn": true,
+          "when": {
+            "data": "batch_no موجود بتاريخ مختلف (والخادم 422 batch_expiry_mismatch)"
+          },
+          "ui": [
+            "«رقم الدفعة مسجّل بتاريخ انتهاء مختلف، راجع العلبة» مع التاريخ المسجّل",
+            "الزر معطّل"
+          ]
+        },
+        {
+          "key": "W04-validation-failed",
+          "label": "أخطاء الخادم",
+          "drawn": true,
+          "when": {
+            "api": "createStockReceipt",
+            "status": 422,
+            "codes": [
+              "validation_failed"
+            ]
+          },
+          "ui": [
+            "نص كل خطأ تحت حقله من errors"
+          ]
+        },
+        {
+          "key": "W04-saved",
+          "label": "تم الإدخال",
+          "drawn": true,
+          "when": {
+            "api": "createStockReceipt",
+            "status": 201
+          },
+          "ui": [
+            "Banner success بالرقم RCV-…",
+            "كل سطر مع «دفعة جديدة» أو «أُضيفت لدفعة موجودة» من batch_created",
+            "«إدخال آخر» و«سجل الإدخال»"
+          ]
+        },
+        {
+          "key": "W04-loading",
+          "label": "جارٍ التحميل",
+          "drawn": true,
+          "when": {
+            "data": "options.status === loading"
+          },
+          "ui": [
+            "Skeleton بشكل البطاقتين"
+          ]
+        },
+        {
+          "key": "W04-error",
+          "label": "تعذّر التحميل",
+          "drawn": true,
+          "when": {
+            "api": "listLocations/listItems",
+            "status": 429,
+            "codes": [
+              "too_many_requests"
+            ]
+          },
+          "ui": [
+            "ErrorState مع «إعادة المحاولة»"
+          ]
+        },
+        {
+          "key": "W04-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "createStockReceipt",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState (عامل المستودع)"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "success createStockReceipt",
+          "to": "عرض ملخص النتيجة في الشاشة نفسها"
+        },
+        {
+          "on": "click «سجل الإدخال» / «إلغاء»",
+          "to": "W05"
+        },
+        {
+          "on": "click «إدخال آخر»",
+          "to": "W04 بنموذج فارغ"
+        }
+      ],
+      "after_mutation": [
+        "إبطال استعلامات: stock-receipts وstock/balances وstock/movements وlow-stock وexpiry-alerts"
+      ],
+      "notes": [
+        "العقد يقبل عدة أسطر (minItems 1)، وSCREENS يعرض حقول سطر واحد: بُني سطر قابل للإضافة والحذف (السطر الأخير لا يُحذف).",
+        "القواعد تُحسب قبل الإرسال بدفعات الصنف من listBatches؛ الخادم يتحقق من كلها عند الإدخال وهو المرجع. أي 422 غير متوقع يُعرض Banner من error-messages بمفتاح code.",
+        "في الإنتاج يُسقط معرّف السطر (id) عند الإرسال، وتُحوَّل الأسماء المختصرة إلى أسماء العقد."
+      ]
+    },
+    "W05": {
+      "id": "W05",
+      "name": "سجل الإدخال",
+      "group": "warehouse",
+      "design_source": {
+        "view": "src/features/stock/views/StockReceiptsView.tsx",
+        "page": "src/app/warehouse/w05-intake-log/page.tsx"
+      },
+      "route": "/dashboard/warehouse/intake",
+      "api": [
+        {
+          "id": "listStockReceipts",
+          "method": "GET",
+          "path": "/stock-receipts",
+          "request": {
+            "page": "state الصفحة",
+            "per_page": "state (20 افتراضي، 50، 100)",
+            "location_id": "filters.locationId",
+            "from": "filters.range.from",
+            "to": "filters.range.to"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<StockReceipt>"
+          },
+          "note": "لا فلتر صنف/دفعة: docs/backend-requests.md §8"
+        },
+        {
+          "id": "listLocations",
+          "method": "GET",
+          "path": "/locations",
+          "request": {
+            "type": "WAREHOUSE"
+          },
+          "success": {
+            "status": 200,
+            "model": "Location[]"
+          },
+          "note": "خيارات فلتر الموقع"
+        }
+      ],
+      "view_props": {
+        "receipts": "Loadable<{ data: StockReceipt[]; meta: PaginationMeta }> ← listStockReceipts (data وmeta من رد Paginated)",
+        "locations": "Location[] ← listLocations",
+        "filters": "{ locationId, range: { from, to } } حالة الصفحة. تغيّرها يعيد الصفحة إلى 1",
+        "onFiltersChange": "يحدّث الفلاتر، ويعيد page إلى 1، ويعيد الطلب",
+        "onPageChange": "page ← الرقم ويعيد الطلب",
+        "onPerPageChange": "per_page ← القيمة، وpage = 1",
+        "selected": "الإدخال المفتوح في الدرج (حالة الصفحة؛ يؤخذ من القائمة نفسها بلا طلب)",
+        "onSelect": "يضبط selected أو null للإغلاق",
+        "today": "اليوم بتوقيت دمشق",
+        "expiryAlertDays": "expiry_alert_days من الإعدادات (docs/backend-requests.md §7)",
+        "onNewReceipt": "التنقل إلى W04",
+        "onRetry": "يعيد listStockReceipts"
+      },
+      "permissions": [
+        "stock.receive"
+      ],
+      "components": [
+        "PageHeader",
+        "FilterBar",
+        "Combobox",
+        "DateRangePicker",
+        "DataTable",
+        "DateTimeStackCell",
+        "Pagination",
+        "Drawer",
+        "DescriptionList",
+        "ReceiptLinesList",
+        "BatchChip",
+        "Badge",
+        "EmptyState",
+        "ErrorState",
+        "ForbiddenState"
+      ],
+      "states": [
+        {
+          "key": "W05-default",
+          "label": "كل الإدخالات",
+          "drawn": true,
+          "when": {
+            "data": "بلا فلاتر، الصفحة الأولى"
+          },
+          "ui": [
+            "جدول الإدخالات من الأحدث إلى الأقدم",
+            "ترقيم تحت الجدول",
+            "زر «إدخال بضاعة» في الرأس"
+          ]
+        },
+        {
+          "key": "W05-details",
+          "label": "تفاصيل إدخال",
+          "drawn": true,
+          "when": {
+            "ui": "النقر على صف"
+          },
+          "ui": [
+            "Drawer: المرجع والوقت في العنوان",
+            "الموقع والمنفّذ والملاحظة",
+            "الأسطر: الصنف والدفعة والكمية وشارة «دفعة جديدة» أو «أُضيفت لدفعة موجودة» (batch_created)",
+            "المجموع"
+          ]
+        },
+        {
+          "key": "W05-loading",
+          "label": "جارٍ التحميل",
+          "drawn": true,
+          "when": {
+            "data": "receipts.status === loading"
+          },
+          "ui": [
+            "Skeleton في الجدول بلا ترقيم"
+          ]
+        },
+        {
+          "key": "W05-empty",
+          "label": "لا توجد بيانات",
+          "drawn": true,
+          "when": {
+            "data": "لا إدخالات ولا فلاتر"
+          },
+          "ui": [
+            "EmptyState «لا إدخالات بعد» مع زر «إدخال بضاعة»",
+            "مع فلاتر مفعّلة: «لا نتائج للفلتر» و«مسح الفلاتر»"
+          ]
+        },
+        {
+          "key": "W05-error",
+          "label": "تعذّر التحميل",
+          "drawn": true,
+          "when": {
+            "api": "listStockReceipts",
+            "status": 429,
+            "codes": [
+              "too_many_requests"
+            ]
+          },
+          "ui": [
+            "ErrorState مع «إعادة المحاولة»"
+          ]
+        },
+        {
+          "key": "W05-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "listStockReceipts",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState (عامل المستودع)"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "click زر «إدخال بضاعة»",
+          "to": "W04"
+        },
+        {
+          "on": "click صف",
+          "to": "فتح الدرج في الشاشة نفسها"
+        },
+        {
+          "on": "W04: «سجل الإدخال» أو «إلغاء»",
+          "to": "W05"
+        }
+      ],
+      "after_mutation": [],
+      "notes": [
+        "صف لكل إدخال لأن الصنف والدفعة والكمية أسطر داخل StockReceipt (SCREENS يعدّدها كأعمدة)؛ الأسطر تظهر في الدرج.",
+        "للقراءة فقط: لا endpoint لعكس إدخال خاطئ (docs/backend-requests.md §8).",
+        "الكمية في الصف مجموع كميات الأسطر (أعداد صحيحة)."
+      ]
     }
   }
 }

@@ -201,8 +201,26 @@ export const screenCatalog: readonly CatalogGroup[] = [
         number: "02",
         title: "الإدخال",
         screens: [
-          { id: "W04", name: "إدخال بضاعة", mobile: false, states: ["empty", "filled", "expired", "near-expiry", "batch-exists", "batch-mismatch", "saved"] },
-          { id: "W05", name: "سجل الإدخال", mobile: false, states: ["default"] },
+          {
+            id: "W04",
+            name: "إدخال بضاعة",
+            mobile: false,
+            states: ["empty", "filled", "expired", "near-expiry", "batch-exists", "batch-mismatch", "validation-failed", "saved", "loading", "error", "forbidden"],
+            slug: "intake",
+            summary:
+              "إدخال بضاعة وصلت إلى المستودع: الموقع، ثم أسطر (صنف، رقم الدفعة، تاريخ الانتهاء، الكمية). تظهر القواعد قبل الإرسال: المنتهي لا يُدخل، والقريب الانتهاء يحتاج تأكيداً، والدفعة الموجودة بالتاريخ نفسه تُضاف كميتها، وبتاريخ مختلف تعارض. بعد الإدخال ملخص بما أُنشئ.",
+            audience: "اللوجستي",
+          },
+          {
+            id: "W05",
+            name: "سجل الإدخال",
+            mobile: false,
+            states: ["default", "details", "loading", "empty", "error", "forbidden"],
+            slug: "intake-log",
+            summary:
+              "سجل كل بضاعة أُدخلت إلى المستودع من الأحدث إلى الأقدم: الوقت والمرجع والموقع والأصناف ومجموع الكمية والمنفّذ. تصفّيه بالموقع أو الفترة، وتنقر إدخالاً لترى أسطره ودفعاته وهل أُنشئت الدفعة أم أُضيفت لدفعة موجودة. ومنه إلى «إدخال بضاعة».",
+            audience: "اللوجستي",
+          },
         ],
       },
       {

@@ -20,3 +20,4 @@ export type AgentReturn = components["schemas"]["AgentReturn"];
 export type BalanceLine = components["schemas"]["BalanceLine"];
 export type Location = components["schemas"]["Location"];
 export type StockMovement = components["schemas"]["StockMovement"];
+export type StockReceipt = components["schemas"]["StockReceipt"];

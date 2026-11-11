@@ -27,6 +27,8 @@ export type ScreenState = {
   when?: string;
   /** نسخة المراجعة تخفيها من أزرار الزبون (مبدّل المقاس يغطيها)، وتبقى بالرابط والالتقاط. مثل tablet وmobile-drawer. */
   reviewHidden?: boolean;
+  /** حالة عامة (تحميل، فراغ، خطأ، لا صلاحية) من `systemStates()`: تُجمَّع في المراجعة تحت «حالات النظام». لا يُحدَّد بالمفتاح، فقد تسمّي شاشة حالتها الخاصة «empty» (W04). */
+  system?: boolean;
   node: ReactNode;
 };
 

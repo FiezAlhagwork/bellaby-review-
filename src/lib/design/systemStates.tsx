@@ -4,11 +4,6 @@ import type { ScreenState } from "./ScreenStates";
 // الحالات العامة لكل شاشة فيها داتا من الخادم (SCREENS.md 0.2): التحميل والفراغ والخطأ ولا صلاحية.
 // تُضاف للشاشة بسطر واحد، وتظهر في نسخة المراجعة تحت «حالات النظام». لا يُنقل للإنتاج.
 
-/** مفاتيح الحالات العامة. تُجمَّع في غلاف المراجعة تحت «حالات النظام». */
-export const SYSTEM_STATE_KEYS = ["loading", "empty", "error", "forbidden"] as const;
-
-export const isSystemState = (key: string) => (SYSTEM_STATE_KEYS as readonly string[]).includes(key);
-
 type SystemStateNodes = {
   loading: ReactNode;
   /** قائمة أو لوحة يمكن أن تفرغ. بدونه لا تُضاف حالة الفراغ. */
@@ -31,5 +26,5 @@ export function systemStates({ loading, empty, error, forbidden }: SystemStateNo
     node: error,
   });
   if (forbidden) states.push({ key: "forbidden", label: "لا صلاحية", when: "الشاشة خارج صلاحيات المستخدم أو نطاقه.", node: forbidden });
-  return states;
+  return states.map((state) => ({ ...state, system: true }));
 }
