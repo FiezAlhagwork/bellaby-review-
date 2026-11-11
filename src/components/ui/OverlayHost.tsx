@@ -27,6 +27,13 @@ const OverlayContext = createContext<OverlayContextValue>({ container: null, com
 
 export const useOverlay = () => useContext(OverlayContext);
 
+/**
+ * عنصر خارجي تُرسم فيه الطبقات بدل المضيف (مع بقاء قياس المقاس من عرض المضيف). تستعمله نسخة المراجعة: الشاشة فيها بطول الصفحة،
+ * فالطبقة fixed داخل المضيف تصير بطول الصفحة وتلتصق الورقة السفلية بنهايتها بعيداً عن الشاشة. هناك يُمرَّر عنصر ثابت بالنافذة طولاً
+ * وبعرض الإطار أفقياً. الإنتاج بلا مزوّد (null) فلا تغيير فيه.
+ */
+export const OverlayPortalContext = createContext<HTMLElement | null>(null);
+
 type OverlayHostProps = {
   id?: string;
   /** بلا padding ولا border: @container يقيس المحتوى الداخلي. */
@@ -37,6 +44,7 @@ type OverlayHostProps = {
 export function OverlayHost({ id, className, children }: OverlayHostProps) {
   const [element, setElement] = useState<HTMLDivElement | null>(null);
   const [breakpoint, setBreakpoint] = useState<Breakpoint>("desktop");
+  const portal = useContext(OverlayPortalContext);
 
   useEffect(() => {
     if (!element) return;
@@ -49,7 +57,7 @@ export function OverlayHost({ id, className, children }: OverlayHostProps) {
   }, [element]);
 
   return (
-    <OverlayContext.Provider value={{ container: element, compact: breakpoint === "mobile", breakpoint }}>
+    <OverlayContext.Provider value={{ container: portal ?? element, compact: breakpoint === "mobile", breakpoint }}>
       <div ref={setElement} id={id} className={cn("@container contain-layout", className)}>
         {children}
       </div>

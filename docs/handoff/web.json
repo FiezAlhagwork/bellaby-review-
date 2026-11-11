@@ -1284,6 +1284,355 @@
         "للقراءة فقط: لا endpoint لعكس إدخال خاطئ (docs/backend-requests.md §8).",
         "الكمية في الصف مجموع كميات الأسطر (أعداد صحيحة)."
       ]
+    },
+    "W06": {
+      "id": "W06",
+      "name": "صرف جديد",
+      "group": "warehouse",
+      "design_source": {
+        "view": "src/features/stock/views/TransferFormView.tsx",
+        "page": "src/app/warehouse/w06-new-dispatch/page.tsx"
+      },
+      "route": "/dashboard/warehouse/dispatch/new",
+      "api": [
+        {
+          "id": "createTransfer",
+          "method": "POST",
+          "path": "/transfers",
+          "request": {
+            "from_location_id": "form.fromLocationId",
+            "to_location_id": "form.toLocationId",
+            "sample_request_id": "sampleRequest.id أو null",
+            "note": "form.note",
+            "lines": "form.lines → [{ item_id, batch_id, quantity }]"
+          },
+          "success": {
+            "status": 201,
+            "model": "Transfer"
+          },
+          "errors": [
+            {
+              "status": 422,
+              "codes": [
+                "validation_failed",
+                "item_type_not_allowed_here",
+                "batch_suspended",
+                "insufficient_stock"
+              ]
+            }
+          ],
+          "note": "صلاحية transfers.create. Idempotency-Key مطلوب (docs/backend-requests.md §9)"
+        },
+        {
+          "id": "listSourceLocations",
+          "method": "GET",
+          "path": "/locations",
+          "request": {
+            "type": "WAREHOUSE"
+          },
+          "success": {
+            "status": 200,
+            "model": "Location[]"
+          }
+        },
+        {
+          "id": "listAgents",
+          "method": "GET",
+          "path": "/locations",
+          "request": {
+            "type": "AGENT"
+          },
+          "success": {
+            "status": 200,
+            "model": "Location[]"
+          },
+          "note": "المستلمون الوكلاء"
+        },
+        {
+          "id": "listReps",
+          "method": "GET",
+          "path": "/locations",
+          "request": {
+            "type": "REP"
+          },
+          "success": {
+            "status": 200,
+            "model": "Location[]"
+          },
+          "note": "المستلمون المندوبون"
+        },
+        {
+          "id": "listItems",
+          "method": "GET",
+          "path": "/items",
+          "request": {
+            "is_active": true
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<Item>"
+          }
+        },
+        {
+          "id": "listBatchBalances",
+          "method": "GET",
+          "path": "/stock/balances",
+          "request": {
+            "location_id": "form.fromLocationId",
+            "item_id": "سطر الصنف المختار",
+            "group_by": "batch"
+          },
+          "success": {
+            "status": 200,
+            "model": "BalanceLine[]"
+          },
+          "note": "دفعات الصنف ومتاحها (quantity) في المستودع المختار؛ يُطلب لكل صنف يُختار"
+        },
+        {
+          "id": "fefoSuggestion",
+          "method": "GET",
+          "path": "/stock/fefo-suggestion",
+          "request": {
+            "location_id": "form.fromLocationId",
+            "item_id": "سطر الصنف",
+            "quantity": "الكمية"
+          },
+          "success": {
+            "status": 200,
+            "model": "{ data: [{ batch, quantity }], shortage }"
+          },
+          "note": "الدفعة المقترحة وتقسيم كمية تتجاوز دفعة؛ shortage يغذّي insufficient"
+        },
+        {
+          "id": "getSampleRequest",
+          "method": "GET",
+          "path": "/sample-requests/{id}",
+          "success": {
+            "status": 200,
+            "model": "SampleRequest"
+          },
+          "note": "عند الفتح من W10 (مع sample_request_id)"
+        }
+      ],
+      "view_props": {
+        "options": "Loadable<{ sources, agents, reps, items }> ← listSourceLocations وlistAgents وlistReps وlistItems",
+        "batches": "Record<String(itemId), Loadable<EditorBatch[]>> ← listBatchBalances (available = quantity)",
+        "form": "{ fromLocationId, recipientKind, toLocationId, note, lines[{ id, itemId, batchId, quantity }] } حالة الصفحة",
+        "onFormChange": "يحدّث الحالة ويمسح errors",
+        "sampleRequest": "getSampleRequest عند sample_request_id في الرابط: يقفل المستلم ويعبّئ الأسطر",
+        "errors": "errors من 422 كما هي (lines.N.batch_id وlines.N.quantity…)",
+        "submitError": "code من 422 بلا حقل (item_type_not_allowed_here…)",
+        "submitting": "حالة طلب createTransfer",
+        "saved": "Transfer من 201 (يُعرض الملخص)",
+        "today": "اليوم بتوقيت دمشق",
+        "onSubmit": "createTransfer بالنموذج بأسماء العقد",
+        "onCancel": "العودة إلى W07",
+        "onNewTransfer": "يفرّغ النموذج",
+        "onOpenTransfers": "التنقل إلى W07",
+        "onRetry": "يعيد جلب الخيارات"
+      },
+      "permissions": [
+        "transfers.create"
+      ],
+      "components": [
+        "PageHeader",
+        "Card",
+        "Grid",
+        "Field",
+        "Select",
+        "SegmentedControl",
+        "Combobox",
+        "Textarea",
+        "LineItemsEditor",
+        "Banner",
+        "Button",
+        "StatusBadge",
+        "StockLine",
+        "Skeleton",
+        "ErrorState",
+        "ForbiddenState"
+      ],
+      "states": [
+        {
+          "key": "W06-empty",
+          "label": "فارغ",
+          "drawn": true,
+          "when": {
+            "data": "نموذج جديد"
+          },
+          "ui": [
+            "المستودع الافتراضي وسطر فارغ",
+            "زر «اعتماد الصرف» معطّل وسببه ظاهر"
+          ]
+        },
+        {
+          "key": "W06-agent",
+          "label": "لوكيل",
+          "drawn": true,
+          "when": {
+            "data": "recipientKind = AGENT"
+          },
+          "ui": [
+            "المنتجات وحدها في قائمة الأصناف",
+            "الدفعة المقترحة (الأقرب انتهاءً) مختارة تلقائياً مع المتاح"
+          ]
+        },
+        {
+          "key": "W06-rep",
+          "label": "لمندوب",
+          "drawn": true,
+          "when": {
+            "data": "recipientKind = REP"
+          },
+          "ui": [
+            "العينات والمواد الدعائية وحدها في قائمة الأصناف"
+          ]
+        },
+        {
+          "key": "W06-type-mismatch",
+          "label": "نوع لا يناسب المستلم",
+          "drawn": true,
+          "when": {
+            "data": "صنف في الأسطر نوعه خارج المسموح للمستلم (يُحسب محلياً؛ والخادم 422 item_type_not_allowed_here)"
+          },
+          "ui": [
+            "«هذا الصنف لا يُصرف للمندوب»/«للوكيل» تحت السطر",
+            "الاعتماد معطّل"
+          ]
+        },
+        {
+          "key": "W06-suspended-batch",
+          "label": "دفعة موقوفة",
+          "drawn": true,
+          "when": {
+            "data": "الدفعة SUSPENDED",
+            "api": "createTransfer",
+            "status": 422,
+            "codes": [
+              "batch_suspended"
+            ]
+          },
+          "ui": [
+            "الدفعة الموقوفة معطّلة في القائمة بسببها",
+            "خطأ الخادم تحت السطر إن صارت موقوفة بعد اختيارها"
+          ]
+        },
+        {
+          "key": "W06-insufficient",
+          "label": "رصيد غير كافٍ",
+          "drawn": true,
+          "when": {
+            "data": "quantity > available (محلياً)",
+            "api": "createTransfer",
+            "status": 422,
+            "codes": [
+              "insufficient_stock"
+            ]
+          },
+          "ui": [
+            "«أكبر من المتاح (240)» تحت السطر",
+            "الاعتماد معطّل"
+          ]
+        },
+        {
+          "key": "W06-from-sample-request",
+          "label": "من طلب عينات",
+          "drawn": true,
+          "when": {
+            "data": "sample_request_id موجود"
+          },
+          "ui": [
+            "Banner info بالطلب والمطلوب لكل صنف",
+            "المستلم (المندوب) مقفل",
+            "يجوز أقل من المطلوب"
+          ]
+        },
+        {
+          "key": "W06-saved",
+          "label": "بالطريق",
+          "drawn": true,
+          "when": {
+            "api": "createTransfer",
+            "status": 201
+          },
+          "ui": [
+            "Banner success بالمرجع TRF-… وشارة «بالطريق»",
+            "الأسطر بـ StockLine والمجموع",
+            "«صرف آخر» و«الصرفيات»"
+          ]
+        },
+        {
+          "key": "W06-loading",
+          "label": "جارٍ التحميل",
+          "drawn": true,
+          "when": {
+            "data": "options.status === loading"
+          },
+          "ui": [
+            "Skeleton بشكل البطاقتين"
+          ]
+        },
+        {
+          "key": "W06-error",
+          "label": "تعذّر التحميل",
+          "drawn": true,
+          "when": {
+            "api": "listAgents/listReps/listItems",
+            "status": 429,
+            "codes": [
+              "too_many_requests"
+            ]
+          },
+          "ui": [
+            "ErrorState مع «إعادة المحاولة»"
+          ]
+        },
+        {
+          "key": "W06-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "createTransfer",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState (عامل المستودع)"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "success createTransfer",
+          "to": "عرض ملخص النتيجة في الشاشة نفسها"
+        },
+        {
+          "on": "click «الصرفيات» / «إلغاء»",
+          "to": "W07"
+        },
+        {
+          "on": "click «صرف آخر»",
+          "to": "W06 بنموذج فارغ"
+        },
+        {
+          "on": "من W07 «صرف جديد»",
+          "to": "W06"
+        },
+        {
+          "on": "من W10 «صرف»",
+          "to": "W06 مع sample_request_id"
+        }
+      ],
+      "after_mutation": [
+        "إبطال استعلامات: transfers وstock/balances وstock/movements وlow-stock وexpiry-alerts"
+      ],
+      "notes": [
+        "للوكيل منتجات فقط، وللمندوب عينات ومواد فقط؛ تُصفّى قائمة الأصناف بالمستلم، وأي صنف خارجها في الأسطر يُعلَّم ويمنع الاعتماد.",
+        "ينقص رصيد المستودع عند الاعتماد (بقفل) ولا يزيد رصيد المستلم قبل تأكيده؛ لا رصيد سالب للمستودع.",
+        "في الإنتاج يُسقط معرّف السطر (id) عند الإرسال، وتُحوَّل الأسماء المختصرة إلى أسماء العقد."
+      ]
     }
   }
 }

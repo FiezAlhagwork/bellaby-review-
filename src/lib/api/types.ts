@@ -21,3 +21,4 @@ export type BalanceLine = components["schemas"]["BalanceLine"];
 export type Location = components["schemas"]["Location"];
 export type StockMovement = components["schemas"]["StockMovement"];
 export type StockReceipt = components["schemas"]["StockReceipt"];
+export type SampleRequest = components["schemas"]["SampleRequest"];

@@ -227,7 +227,16 @@ export const screenCatalog: readonly CatalogGroup[] = [
         number: "03",
         title: "الصرف وطلبات العينات",
         screens: [
-          { id: "W06", name: "صرف جديد", mobile: false, states: ["empty", "agent", "rep", "type-mismatch", "suspended-batch", "insufficient", "from-sample-request", "saved"] },
+          {
+            id: "W06",
+            name: "صرف جديد",
+            mobile: false,
+            states: ["empty", "agent", "rep", "type-mismatch", "suspended-batch", "insufficient", "from-sample-request", "saved", "loading", "error", "forbidden"],
+            slug: "new-dispatch",
+            summary:
+              "اصرف بضاعة من المستودع إلى وكيل (منتجات) أو مندوب (عينات ومواد). تُقترح الدفعة الأقرب انتهاءً لكل صنف مع متاحها، وتُعلَّم الأصناف التي لا تناسب المستلم والدفعة الموقوفة والكمية الأكبر من المتاح. بعد الاعتماد يبقى الصرف «بالطريق» حتى يؤكد المستلم. ويمكن تعبئته من طلب عينات.",
+            audience: "اللوجستي",
+          },
           { id: "W07", name: "الصرف", mobile: false, states: ["default", "unconfirmed"] },
           { id: "W08", name: "تفاصيل الصرف", mobile: false, states: ["in-transit", "cancel", "received", "cancelled", "overdue-48h"] },
           { id: "W09", name: "طلبات العينات", mobile: false, states: ["default"] },

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { Banner } from "@/components/ui/Banner";
 import { Button } from "@/components/ui/Button";
 import { NavDrawer } from "@/components/ui/Drawer";
@@ -73,7 +74,7 @@ function DelegationBar({ delegation }: { delegation: ShellDelegation }) {
 }
 
 function ShellBody({ navigation, user, activeKey, breadcrumbs, delegation, unreadCount, pendingCount, notificationsPanel, onBellClick, onPendingClick, onProfile, onSignOut, defaultMenuOpen = false, children }: DashboardShellProps) {
-  const { breakpoint } = useOverlay();
+  const { breakpoint, container } = useOverlay();
   // زر القائمة: درج على الموبايل، وقائمة موسّعة فوق المحتوى على التابلت. على المكتب لا زر.
   const [navOpen, setNavOpen] = useState(defaultMenuOpen);
   const close = () => setNavOpen(false);
@@ -102,6 +103,14 @@ function ShellBody({ navigation, user, activeKey, breadcrumbs, delegation, unrea
     />
   );
 
+  // القائمة الموسّعة على التابلت: تُرسم في حاوية الطبقات (المضيف، أو عنصر نسخة المراجعة الثابت بالنافذة).
+  const expandedMenu = (
+    <div role="dialog" aria-modal="true" aria-label="القائمة الرئيسية" className="fixed inset-0 z-40">
+      <button type="button" aria-label="إغلاق القائمة" onClick={close} className="absolute inset-0 bg-overlay" />
+      <CaptureRow className="pointer-events-none relative h-full justify-start">{sidebar("full", "pointer-events-auto shadow-overlay")}</CaptureRow>
+    </div>
+  );
+
   return (
     <>
       <CaptureRow className="min-h-0 min-w-0 flex-1 items-stretch">
@@ -125,15 +134,10 @@ function ShellBody({ navigation, user, activeKey, breadcrumbs, delegation, unrea
       </CaptureRow>
 
       <NavDrawer open={navOpen && breakpoint === "mobile"} onOpenChange={setNavOpen} aria-label="القائمة الرئيسية">
-        {sidebar("full")}
+        {sidebar("full", "w-full")}
       </NavDrawer>
 
-      {expanded ? (
-        <div role="dialog" aria-modal="true" aria-label="القائمة الرئيسية" className="fixed inset-0 z-40">
-          <button type="button" aria-label="إغلاق القائمة" onClick={close} className="absolute inset-0 bg-overlay" />
-          <CaptureRow className="pointer-events-none relative h-full justify-start">{sidebar("full", "pointer-events-auto shadow-overlay")}</CaptureRow>
-        </div>
-      ) : null}
+      {expanded ? (container ? createPortal(expandedMenu, container) : expandedMenu) : null}
     </>
   );
 }

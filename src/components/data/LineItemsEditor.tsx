@@ -87,7 +87,7 @@ export function LineItemsEditor({
     const suggested = suggestedBatch(loadable.data, today);
     return {
       options: sortedBatches(loadable.data).map((batch): Option => {
-        const label = `${batch.batch_no} · ${dayLabel(batch.expiry_date)}${batch.id === suggested?.id ? " · مقترحة" : ""}`;
+        const label = `${isolate(batch.batch_no ?? "")} · ${dayLabel(batch.expiry_date)}${batch.id === suggested?.id ? " · مقترحة" : ""}`;
         // الموقوفة والمنتهية معطّلة بسببها (batch_suspended وbatch_expired في العقد)، إلا في حركات القرار 2.
         if (!allowSuspended && batch.status === "SUSPENDED") return { value: String(batch.id), label, disabled: true, reason: "موقوفة" };
         if (!allowSuspended && batch.expiry_date < today) return { value: String(batch.id), label, disabled: true, reason: "منتهية" };
@@ -202,6 +202,14 @@ export function LineItemsEditor({
     };
   };
 
+  // اسم ظاهر فوق الحقل في البطاقة (في صف المكتب الاسم في رأس الأعمدة).
+  const labeled = (label: string, field: ReactNode) => (
+    <div className="flex flex-col gap-1">
+      <span className="text-label font-medium text-fg-muted">{label}</span>
+      {field}
+    </div>
+  );
+
   const message = (messages: string[]): ReactNode =>
     messages.length > 0 ? (
       <p role="alert" className="text-label text-danger">
@@ -211,8 +219,8 @@ export function LineItemsEditor({
 
   return (
     <div className="flex flex-col gap-4">
-      {/* تابلت وما فوق */}
-      <div className="hidden flex-col gap-3 @tablet:flex">
+      {/* مكتب (من 1280): صف واحد بأعمدة */}
+      <div className="hidden flex-col gap-3 @desktop:flex">
         {lines.length > 0 ? (
           <CaptureRow className="items-center gap-3 px-1 text-label font-medium text-fg-muted">
             <span className={cn(COLUMN.item, "text-start")}>الصنف</span>
@@ -239,8 +247,8 @@ export function LineItemsEditor({
         })}
       </div>
 
-      {/* موبايل: كل سطر بطاقة، والحقول تحت بعضها */}
-      <div className="flex flex-col gap-3 @tablet:hidden">
+      {/* تابلت وموبايل: كل سطر بطاقة. الصنف بعرض كامل، وتحته الدفعة والمتاح والكمية: تحت بعضها على الموبايل وفي صف على التابلت */}
+      <div className="flex flex-col gap-3 @desktop:hidden">
         {lines.map((line, index) => {
           const c = controls(line, index);
           return (
@@ -249,13 +257,20 @@ export function LineItemsEditor({
                 <span className="min-w-0 flex-1 text-label font-medium text-fg-muted">{`السطر ${isolate(index + 1)}`}</span>
                 {c.remove}
               </CaptureRow>
-              {c.item}
-              {c.batch}
-              <CaptureRow className="items-center gap-3">
-                <span className="text-label text-fg-muted">المتاح</span>
-                <span className="flex-1 text-start text-body text-fg">{c.available}</span>
+              {labeled("الصنف", c.item)}
+              <div className="flex flex-col gap-3 @tablet:hidden">
+                {labeled("الدفعة", c.batch)}
+                <CaptureRow className="items-center gap-3">
+                  <span className="text-label text-fg-muted">المتاح</span>
+                  <span className="flex-1 text-start text-body text-fg">{c.available}</span>
+                </CaptureRow>
+                {labeled("الكمية", c.quantity)}
+              </div>
+              <CaptureRow className="hidden items-start gap-3 @tablet:flex">
+                <div className="min-w-52 flex-[2]">{labeled("الدفعة", c.batch)}</div>
+                <div className="w-20 shrink-0">{labeled("المتاح", <span className="flex h-10 items-center text-body text-fg">{c.available}</span>)}</div>
+                <div className="min-w-0 flex-1">{labeled("الكمية", c.quantity)}</div>
               </CaptureRow>
-              {c.quantity}
               {message(c.messages)}
             </div>
           );
