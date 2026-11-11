@@ -17,3 +17,6 @@ export type ExpiryAlert = components["schemas"]["ExpiryAlert"];
 export type StockCount = components["schemas"]["StockCount"];
 export type Task = components["schemas"]["Task"];
 export type AgentReturn = components["schemas"]["AgentReturn"];
+export type BalanceLine = components["schemas"]["BalanceLine"];
+export type Location = components["schemas"]["Location"];
+export type StockMovement = components["schemas"]["StockMovement"];

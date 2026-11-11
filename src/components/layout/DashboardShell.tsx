@@ -104,7 +104,7 @@ function ShellBody({ navigation, user, activeKey, breadcrumbs, delegation, unrea
 
   return (
     <>
-      <CaptureRow className="min-h-0 flex-1 items-stretch">
+      <CaptureRow className="min-h-0 min-w-0 flex-1 items-stretch">
         <div className="hidden shrink-0 @tablet:flex">{sidebar("auto", "h-auto")}</div>
         <div className="flex min-w-0 flex-1 flex-col">
           <Topbar

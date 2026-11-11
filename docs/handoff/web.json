@@ -261,6 +261,561 @@
       "notes": [
         "القائمة بالصلاحيات لا بالأدوار (config/navigation.ts). 29 مفتاحاً مؤقتاً تنتظر تأكيد الباك: docs/backend-requests.md."
       ]
+    },
+    "W01": {
+      "id": "W01",
+      "name": "لوحة المستودع",
+      "group": "warehouse",
+      "design_source": {
+        "view": "src/features/stock/views/WarehouseDashboardView.tsx",
+        "page": "src/app/warehouse/w01-dashboard/page.tsx"
+      },
+      "route": "/dashboard/warehouse",
+      "api": [
+        {
+          "id": "getLowStock",
+          "method": "GET",
+          "path": "/stock/low-stock",
+          "success": {
+            "status": 200,
+            "model": "LowStockAlert[]"
+          }
+        },
+        {
+          "id": "getExpiryAlerts",
+          "method": "GET",
+          "path": "/stock/expiry-alerts",
+          "success": {
+            "status": 200,
+            "model": "ExpiryAlert[]"
+          }
+        },
+        {
+          "id": "listTransfers",
+          "method": "GET",
+          "path": "/transfers?status=IN_TRANSIT",
+          "success": {
+            "status": 200,
+            "model": "Transfer[]"
+          },
+          "note": "تُصفّى بالعمر: أكثر من 48 ساعة"
+        },
+        {
+          "id": "listAgentReturns",
+          "method": "GET",
+          "path": "/agent-returns?status=IN_TRANSIT",
+          "success": {
+            "status": 200,
+            "model": "AgentReturn[]"
+          }
+        },
+        {
+          "id": "listStockCounts",
+          "method": "GET",
+          "path": "/stock-counts?status=IN_PROGRESS",
+          "success": {
+            "status": 200,
+            "model": "StockCount[]"
+          }
+        },
+        {
+          "id": "listTasks",
+          "method": "GET",
+          "path": "/tasks",
+          "success": {
+            "status": 200,
+            "model": "Task[]"
+          },
+          "note": "لعامل المستودع: مهامه"
+        }
+      ],
+      "view_props": {
+        "canManageStock": "permission stock.view (مؤقت) ؛ بدونه يُعرض عامل المستودع",
+        "overview": "Loadable<WarehouseOverview> ← { lowStock, expiryAlerts, staleTransfers(IN_TRANSIT > 48h), pendingReturns, activeCounts }",
+        "myWork": "Loadable<WarehouseWorkerWork> ← { tasks, counts(assigned_to = me) }",
+        "now": "الآن بتوقيت UTC",
+        "expiryAlertDays": "settings.expiry_alert_days (الافتراضي 60)",
+        "onOpen": "تنقّل إلى القائمة الكاملة: low-stock→W02 · expiry→W17 · transfers→W03 · returns→W13 · counts→W14 · tasks→G06"
+      },
+      "permissions": [
+        "stock.view (مؤقت)"
+      ],
+      "components": [
+        "PageHeader",
+        "KpiTile",
+        "Grid",
+        "Section",
+        "DataTable",
+        "StatusCell",
+        "EmptyState",
+        "ErrorState"
+      ],
+      "states": [
+        {
+          "key": "W01-default",
+          "label": "يوم عادي",
+          "drawn": true,
+          "when": {
+            "data": "بعض التنبيهات"
+          },
+          "ui": [
+            "5 خلايا مؤشرات",
+            "قوائم التنبيهات غير الفارغة فقط"
+          ]
+        },
+        {
+          "key": "W01-alerts",
+          "label": "كل التنبيهات",
+          "drawn": true,
+          "when": {
+            "data": "كل أنواع التنبيهات قائمة"
+          },
+          "ui": [
+            "كل القوائم الخمس تحت الخلايا"
+          ]
+        },
+        {
+          "key": "W01-worker",
+          "label": "عامل المستودع",
+          "drawn": true,
+          "when": {
+            "data": "canManageStock = false"
+          },
+          "ui": [
+            "خلايا: مهام مفتوحة ومتأخرة وجرد مسند",
+            "جدولا مهامي والجرد المسند إليّ"
+          ]
+        },
+        {
+          "key": "W01-loading",
+          "label": "جارٍ التحميل",
+          "drawn": true,
+          "when": {
+            "data": "overview.status === loading"
+          },
+          "ui": [
+            "Skeleton للخلايا والجدول"
+          ]
+        },
+        {
+          "key": "W01-empty",
+          "label": "لا توجد بيانات",
+          "drawn": true,
+          "when": {
+            "data": "كل القوائم فارغة"
+          },
+          "ui": [
+            "الخلايا بصفر",
+            "EmptyState «لا شيء يحتاج انتباهك الآن»"
+          ]
+        },
+        {
+          "key": "W01-error",
+          "label": "تعذّر التحميل",
+          "drawn": true,
+          "when": {
+            "api": "أي طلب",
+            "status": 429,
+            "codes": [
+              "too_many_requests"
+            ]
+          },
+          "ui": [
+            "ErrorState مع «إعادة المحاولة»"
+          ]
+        },
+        {
+          "key": "W01-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "getLowStock",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "click خلية مؤشر",
+          "to": "W02|W17|W03|W13|W14|G06"
+        }
+      ],
+      "after_mutation": [],
+      "notes": [
+        "الخلايا قابلة للضغط حين يمرَّر onOpen.",
+        "العدّ من أطوال القوائم لأن DashboardSummary بلا حقول (docs/backend-requests.md §4)."
+      ]
+    },
+    "W02": {
+      "id": "W02",
+      "name": "الأرصدة",
+      "group": "warehouse",
+      "design_source": {
+        "view": "src/features/stock/views/StockBalancesView.tsx",
+        "page": "src/app/warehouse/w02-balances/page.tsx"
+      },
+      "route": "/dashboard/warehouse/balances",
+      "api": [
+        {
+          "id": "listBalances",
+          "method": "GET",
+          "path": "/stock/balances",
+          "request": {
+            "location_id": "filters.locationId",
+            "item_id": "filters.itemId",
+            "item_type": "filters.itemType",
+            "at": "نهاية filters.at بتوقيت دمشق (UTC)",
+            "group_by": "batch"
+          },
+          "success": {
+            "status": 200,
+            "model": "BalanceLine[]"
+          }
+        },
+        {
+          "id": "listLocations",
+          "method": "GET",
+          "path": "/locations",
+          "success": {
+            "status": 200,
+            "model": "Location[]"
+          },
+          "note": "خيارات فلتر الموقع"
+        },
+        {
+          "id": "listItems",
+          "method": "GET",
+          "path": "/items",
+          "success": {
+            "status": 200,
+            "model": "Paginated<Item>"
+          },
+          "note": "خيارات فلتر الصنف (q من الخادم)"
+        }
+      ],
+      "view_props": {
+        "balances": "Loadable<BalanceLine[]> ← listBalances بالفلاتر الحالية",
+        "locations": "Location[] ← listLocations (لعامل المستودع مواقع المستودع فقط)",
+        "items": "ItemRef[] ← listItems",
+        "filters": "{ locationId, itemId, itemType, at } حالة الصفحة (الرابط أو state)",
+        "onFiltersChange": "يحدّث الفلاتر ويعيد الطلب",
+        "canOpenMovements": "permission transfers.view (مؤقت)",
+        "today": "اليوم بتوقيت دمشق (حدّ منتقي التاريخ وحالة الدفعات)",
+        "onOpenMovements": "التنقل إلى W03 بـ item_id وbatch_id"
+      },
+      "permissions": [
+        "stock.view (مؤقت)",
+        "transfers.view (مؤقت)"
+      ],
+      "components": [
+        "PageHeader",
+        "FilterBar",
+        "Combobox",
+        "DatePicker",
+        "Banner",
+        "DataTable",
+        "BatchChip",
+        "EmptyState",
+        "ErrorState"
+      ],
+      "states": [
+        {
+          "key": "W02-default",
+          "label": "مواقع المستودع",
+          "drawn": true,
+          "when": {
+            "data": "بلا فلاتر، مواقع المستودع"
+          },
+          "ui": [
+            "جدول الأرصدة مجمّعة بالدفعة"
+          ]
+        },
+        {
+          "key": "W02-all-locations",
+          "label": "كل المواقع",
+          "drawn": true,
+          "when": {
+            "data": "الأرصدة لكل المواقع (وكلاء ومندوبون)"
+          },
+          "ui": [
+            "رصيد المندوب السالب بلون danger"
+          ]
+        },
+        {
+          "key": "W02-at-time",
+          "label": "في لحظة سابقة",
+          "drawn": true,
+          "when": {
+            "ui": "اختيار تاريخ من «فلاتر أخرى»"
+          },
+          "ui": [
+            "شارة الفلتر «الرصيد في: …»",
+            "Banner info مع «العودة للآن»"
+          ]
+        },
+        {
+          "key": "W02-worker",
+          "label": "عامل المستودع",
+          "drawn": true,
+          "when": {
+            "data": "canOpenMovements = false"
+          },
+          "ui": [
+            "الصفوف لا تُفتح"
+          ]
+        },
+        {
+          "key": "W02-loading",
+          "label": "جارٍ التحميل",
+          "drawn": true,
+          "when": {
+            "data": "balances.status === loading"
+          },
+          "ui": [
+            "Skeleton في الجدول"
+          ]
+        },
+        {
+          "key": "W02-empty",
+          "label": "لا توجد بيانات",
+          "drawn": true,
+          "when": {
+            "data": "لا أرصدة ولا فلاتر"
+          },
+          "ui": [
+            "EmptyState «لا أرصدة بعد»",
+            "مع فلاتر مفعّلة: «لا نتائج للفلتر» و«مسح الفلاتر»"
+          ]
+        },
+        {
+          "key": "W02-error",
+          "label": "تعذّر التحميل",
+          "drawn": true,
+          "when": {
+            "api": "listBalances",
+            "status": 429,
+            "codes": [
+              "too_many_requests"
+            ]
+          },
+          "ui": [
+            "ErrorState مع «إعادة المحاولة»"
+          ]
+        },
+        {
+          "key": "W02-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "listBalances",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "click صف (canOpenMovements)",
+          "to": "W03",
+          "pass": {
+            "item_id": "row.item.id",
+            "batch_id": "row.batch.id"
+          }
+        }
+      ],
+      "after_mutation": [],
+      "notes": [
+        "بلا ترقيم صفحات: العقد يعيد مصفوفة (docs/backend-requests.md §5).",
+        "الكمية السالبة جائزة لرصيد المندوب وحده."
+      ]
+    },
+    "W03": {
+      "id": "W03",
+      "name": "حركات المخزون",
+      "group": "warehouse",
+      "design_source": {
+        "view": "src/features/stock/views/StockMovementsView.tsx",
+        "page": "src/app/warehouse/w03-movements/page.tsx"
+      },
+      "route": "/dashboard/warehouse/movements",
+      "api": [
+        {
+          "id": "listStockMovements",
+          "method": "GET",
+          "path": "/stock/movements",
+          "request": {
+            "page": "state الصفحة",
+            "per_page": "state (20 افتراضي، 50، 100)",
+            "location_id": "filters.locationId",
+            "item_id": "filters.itemId",
+            "batch_id": "filters.batchId",
+            "from": "filters.range.from",
+            "to": "filters.range.to"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<StockMovement>"
+          }
+        },
+        {
+          "id": "listLocations",
+          "method": "GET",
+          "path": "/locations",
+          "success": {
+            "status": 200,
+            "model": "Location[]"
+          },
+          "note": "خيارات فلتر الموقع"
+        },
+        {
+          "id": "listItems",
+          "method": "GET",
+          "path": "/items",
+          "success": {
+            "status": 200,
+            "model": "Paginated<Item>"
+          },
+          "note": "خيارات فلتر الصنف (q من الخادم)"
+        },
+        {
+          "id": "listBatches",
+          "method": "GET",
+          "path": "/batches",
+          "request": {
+            "item_id": "filters.itemId"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<Batch>"
+          },
+          "note": "خيارات فلتر الدفعة: دفعات الصنف المختار. المسار موجود في العقد (item_id وpage وper_page حتى 100)"
+        }
+      ],
+      "view_props": {
+        "movements": "Loadable<{ data: StockMovement[]; meta: PaginationMeta }> ← listStockMovements (data وmeta من رد Paginated)",
+        "locations": "Location[] ← listLocations",
+        "items": "ItemRef[] ← listItems",
+        "batches": "BatchRef[] ← listBatches (دفعات filters.itemId إن وُجد)",
+        "filters": "{ locationId, itemId, batchId, range: { from, to } } حالة الصفحة (الرابط أو state). تغيّرها يعيد الصفحة إلى 1",
+        "onFiltersChange": "يحدّث الفلاتر، ويعيد page إلى 1، ويعيد الطلب",
+        "onPageChange": "page ← الرقم ويعيد الطلب",
+        "onPerPageChange": "per_page ← القيمة، وpage = 1",
+        "today": "اليوم بتوقيت دمشق (حدّ منتقي الفترة وحالة الدفعات)",
+        "onRetry": "يعيد listStockMovements"
+      },
+      "permissions": [
+        "transfers.view (مؤقت: يظهر به عنصر «الحركات»، وللوجستي وحده)"
+      ],
+      "components": [
+        "PageHeader",
+        "FilterBar",
+        "Combobox",
+        "DateRangePicker",
+        "DataTable",
+        "Pagination",
+        "StatusBadge",
+        "BatchChip",
+        "EmptyState",
+        "ErrorState"
+      ],
+      "states": [
+        {
+          "key": "W03-default",
+          "label": "كل الحركات",
+          "drawn": true,
+          "when": {
+            "data": "بلا فلاتر، الصفحة الأولى"
+          },
+          "ui": [
+            "جدول الحركات من الأحدث إلى الأقدم",
+            "ترقيم تحت الجدول",
+            "حركة العكس: النوع «عكس» وكمية سالبة وسطر «يعكس الحركة #…»"
+          ]
+        },
+        {
+          "key": "W03-from-balance",
+          "label": "من صف في الأرصدة",
+          "drawn": true,
+          "when": {
+            "ui": "التنقل من W02 بـ item_id وbatch_id"
+          },
+          "ui": [
+            "شارتا الصنف والدفعة مفعّلتان مسبقاً"
+          ]
+        },
+        {
+          "key": "W03-loading",
+          "label": "جارٍ التحميل",
+          "drawn": true,
+          "when": {
+            "data": "movements.status === loading"
+          },
+          "ui": [
+            "Skeleton في الجدول بلا ترقيم"
+          ]
+        },
+        {
+          "key": "W03-empty",
+          "label": "لا توجد بيانات",
+          "drawn": true,
+          "when": {
+            "data": "لا حركات ولا فلاتر"
+          },
+          "ui": [
+            "EmptyState «لا حركات بعد»",
+            "مع فلاتر مفعّلة: «لا نتائج للفلتر» و«مسح الفلاتر»"
+          ]
+        },
+        {
+          "key": "W03-error",
+          "label": "تعذّر التحميل",
+          "drawn": true,
+          "when": {
+            "api": "listStockMovements",
+            "status": 429,
+            "codes": [
+              "too_many_requests"
+            ]
+          },
+          "ui": [
+            "ErrorState مع «إعادة المحاولة»"
+          ]
+        },
+        {
+          "key": "W03-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "listStockMovements",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState (مثلاً عامل المستودع)"
+          ]
+        }
+      ],
+      "navigation": [],
+      "after_mutation": [],
+      "notes": [
+        "للقراءة فقط: الحركات «إضافة فقط» ولا شاشة تفاصيل للحركة في العقد، فالصف غير قابل للفتح.",
+        "الكمية تُعرض كما وصلت (السالب بلون danger). دلالة الإشارة وموقعها: docs/backend-requests.md §6.",
+        "فلتر الفترة: من/إلى تاريخان بتوقيت دمشق (ضمني) كما في وصف المعامل.",
+        "من صف الأرصدة (W02) يُمرَّر item_id وbatch_id (والموقع اختياري)."
+      ]
     }
   }
 }

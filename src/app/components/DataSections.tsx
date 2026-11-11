@@ -213,11 +213,11 @@ const statusOptions = [
   { value: "CANCELLED", label: "ملغى" },
 ] as const;
 
-function LiveFilters({ initial = false }: { initial?: boolean }) {
+function LiveFilters({ initial = false, withSearch = true, many = false }: { initial?: boolean; withSearch?: boolean; many?: boolean }) {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<(typeof statusOptions)[number]["value"] | null>(initial ? "IN_TRANSIT" : null);
   const [range, setRange] = useState<DateRange>(initial ? { from: "2026-11-01", to: "2026-11-09" } : { from: null, to: null });
-  const [destination, setDestination] = useState("");
+  const [destination, setDestination] = useState(many ? "وكالة الياسمين للتوزيع" : "");
 
   const active: ActiveFilter[] = [
     ...(status ? [{ key: "status", label: `الحالة: ${statusOptions.find((option) => option.value === status)?.label}`, onRemove: () => setStatus(null) }] : []),
@@ -227,7 +227,7 @@ function LiveFilters({ initial = false }: { initial?: boolean }) {
 
   return (
     <FilterBar
-      search={{ value: search, onChange: setSearch, placeholder: "ابحث برقم الصرف" }}
+      search={withSearch ? { value: search, onChange: setSearch, placeholder: "ابحث برقم الصرف" } : undefined}
       quickFilters={[
         <Select key="status" aria-label="الحالة" placeholder="الحالة" options={statusOptions} value={status} onValueChange={setStatus} />,
         <DateRangePicker key="range" aria-label="الفترة" placeholder="الفترة" value={range} onValueChange={setRange} today="2026-11-10" />,
@@ -262,11 +262,17 @@ export function FilterBarSection() {
           <HostFrame label="مكتب بفلاتر مفعّلة" widthClass={DESKTOP}>
             <LiveFilters initial />
           </HostFrame>
+          <HostFrame label="مكتب بلا بحث (حين لا يعرّف العقد بحثاً نصياً)" widthClass={DESKTOP}>
+            <LiveFilters initial withSearch={false} />
+          </HostFrame>
           <HostFrame label="تابلت" widthClass={TABLET}>
             <LiveFilters initial />
           </HostFrame>
           <HostFrame label="موبايل: «فلاتر (2)» تفتح ورقة سفلية" widthClass={MOBILE}>
             <LiveFilters initial />
+          </HostFrame>
+          <HostFrame label="موبايل بثلاثة فلاتر: الشارات تلتف على أسطر" widthClass={MOBILE}>
+            <LiveFilters initial many />
           </HostFrame>
         </div>
       </GalleryGroup>

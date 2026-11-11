@@ -12,7 +12,8 @@ import { CaptureRow, useCaptureClass } from "@/lib/design/CaptureMode";
 export type ActiveFilter = { key: string; label: string; onRemove: () => void };
 
 type FilterBarProps = {
-  search: { value: string; onChange: (value: string) => void; placeholder?: string };
+  /** حقل البحث. بدونه (حين لا يعرّف العقد بحثاً نصياً) يبدأ الشريط بالفلاتر. */
+  search?: { value: string; onChange: (value: string) => void; placeholder?: string };
   /** فلاتر سريعة (Select أو DateRangePicker). كل عنصر بمفتاح، ويأخذ عرضه من الشريط. */
   quickFilters?: readonly ReactElement[];
   /** محتوى «فلاتر أخرى» (popover على المكتب، وفي الورقة السفلية على الموبايل). */
@@ -31,7 +32,7 @@ export function FilterBar({ search, quickFilters = [], moreFilters, active = [],
   const count = active.length;
   const hasFilters = quickFilters.length > 0 || moreFilters !== undefined;
 
-  const searchField = (
+  const searchField = search ? (
     <SearchInput
       aria-label="بحث"
       placeholder={search.placeholder ?? "ابحث"}
@@ -39,13 +40,13 @@ export function FilterBar({ search, quickFilters = [], moreFilters, active = [],
       onChange={(event) => search.onChange(event.target.value)}
       onClear={() => search.onChange("")}
     />
-  );
+  ) : null;
 
   return (
     <div className="flex flex-col gap-3">
       {/* مكتب وتابلت */}
-      <CaptureRow className="hidden items-center gap-3 @tablet:flex">
-        <div className="min-w-0 max-w-sm flex-1">{searchField}</div>
+      <CaptureRow className="hidden flex-wrap items-center gap-3 @tablet:flex">
+        {searchField ? <div className="min-w-0 max-w-sm flex-1">{searchField}</div> : null}
         {quickFilters.map((filter, index) => (
           <div key={filter.key ?? index} className="w-48 shrink-0">
             {filter}
@@ -66,9 +67,9 @@ export function FilterBar({ search, quickFilters = [], moreFilters, active = [],
 
       {/* موبايل */}
       <CaptureRow className="items-center gap-2 @tablet:hidden">
-        <div className="min-w-0 flex-1">{searchField}</div>
+        {searchField ? <div className="min-w-0 flex-1">{searchField}</div> : null}
         {hasFilters ? (
-          <Button variant="secondary" icon={SlidersHorizontal} onClick={() => setSheetOpen(true)}>
+          <Button variant="secondary" icon={SlidersHorizontal} fullWidth={!searchField} onClick={() => setSheetOpen(true)}>
             {count > 0 ? `فلاتر (${count})` : "فلاتر"}
           </Button>
         ) : null}
@@ -94,8 +95,9 @@ export function FilterBar({ search, quickFilters = [], moreFilters, active = [],
       ) : null}
 
       {count > 0 ? (
-        <CaptureRow className="items-center gap-2">
-          <CaptureRow role="list" aria-label="الفلاتر المفعّلة" className="min-w-0 flex-1 items-center gap-2 overflow-x-auto">
+        <CaptureRow className="items-start gap-2">
+          {/* تلتف الشارات على أسطر بدل التمرير الأفقي: كل شارة كاملة ظاهرة. */}
+          <CaptureRow role="list" aria-label="الفلاتر المفعّلة" className="min-w-0 flex-1 flex-wrap items-center gap-2">
             {active.map((filter) => (
               <FilterChip key={filter.key} filter={filter} />
             ))}

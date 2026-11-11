@@ -29,6 +29,7 @@ const returnStatuses = {
 
 type StatusMapShape = {
   batch: StatusesOf<Schemas["BatchStatus"]>;
+  stockMovementKind: StatusesOf<NonNullable<Schemas["StockMovement"]["kind"]>>;
   transfer: StatusesOf<Schemas["TransferStatus"]>;
   withdrawRequest: StatusesOf<Schemas["WithdrawStatus"]>;
   sampleRequest: StatusesOf<Schemas["SampleRequestStatus"]>;
@@ -61,6 +62,20 @@ export const statusMap = {
   batch: {
     ACTIVE: { label: "فعّالة", color: "success" },
     SUSPENDED: { label: "موقوفة", color: "danger" },
+  },
+  // نوع حركة المخزون: الدخول للمخزون نجاح، والحركة بين المواقع معلومة، والتسوية والفرق تنبيه، والتالف خطر، والعكس والإرجاع محايد.
+  stockMovementKind: {
+    RECEIPT: { label: "إدخال", color: "success" },
+    TRANSFER: { label: "صرف", color: "info" },
+    DELIVERY: { label: "تسليم", color: "info" },
+    VISIT_DISTRIBUTION: { label: "توزيع زيارة", color: "info" },
+    CUSTOMER_RETURN: { label: "إرجاع عميل", color: "neutral" },
+    AGENT_RETURN: { label: "إرجاع وكيل", color: "neutral" },
+    WITHDRAW: { label: "سحب", color: "info" },
+    DAMAGE: { label: "تالف", color: "danger" },
+    COUNT_ADJUSTMENT: { label: "تسوية جرد", color: "warning" },
+    DISCREPANCY: { label: "فرق مخزون", color: "warning" },
+    REVERSAL: { label: "عكس", color: "neutral" },
   },
   transfer: {
     IN_TRANSIT: { label: "بالطريق", color: "info" },

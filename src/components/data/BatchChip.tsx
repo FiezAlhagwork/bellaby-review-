@@ -50,7 +50,7 @@ export function BatchChip({ batch, expiryAlertDays = 60, today: todayProp, hideE
           : null;
 
   return (
-    <CaptureRow className="min-w-0 items-center gap-2">
+    <CaptureRow className="min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
       <span dir="ltr" className="shrink-0 text-body tabular-nums text-fg">
         {batch.batch_no}
       </span>

@@ -165,9 +165,36 @@ export const screenCatalog: readonly CatalogGroup[] = [
         number: "01",
         title: "اللوحة والأرصدة",
         screens: [
-          { id: "W01", name: "لوحة المستودع", mobile: false, states: ["default", "alerts", "worker"] },
-          { id: "W02", name: "الأرصدة", mobile: false, states: ["default", "all-locations", "at-time", "worker"] },
-          { id: "W03", name: "حركات المخزون", mobile: false, states: ["default"] },
+          {
+            id: "W01",
+            name: "لوحة المستودع",
+            mobile: false,
+            states: ["default", "alerts", "worker", "loading", "empty", "error", "forbidden"],
+            slug: "dashboard",
+            summary:
+              "نظرة سريعة على ما يحتاج انتباهاً في المستودع: أصناف نزل رصيدها تحت الحد الأدنى، ودفعات قريبة الانتهاء، وصرف لم يُؤكَّد استلامه، وإرجاعات الوكلاء بانتظار الاستلام، والجرد الجاري. وتحتها قوائم التنبيهات نفسها. وعامل المستودع يرى مهامه والجرد المسند إليه.",
+            audience: "اللوجستي وعامل المستودع",
+          },
+          {
+            id: "W02",
+            name: "الأرصدة",
+            mobile: false,
+            states: ["default", "all-locations", "at-time", "worker", "loading", "empty", "error", "forbidden"],
+            slug: "balances",
+            summary:
+              "أرصدة المخزون: الصنف والدفعة والموقع والكمية، وما خرج بالطريق ولم يُؤكَّد استلامه. تصفّيها بالموقع أو الصنف أو النوع، وتعرض الرصيد كما كان في يوم سابق. وعامل المستودع يراها للقراءة فقط.",
+            audience: "اللوجستي وعامل المستودع",
+          },
+          {
+            id: "W03",
+            name: "حركات المخزون",
+            mobile: false,
+            states: ["default", "from-balance", "loading", "empty", "error", "forbidden"],
+            slug: "movements",
+            summary:
+              "سجل كل ما غيّر المخزون من الأحدث إلى الأقدم: إدخال وصرف وتسليم وإرجاع وتسوية جرد وتالف وعكس، مع الكمية والموقع والمنفّذ والمرجع. تصفّيه بالموقع أو الصنف أو الدفعة أو الفترة، وهو للقراءة فقط.",
+            audience: "اللوجستي",
+          },
         ],
       },
       {
