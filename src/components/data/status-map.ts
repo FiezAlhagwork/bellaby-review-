@@ -69,7 +69,7 @@ export const statusMap = {
     TRANSFER: { label: "صرف", color: "info" },
     DELIVERY: { label: "تسليم", color: "info" },
     VISIT_DISTRIBUTION: { label: "توزيع زيارة", color: "info" },
-    CUSTOMER_RETURN: { label: "إرجاع عميل", color: "neutral" },
+    CUSTOMER_RETURN: { label: "مرتجع صيدلية", color: "neutral" },
     AGENT_RETURN: { label: "إرجاع وكيل", color: "neutral" },
     WITHDRAW: { label: "سحب", color: "info" },
     DAMAGE: { label: "تالف", color: "danger" },

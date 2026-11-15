@@ -23,14 +23,14 @@ const screen: ScreenDefinition = {
     {
       key: "default",
       label: "كل الحركات",
-      when: "سجل حركات المخزون من الأحدث إلى الأقدم: إدخال وصرف وتسليم وإرجاع وتسوية وتالف وعكس. جرّب فلاتر الموقع والصنف والفترة والترقيم.",
+      when: "سجل حركات المخزون من الأحدث إلى الأقدم: إدخال وصرف وتسليم وإرجاع وتسوية وتالف وعكس. جرّب فلاتر الموقع والصنف والنوع والفترة والترقيم.",
       node: logistics(<StockMovementsDemo />),
     },
     {
       key: "from-balance",
       label: "من صف في الأرصدة",
-      when: "حين يفتح اللوجستي صفاً في الأرصدة (W02) تُعرض حركات ذلك الصنف والدفعة: فلتر الصنف والدفعة مفعّل مسبقاً.",
-      node: logistics(<StockMovementsDemo initialFilters={{ locationId: null, itemId: "1", batchId: "32", range: { from: null, to: null } }} />),
+      when: "حين يفتح اللوجستي صفاً في الأرصدة (W02) تُعرض حركات ذلك الصنف والدفعة في ذلك الموقع: فلاتر الموقع والصنف والدفعة مفعّلة مسبقاً ويمكن إزالة أيّها.",
+      node: logistics(<StockMovementsDemo initialFilters={{ locationId: "1", itemId: "1", batchId: "32", kind: null, range: { from: null, to: null } }} />),
     },
     ...systemStates({
       loading: logistics(<StockMovementsDemo mode="loading" />),

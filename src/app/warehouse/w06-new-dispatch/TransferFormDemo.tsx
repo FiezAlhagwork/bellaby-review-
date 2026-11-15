@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { emptyTransferForm, TransferFormView, type TransferForm, type TransferOptions } from "@/features/stock/views/TransferFormView";
-import type { SampleRequest, Transfer } from "@/lib/api/types";
+import { emptyTransferForm, TransferFormView, type TransferForm, type TransferOptions } from "@/features/transfers/views/TransferFormView";
+import type { Location, SampleRequest, Transfer } from "@/lib/api/types";
 import type { Loadable } from "@/lib/loadable";
 import { balanceItems, damascus } from "@/mocks/stock-balances";
 import { transferBatches, transferOptions, transferToday } from "@/mocks/transfer-form";
@@ -19,15 +19,18 @@ type TransferFormDemoProps = {
   mode?: "ready" | "loading" | "error";
 };
 
-const readyOptions: Loadable<TransferOptions> = { status: "ready", data: transferOptions };
 const defaultForm = () => emptyTransferForm("1");
 
 export function TransferFormDemo({ initialForm, sampleRequest = null, initialSaved = null, initialErrors, mode = "ready" }: TransferFormDemoProps) {
   const [form, setForm] = useState<TransferForm>(initialForm ?? defaultForm());
   const [saved, setSaved] = useState<Transfer | null>(initialSaved);
   const [errors, setErrors] = useState(initialErrors);
+  // نص بحث المستلم: يصفّيه الخادم في الإنتاج (GET /locations?q=)، وهنا محلياً.
+  const [recipientQuery, setRecipientQuery] = useState("");
 
-  const options: Loadable<TransferOptions> = mode === "loading" ? { status: "loading" } : mode === "error" ? { status: "error", code: "too_many_requests" } : readyOptions;
+  const matches = (location: Location) => !recipientQuery.trim() || (location.name ?? "").includes(recipientQuery.trim());
+  const searched: Loadable<TransferOptions> = { status: "ready", data: { ...transferOptions, agents: transferOptions.agents.filter(matches), reps: transferOptions.reps.filter(matches) } };
+  const options: Loadable<TransferOptions> = mode === "loading" ? { status: "loading" } : mode === "error" ? { status: "error", code: "too_many_requests" } : searched;
 
   const reset = () => {
     setForm(defaultForm());
@@ -67,6 +70,8 @@ export function TransferFormDemo({ initialForm, sampleRequest = null, initialSav
       batches={transferBatches}
       form={form}
       onFormChange={(next) => {
+        // تبديل نوع المستلم يصفّر نص البحث (وإلا صُفّيت القائمة الجديدة باسم الوكيل السابق).
+        if (next.recipientKind !== form.recipientKind) setRecipientQuery("");
         setForm(next);
         setErrors(undefined);
       }}
@@ -78,6 +83,7 @@ export function TransferFormDemo({ initialForm, sampleRequest = null, initialSav
       onCancel={reset}
       onNewTransfer={reset}
       onOpenTransfers={() => {}}
+      onRecipientQueryChange={setRecipientQuery}
     />
   );
 }

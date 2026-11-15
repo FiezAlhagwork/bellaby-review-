@@ -28,6 +28,8 @@ type DecisionPanelProps = {
   /** تعطيل «اعتماد» (مثل خيار إلزامي لم يُختر). يجب أن يرافقه `approveHint` يشرح السبب. */
   approveDisabled?: boolean;
   approveHint?: string;
+  /** اسم الزر الثاني. الافتراضي «رفض»؛ قرار الجرد «إرجاع لإعادة العدّ». */
+  rejectLabel?: string;
   /** الاعتماد يُنفَّذ الآن. */
   approving?: boolean;
   /** «رفض» يفتح ReasonDialog (الأب يفتحها). */
@@ -48,6 +50,7 @@ export function DecisionPanel({
   forbiddenNote,
   approveDisabled = false,
   approveHint,
+  rejectLabel = "رفض",
   approving = false,
   onApprove,
   onReject,
@@ -75,7 +78,7 @@ export function DecisionPanel({
               اعتماد
             </Button>
             <Button key="reject" className="flex-1" variant="danger" disabled={forbidden || approving} onClick={onReject}>
-              رفض
+              {rejectLabel}
             </Button>
           </CaptureRow>
           {forbidden && forbiddenNote ? <p className="text-start text-label text-fg-muted">{`لا تقرر فيما يخصّك. ${forbiddenNote}`}</p> : null}

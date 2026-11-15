@@ -73,6 +73,11 @@ type TransferFormViewProps = {
   onCancel?: () => void;
   onNewTransfer?: () => void;
   onOpenTransfers?: () => void;
+  /**
+   * بحث المستلم من الخادم: يُستدعى بنص البحث والأب يمرّر `options.agents`/`reps` المصفّاة (`q` على `GET /locations`: مقترح غير موجود في العقد،
+   * docs/backend-requests.md §9.4). بدونه يصفّي المكوّن القائمة محلياً.
+   */
+  onRecipientQueryChange?: (query: string) => void;
   onRetry?: () => void;
 };
 
@@ -106,6 +111,7 @@ export function TransferFormView({
   onCancel,
   onNewTransfer,
   onOpenTransfers,
+  onRecipientQueryChange,
   onRetry,
 }: TransferFormViewProps) {
   const header = <PageHeader title="صرف جديد" description="اصرف بضاعة من المستودع إلى وكيل أو مندوب. يبقى الصرف «بالطريق» حتى يؤكد المستلم." />;
@@ -145,7 +151,8 @@ export function TransferFormView({
 
   const locationOption = (location: Location): Option[] => (location.id !== undefined && location.name ? [{ value: String(location.id), label: location.name }] : []);
   const sourceOptions = sources.flatMap(locationOption);
-  const recipientOptions = (form.recipientKind === "AGENT" ? agents : reps).flatMap(locationOption);
+  // الموقع المعطّل (`is_active: false`) لا يُختار مستلماً.
+  const recipientOptions = (form.recipientKind === "AGENT" ? agents : reps).filter((location) => location.is_active !== false).flatMap(locationOption);
 
   // أصناف النوع المناسب، ومعها ما اختير سابقاً (ليبقى اسمه ظاهراً وسطره معلّماً).
   const allowed = allowedTypes[form.recipientKind];
@@ -216,7 +223,7 @@ export function TransferFormView({
         <Card title="التفاصيل">
           <Grid cols={{ base: 1, tablet: 2 }} gap={4}>
             <Field label="من" required error={errors.from_location_id}>
-              <Select aria-label="من" placeholder="اختر المستودع" options={sourceOptions} value={form.fromLocationId} onValueChange={(fromLocationId) => set({ fromLocationId })} />
+              <Select aria-label="من" placeholder="اختر المستودع" options={sourceOptions} value={form.fromLocationId} onValueChange={(fromLocationId) => set({ fromLocationId })} locked={sourceOptions.length === 1} />
             </Field>
             <Field label="إلى" required error={errors.to_location_id}>
               <div className="flex flex-col gap-2">
@@ -238,6 +245,7 @@ export function TransferFormView({
                   value={form.toLocationId}
                   onValueChange={(toLocationId) => set({ toLocationId })}
                   locked={recipientLocked}
+                  onQueryChange={recipientLocked ? undefined : onRecipientQueryChange}
                 />
               </div>
             </Field>

@@ -19,12 +19,13 @@ type StockMovementsDemoProps = {
 /** يوم الحدث بتوقيت دمشق: أوقات المعرض بين 07:00 و14:00 UTC فيطابق يومها يوم UTC. */
 const dayOf = (movement: StockMovement) => movement.occurred_at?.slice(0, 10) ?? "";
 
-function applyFilters(rows: readonly StockMovement[], { locationId, itemId, batchId, range }: StockMovementFilters): StockMovement[] {
+function applyFilters(rows: readonly StockMovement[], { locationId, itemId, batchId, kind, range }: StockMovementFilters): StockMovement[] {
   return rows.filter(
     (row) =>
       (!locationId || String(row.from_location?.id) === locationId || String(row.to_location?.id) === locationId) &&
       (!itemId || String(row.item?.id) === itemId) &&
       (!batchId || String(row.batch?.id) === batchId) &&
+      (!kind || row.kind === kind) &&
       (range.from === null || dayOf(row) >= range.from) &&
       (range.to === null || dayOf(row) <= range.to),
   );

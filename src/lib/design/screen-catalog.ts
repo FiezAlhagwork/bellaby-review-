@@ -192,7 +192,7 @@ export const screenCatalog: readonly CatalogGroup[] = [
             states: ["default", "from-balance", "loading", "empty", "error", "forbidden"],
             slug: "movements",
             summary:
-              "سجل كل ما غيّر المخزون من الأحدث إلى الأقدم: إدخال وصرف وتسليم وإرجاع وتسوية جرد وتالف وعكس، مع الكمية والموقع والمنفّذ والمرجع. تصفّيه بالموقع أو الصنف أو الدفعة أو الفترة، وهو للقراءة فقط.",
+              "سجل كل ما غيّر المخزون من الأحدث إلى الأقدم: إدخال وصرف وتسليم وإرجاع وتسوية جرد وتالف وعكس، مع الكمية والموقع والمنفّذ والمرجع. تصفّيه بالموقع أو الصنف أو الدفعة أو النوع أو الفترة، وهو للقراءة فقط.",
             audience: "اللوجستي",
           },
         ],
@@ -215,10 +215,10 @@ export const screenCatalog: readonly CatalogGroup[] = [
             id: "W05",
             name: "سجل الإدخال",
             mobile: false,
-            states: ["default", "details", "loading", "empty", "error", "forbidden"],
+            states: ["default", "details", "reverse", "loading", "empty", "error", "forbidden"],
             slug: "intake-log",
             summary:
-              "سجل كل بضاعة أُدخلت إلى المستودع من الأحدث إلى الأقدم: الوقت والمرجع والموقع والأصناف ومجموع الكمية والمنفّذ. تصفّيه بالموقع أو الفترة، وتنقر إدخالاً لترى أسطره ودفعاته وهل أُنشئت الدفعة أم أُضيفت لدفعة موجودة. ومنه إلى «إدخال بضاعة».",
+              "سجل كل بضاعة أُدخلت إلى المستودع من الأحدث إلى الأقدم: الوقت والمرجع والموقع والأصناف ومجموع الكمية والمنفّذ. تصفّيه بالموقع أو الصنف أو الدفعة أو الفترة، وتنقر إدخالاً لترى أسطره ودفعاته وهل أُنشئت الدفعة أم أُضيفت لدفعة موجودة، ومنه تعكس إدخالاً خاطئاً بسبب. ومنه إلى «إدخال بضاعة».",
             audience: "اللوجستي",
           },
         ],
@@ -237,37 +237,153 @@ export const screenCatalog: readonly CatalogGroup[] = [
               "اصرف بضاعة من المستودع إلى وكيل (منتجات) أو مندوب (عينات ومواد). تُقترح الدفعة الأقرب انتهاءً لكل صنف مع متاحها، وتُعلَّم الأصناف التي لا تناسب المستلم والدفعة الموقوفة والكمية الأكبر من المتاح. بعد الاعتماد يبقى الصرف «بالطريق» حتى يؤكد المستلم. ويمكن تعبئته من طلب عينات.",
             audience: "اللوجستي",
           },
-          { id: "W07", name: "الصرف", mobile: false, states: ["default", "unconfirmed"] },
-          { id: "W08", name: "تفاصيل الصرف", mobile: false, states: ["in-transit", "cancel", "received", "cancelled", "overdue-48h"] },
-          { id: "W09", name: "طلبات العينات", mobile: false, states: ["default"] },
-          { id: "W10", name: "تفاصيل طلب العينات", mobile: false, states: ["new", "dispatched", "rejected", "cancelled"] },
+          {
+            id: "W07",
+            name: "الصرف",
+            mobile: false,
+            states: ["default", "unconfirmed", "loading", "empty", "error", "forbidden"],
+            slug: "dispatch",
+            summary:
+              "كل الصرفيات من المستودع إلى الوكلاء والمندوبين: الرقم والمستلم والتاريخ والكمية والحالة وساعات بالطريق. ما بقي «بالطريق» أكثر من 48 ساعة معلَّم، ويمكن عرضه وحده. بحث برقم الصرف أو المستلم، وفلاتر الحالة والمستلم والفترة. ومنها إلى «صرف جديد».",
+            audience: "اللوجستي",
+          },
+          {
+            id: "W08",
+            name: "تفاصيل الصرف",
+            mobile: false,
+            states: ["in-transit", "cancel", "received", "cancelled", "receipt-rejected", "overdue-48h", "not-found", "loading", "error", "forbidden"],
+            slug: "transfer-details",
+            summary:
+              "تفاصيل صرفية واحدة: المرجع وحالتها، والمستلم ومن صرف، والأسطر بدفعاتها، وطلب العينات المرتبط، والسجل. ما دامت بالطريق يلغيها اللوجستي بسبب (تعود الكمية للمستودع)، ويُعلَّم ما مضى عليه 48 ساعة دون تأكيد.",
+            audience: "اللوجستي",
+          },
+          {
+            id: "W09",
+            name: "طلبات العينات",
+            mobile: false,
+            states: ["default", "loading", "empty", "error", "forbidden"],
+            slug: "sample-requests",
+            summary:
+              "طلبات العينات والمواد الدعائية التي يرفعها مدير المكتب العلمي للمندوبين: المندوب والطالب والأصناف والسبب والتاريخ والحالة (جديد، مصروف، مرفوض، ملغى). تصفّيها بالحالة أو المندوب أو الفترة، وتفتح الطلب لتصرفه أو ترفضه.",
+            audience: "اللوجستي",
+          },
+          {
+            id: "W10",
+            name: "تفاصيل طلب العينات",
+            mobile: false,
+            states: ["new", "reject", "dispatched", "rejected", "cancelled", "not-found", "loading", "error", "forbidden"],
+            slug: "sample-request-details",
+            summary:
+              "تفاصيل طلب عينات واحد: المندوب والطالب والسبب، والمطلوب والمصروف لكل صنف، والسجل. للجديد يصرفه اللوجستي (يفتح صرفاً معبّأً من الطلب) أو يرفضه بسبب. الإلغاء للطالب وحده.",
+            audience: "اللوجستي",
+          },
         ],
       },
       {
         number: "04",
         title: "ما يعود للمستودع",
         screens: [
-          { id: "W11", name: "طلبات السحب", mobile: false, states: ["default", "new-form"] },
-          { id: "W12", name: "تفاصيل طلب السحب", mobile: false, states: ["requested", "handed-over", "cancelled", "rep-deactivated"] },
-          { id: "W13", name: "إرجاعات الوكلاء", mobile: false, states: ["in-transit", "confirm", "received"] },
+          {
+            id: "W11",
+            name: "طلبات السحب",
+            mobile: false,
+            states: ["default", "new-form", "new-form-filled", "new-form-validation", "loading", "empty", "error", "forbidden"],
+            slug: "withdraw-requests",
+            summary:
+              "طلبات استلام العينات والمواد من أرصدة المندوبين: المندوب والأصناف والسبب والتاريخ والحالة (مطلوب، مسلَّم، ملغى). تصفّيها بالحالة أو المندوب، وتطلب سحباً جديداً من نافذة تأخذ الأصناف من رصيد المندوب.",
+            audience: "اللوجستي",
+          },
+          {
+            id: "W12",
+            name: "تفاصيل طلب السحب",
+            mobile: false,
+            states: ["requested", "cancel", "handed-over", "cancelled", "rep-deactivated", "on-behalf", "handed-over-on-behalf", "not-found", "loading", "error", "forbidden"],
+            slug: "withdraw-request-details",
+            summary:
+              "تفاصيل طلب سحب واحد: المطلوب والفعلي لكل صنف ودفعة، والسبب، والسجل. للمطلوب يلغيه اللوجستي بسبب قبل التسليم، وإن كان المندوب معطَّلاً يؤكد الاستلام عنه بالكمية الفعلية (والفرق فرق مخزون).",
+            audience: "اللوجستي",
+          },
+          {
+            id: "W13",
+            name: "إرجاعات الوكلاء",
+            mobile: false,
+            states: ["in-transit", "details", "confirm", "received", "loading", "empty", "error", "forbidden"],
+            slug: "agent-returns",
+            summary:
+              "الإرجاعات التي اعتمدها مدير المبيعات وتصل المستودع من الوكلاء: الوكيل والأصناف والسبب والوجهة. تفتح التفاصيل في درج وتؤكد الاستلام كاملاً (بلا جزئي) فتصير «مستلم».",
+            audience: "اللوجستي",
+          },
         ],
       },
       {
         number: "05",
         title: "الجرد",
         screens: [
-          { id: "W14", name: "الجرد", mobile: false, states: ["default", "new-form", "worker"] },
-          { id: "W15", name: "العدّ", mobile: false, states: ["in-progress", "line-saved", "with-diff", "submitted", "returned", "cancel", "worker"] },
-          { id: "W16", name: "اعتماد الجرد", mobile: false, states: ["awaiting-me", "approved", "returned"] },
+          {
+            id: "W14",
+            name: "الجرد",
+            mobile: false,
+            states: ["default", "new-form", "new-form-filled", "new-form-validation", "worker", "loading", "empty", "error", "forbidden"],
+            slug: "stock-counts",
+            summary:
+              "جرود مواقع المستودع: الموقع والمكلَّف والتاريخ وعدد الأسطر التي فيها فرق والحالة (قيد العدّ، مرسل، معتمد، ملغى). تصفّيها بالحالة أو الموقع أو المكلَّف، وتبدأ جرداً جديداً وتسنده لعامل. عامل المستودع يرى المسنَد إليه فقط.",
+            audience: "اللوجستي وعامل المستودع",
+          },
+          {
+            id: "W15",
+            name: "العدّ",
+            mobile: false,
+            states: ["in-progress", "line-saved", "with-diff", "submit", "submitted", "returned", "cancel", "cancelled", "worker", "not-found", "loading", "error", "forbidden"],
+            slug: "stock-count",
+            summary:
+              "عدّ جرد موقع سطراً بسطر: الصنف والدفعة والكمية الفعلية، فيُحفظ السطر فور إدخاله بمتوقعه (رصيد النظام لحظة العدّ) وفرقه. ثم الإرسال للاعتماد فتُقفل الأسطر. الجرد المُرجَع يبقي أسطره القديمة في السجل. الإلغاء قبل الإرسال بسبب.",
+            audience: "اللوجستي وعامل المستودع",
+          },
+          {
+            id: "W16",
+            name: "اعتماد الجرد",
+            mobile: false,
+            states: ["awaiting-me", "return-dialog", "returned", "approved", "approved-delegated", "self-decision-forbidden", "approve-failed", "not-found", "loading", "error", "forbidden"],
+            slug: "stock-count-approval",
+            summary:
+              "شاشة العدّ للمدير التنفيذي: الأسطر والفروق، ولوحة القرار: «اعتماد» (تتولّد التسويات وتُحال الفروق للمراقبة) أو «إرجاع لإعادة العدّ» بسبب. يشمله التفويض، لا لجرد المفوَّض نفسه.",
+            audience: "المدير التنفيذي",
+          },
         ],
       },
       {
         number: "06",
         title: "الدفعات",
         screens: [
-          { id: "W17", name: "الدفعات", mobile: false, states: ["default", "suspended-filter"] },
-          { id: "W18", name: "تفاصيل الدفعة", mobile: false, states: ["active", "suspend", "suspended", "unsuspend", "suspended-logistics"] },
-          { id: "W19", name: "تقرير تتبع السحب", mobile: false, states: ["default", "distributed-after"] },
+          {
+            id: "W17",
+            name: "الدفعات",
+            mobile: false,
+            states: ["default", "suspended-filter", "loading", "empty", "error", "forbidden"],
+            slug: "batches",
+            summary: "جدول الدفعات: الصنف ورقم الدفعة وتاريخ الانتهاء (مع تنبيه المنتهية والقريبة منه) والكمية الكلية وما بقي في المستودع والحالة، بفلاتر الصنف والحالة و«المتوفرة فقط» وترقيم. الصف يفتح التفاصيل.",
+            audience: "اللوجستي والمدير التنفيذي",
+          },
+          {
+            id: "W18",
+            name: "تفاصيل الدفعة",
+            mobile: false,
+            states: ["active", "suspend", "suspended", "unsuspend", "suspended-logistics", "suspend-failed", "not-found", "loading", "error", "forbidden"],
+            slug: "batch",
+            summary:
+              "بيانات الدفعة ورصيدها في كل موقع وسجل الإيقاف والفك. الإيقاف بسبب للوجستي والمدير التنفيذي (لا ينقص رصيداً، وتتوقف حركتها في كل المواقع)، وفكّه بسبب للمدير التنفيذي وحده، وعند اللوجستي يظهر معطّلاً بسببه.",
+            audience: "اللوجستي والمدير التنفيذي",
+          },
+          {
+            id: "W19",
+            name: "تقرير تتبع السحب",
+            mobile: false,
+            states: ["default", "distributed-after", "exporting", "not-found", "loading", "error", "forbidden"],
+            slug: "recall-trace",
+            summary:
+              "أين الدفعة الآن وإلى أين وصلت: الباقي في كل موقع، وما وصل لكل عميل عبر وكيله بتاريخه، وما وُزّع في الزيارات (مع تعليم ما وُزّع بعد الإيقاف من جهاز دون اتصال). تصدير PDF أو Excel.",
+            audience: "اللوجستي والمدير التنفيذي",
+          },
         ],
       },
       {

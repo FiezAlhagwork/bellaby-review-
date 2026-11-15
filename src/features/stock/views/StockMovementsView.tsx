@@ -3,6 +3,7 @@
 import { ArrowsLeftRight, MagnifyingGlass } from "@phosphor-icons/react";
 import { BatchChip } from "@/components/data/BatchChip";
 import { DateTimeStackCell, QuantityCell, StatusCell, TextCell } from "@/components/data/cells";
+import { statusMap } from "@/components/data/status-map";
 import { DataTable, type DataTableColumn } from "@/components/data/DataTable";
 import { FilterBar, type ActiveFilter } from "@/components/data/FilterBar";
 import { Pagination, type PaginationMeta } from "@/components/data/Pagination";
@@ -18,18 +19,26 @@ import { dayLabel, type IsoDate } from "@/lib/calendar";
 import { isolate } from "@/lib/format";
 import type { Loadable } from "@/lib/loadable";
 
-/** الفلاتر كما يرسلها العقد: `location_id` و`item_id` و`batch_id` و`from` و`to`. تغيّرها يعيد الأب إلى الصفحة الأولى. */
+/**
+ * الفلاتر كما يرسلها العقد: `location_id` و`item_id` و`batch_id` و`from` و`to`، ومعها `kind` (نوع الحركة): غير موجود في العقد بعد، مضاف هنا بصفة مؤقتة
+ * وطلبه في docs/backend-requests.md. تغيّرها يعيد الأب إلى الصفحة الأولى.
+ */
+type StockMovementKind = NonNullable<StockMovement["kind"]>;
+
 export type StockMovementFilters = {
   locationId: string | null;
   itemId: string | null;
   batchId: string | null;
+  kind: StockMovementKind | null;
   range: DateRange;
 };
 
-export const noStockMovementFilters: StockMovementFilters = { locationId: null, itemId: null, batchId: null, range: { from: null, to: null } };
+export const noStockMovementFilters: StockMovementFilters = { locationId: null, itemId: null, batchId: null, kind: null, range: { from: null, to: null } };
 
 /** صفحة من `GET /stock/movements` (`Paginated`): السطور و`meta` بأسلوب Laravel. */
 export type StockMovementsPage = { data: readonly StockMovement[]; meta: PaginationMeta };
+
+const kindOptions: Option[] = (Object.keys(statusMap.stockMovementKind) as StockMovementKind[]).map((kind) => ({ value: kind, label: statusMap.stockMovementKind[kind].label }));
 
 type StockMovementsViewProps = {
   movements: Loadable<StockMovementsPage>;
@@ -107,6 +116,7 @@ export function StockMovementsView({ movements, locations, items, batches, filte
     ...(filters.locationId ? [{ key: "location", label: `الموقع: ${locationOptions.find((o) => o.value === filters.locationId)?.label ?? ""}`, onRemove: () => set({ locationId: null }) }] : []),
     ...(filters.itemId ? [{ key: "item", label: `الصنف: ${itemOptions.find((o) => o.value === filters.itemId)?.label ?? ""}`, onRemove: () => set({ itemId: null, batchId: null }) }] : []),
     ...(filters.batchId ? [{ key: "batch", label: `الدفعة: ${batchOptions.find((o) => o.value === filters.batchId)?.label ?? ""}`, onRemove: () => set({ batchId: null }) }] : []),
+    ...(filters.kind ? [{ key: "kind", label: `النوع: ${statusMap.stockMovementKind[filters.kind].label}`, onRemove: () => set({ kind: null }) }] : []),
     ...(rangeLabel ? [{ key: "range", label: rangeLabel, onRemove: () => set({ range: { from: null, to: null } }) }] : []),
   ];
 
@@ -178,9 +188,14 @@ export function StockMovementsView({ movements, locations, items, batches, filte
             <DateRangePicker key="range" aria-label="الفترة" placeholder="كل الأوقات" value={filters.range} onValueChange={(range) => set({ range })} max={today} today={today} />,
           ]}
           moreFilters={
-            <Field label="الدفعة" hint="دفعات الصنف المختار إن اخترت صنفاً.">
-              <Combobox aria-label="الدفعة" placeholder="كل الدفعات" options={batchOptions} value={filters.batchId} onValueChange={(batchId) => set({ batchId })} clearable />
-            </Field>
+            <>
+              <Field label="الدفعة" hint="دفعات الصنف المختار إن اخترت صنفاً.">
+                <Combobox aria-label="الدفعة" placeholder="كل الدفعات" options={batchOptions} value={filters.batchId} onValueChange={(batchId) => set({ batchId })} clearable />
+              </Field>
+              <Field label="النوع">
+                <Combobox aria-label="النوع" placeholder="كل الأنواع" options={kindOptions} value={filters.kind} onValueChange={(kind) => set({ kind: kind as StockMovementKind | null })} clearable />
+              </Field>
+            </>
           }
           active={active}
           onClearAll={clearAll}

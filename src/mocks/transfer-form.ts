@@ -1,7 +1,7 @@
 import type { EditorBatch } from "@/components/data/LineItemsEditor";
 import { errorMessage } from "@/lib/api/error-messages";
 import type { Location, SampleRequest, Transfer } from "@/lib/api/types";
-import type { TransferForm, TransferOptions } from "@/features/stock/views/TransferFormView";
+import type { TransferForm, TransferOptions } from "@/features/transfers/views/TransferFormView";
 import type { Loadable } from "@/lib/loadable";
 import { balanceItems, batchA, batchB, batchBooklet, batchC, batchCereal, batchInf2A, batchInf2B, batchSample, damascus, warehouseLocations } from "./stock-balances";
 import { stockItems } from "./stock";

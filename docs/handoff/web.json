@@ -259,7 +259,7 @@
         "invalidate getMe عند إنهاء التفويض"
       ],
       "notes": [
-        "القائمة بالصلاحيات لا بالأدوار (config/navigation.ts). 29 مفتاحاً مؤقتاً تنتظر تأكيد الباك: docs/backend-requests.md."
+        "القائمة بالصلاحيات لا بالأدوار (config/navigation.ts). 27 مفتاحاً مؤقتاً تنتظر تأكيد الباك: docs/backend-requests.md."
       ]
     },
     "W01": {
@@ -449,7 +449,8 @@
       "after_mutation": [],
       "notes": [
         "الخلايا قابلة للضغط حين يمرَّر onOpen.",
-        "العدّ من أطوال القوائم لأن DashboardSummary بلا حقول (docs/backend-requests.md §4)."
+        "العدّ من أطوال القوائم لأن DashboardSummary بلا حقول (docs/backend-requests.md §4).",
+        "صرف بالطريق أكثر من 48 ساعة: يوجد معامل in_transit_over_hours في GET /transfers (docs/backend-requests.md §4.2 محسوم)."
       ]
     },
     "W02": {
@@ -630,14 +631,16 @@
           "to": "W03",
           "pass": {
             "item_id": "row.item.id",
-            "batch_id": "row.batch.id"
+            "batch_id": "row.batch.id",
+            "location_id": "row.location.id"
           }
         }
       ],
       "after_mutation": [],
       "notes": [
         "بلا ترقيم صفحات: العقد يعيد مصفوفة (docs/backend-requests.md §5).",
-        "الكمية السالبة جائزة لرصيد المندوب وحده."
+        "الكمية السالبة جائزة لرصيد المندوب وحده.",
+        "القرار (12 تشرين الثاني): النقر على الصف يفتح W03 بالصنف والدفعة والموقع، ويمكن إزالة أيّها هناك."
       ]
     },
     "W03": {
@@ -661,7 +664,8 @@
             "item_id": "filters.itemId",
             "batch_id": "filters.batchId",
             "from": "filters.range.from",
-            "to": "filters.range.to"
+            "to": "filters.range.to",
+            "kind": "filters.kind (مقترح: غير موجود في العقد، docs/backend-requests.md §6.4)"
           },
           "success": {
             "status": 200,
@@ -707,7 +711,7 @@
         "locations": "Location[] ← listLocations",
         "items": "ItemRef[] ← listItems",
         "batches": "BatchRef[] ← listBatches (دفعات filters.itemId إن وُجد)",
-        "filters": "{ locationId, itemId, batchId, range: { from, to } } حالة الصفحة (الرابط أو state). تغيّرها يعيد الصفحة إلى 1",
+        "filters": "{ locationId, itemId, batchId, kind, range: { from, to } } حالة الصفحة (الرابط أو state). تغيّرها يعيد الصفحة إلى 1",
         "onFiltersChange": "يحدّث الفلاتر، ويعيد page إلى 1، ويعيد الطلب",
         "onPageChange": "page ← الرقم ويعيد الطلب",
         "onPerPageChange": "per_page ← القيمة، وpage = 1",
@@ -727,7 +731,8 @@
         "StatusBadge",
         "BatchChip",
         "EmptyState",
-        "ErrorState"
+        "ErrorState",
+        "Field"
       ],
       "states": [
         {
@@ -751,7 +756,7 @@
             "ui": "التنقل من W02 بـ item_id وbatch_id"
           },
           "ui": [
-            "شارتا الصنف والدفعة مفعّلتان مسبقاً"
+            "شارات الموقع والصنف والدفعة مفعّلة مسبقاً (قابلة للإزالة)"
           ]
         },
         {
@@ -808,13 +813,24 @@
           ]
         }
       ],
-      "navigation": [],
+      "navigation": [
+        {
+          "on": "الوصول من W02 (click صف)",
+          "to": "W03",
+          "pass": {
+            "location_id": "row.location.id",
+            "item_id": "row.item.id",
+            "batch_id": "row.batch.id"
+          }
+        }
+      ],
       "after_mutation": [],
       "notes": [
         "للقراءة فقط: الحركات «إضافة فقط» ولا شاشة تفاصيل للحركة في العقد، فالصف غير قابل للفتح.",
         "الكمية تُعرض كما وصلت (السالب بلون danger). دلالة الإشارة وموقعها: docs/backend-requests.md §6.",
         "فلتر الفترة: من/إلى تاريخان بتوقيت دمشق (ضمني) كما في وصف المعامل.",
-        "من صف الأرصدة (W02) يُمرَّر item_id وbatch_id (والموقع اختياري)."
+        "من صف الأرصدة (W02) يُمرَّر item_id وbatch_id (والموقع اختياري).",
+        "فلتر النوع (kind) مضاف في «فلاتر أخرى»: غير موجود في العقد، طلبه في docs/backend-requests.md §6.4."
       ]
     },
     "W04": {
@@ -895,12 +911,12 @@
         {
           "id": "getExpiryAlertDays",
           "method": "GET",
-          "path": "/settings (مقترح)",
+          "path": "/settings",
           "success": {
             "status": 200,
             "model": "expiry_alert_days"
           },
-          "note": "غير موجود للوجستي في العقد: docs/backend-requests.md §7"
+          "note": "موجود في العقد: GET /settings (expiry_alert_days وtransfer_unconfirmed_alert_hours). docs/backend-requests.md §7.2"
         }
       ],
       "view_props": {
@@ -1126,13 +1142,15 @@
             "per_page": "state (20 افتراضي، 50، 100)",
             "location_id": "filters.locationId",
             "from": "filters.range.from",
-            "to": "filters.range.to"
+            "to": "filters.range.to",
+            "item_id": "filters.itemId (مقترح: غير موجود في العقد، docs/backend-requests.md §8.1)",
+            "batch_id": "filters.batchId (مقترح، §8.1)"
           },
           "success": {
             "status": 200,
             "model": "Paginated<StockReceipt>"
           },
-          "note": "لا فلتر صنف/دفعة: docs/backend-requests.md §8"
+          "note": "item_id وbatch_id مقترحان"
         },
         {
           "id": "listLocations",
@@ -1146,24 +1164,81 @@
             "model": "Location[]"
           },
           "note": "خيارات فلتر الموقع"
+        },
+        {
+          "id": "listItems",
+          "method": "GET",
+          "path": "/items",
+          "request": {
+            "is_active": true
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<Item>"
+          },
+          "note": "خيارات فلتر الصنف"
+        },
+        {
+          "id": "listBatches",
+          "method": "GET",
+          "path": "/batches",
+          "request": {
+            "item_id": "filters.itemId"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<Batch>"
+          },
+          "note": "خيارات فلتر الدفعة"
+        },
+        {
+          "id": "reverseStockReceipt",
+          "method": "POST",
+          "path": "/stock-receipts/{id}/reverse (مقترح: غير موجود في العقد)",
+          "request": {
+            "reason": "reversal.reason"
+          },
+          "success": {
+            "status": 200,
+            "model": "StockReceipt"
+          },
+          "errors": [
+            {
+              "status": 422,
+              "codes": [
+                "validation_failed",
+                "insufficient_stock (مفترض)"
+              ]
+            }
+          ],
+          "note": "عكس إدخال خاطئ بقيد معاكس (REVERSAL). صلاحية مقترحة stock_receipts.reverse. docs/backend-requests.md §8.2"
         }
       ],
       "view_props": {
         "receipts": "Loadable<{ data: StockReceipt[]; meta: PaginationMeta }> ← listStockReceipts (data وmeta من رد Paginated)",
         "locations": "Location[] ← listLocations",
-        "filters": "{ locationId, range: { from, to } } حالة الصفحة. تغيّرها يعيد الصفحة إلى 1",
+        "filters": "{ locationId, itemId, batchId, range: { from, to} } حالة الصفحة. تغيّرها يعيد الصفحة إلى 1",
         "onFiltersChange": "يحدّث الفلاتر، ويعيد page إلى 1، ويعيد الطلب",
         "onPageChange": "page ← الرقم ويعيد الطلب",
         "onPerPageChange": "per_page ← القيمة، وpage = 1",
         "selected": "الإدخال المفتوح في الدرج (حالة الصفحة؛ يؤخذ من القائمة نفسها بلا طلب)",
         "onSelect": "يضبط selected أو null للإغلاق",
         "today": "اليوم بتوقيت دمشق",
-        "expiryAlertDays": "expiry_alert_days من الإعدادات (docs/backend-requests.md §7)",
+        "expiryAlertDays": "expiry_alert_days من GET /settings",
         "onNewReceipt": "التنقل إلى W04",
-        "onRetry": "يعيد listStockReceipts"
+        "onRetry": "يعيد listStockReceipts",
+        "items": "ItemRef[] ← listItems",
+        "batches": "BatchRef[] ← listBatches (دفعات filters.itemId إن وُجد)",
+        "canReverse": "permission stock_receipts.reverse (مقترح)",
+        "reversal": "{ reason, loading?, errorCode? } | null: نافذة العكس المفتوحة (حالة الصفحة)",
+        "onStartReverse": "يفتح نافذة السبب (reversal = { reason: '' })",
+        "onReversalReasonChange": "يحدّث reversal.reason",
+        "onConfirmReverse": "reverseStockReceipt ثم إغلاق النافذة والدرج وإعادة جلب القائمة (وإبطال stock/balances وstock/movements)",
+        "onCancelReverse": "reversal = null"
       },
       "permissions": [
-        "stock.receive"
+        "stock.receive",
+        "stock_receipts.reverse (مقترح مؤقت)"
       ],
       "components": [
         "PageHeader",
@@ -1180,7 +1255,9 @@
         "Badge",
         "EmptyState",
         "ErrorState",
-        "ForbiddenState"
+        "ForbiddenState",
+        "Field",
+        "ReasonDialog"
       ],
       "states": [
         {
@@ -1208,6 +1285,19 @@
             "الموقع والمنفّذ والملاحظة",
             "الأسطر: الصنف والدفعة والكمية وشارة «دفعة جديدة» أو «أُضيفت لدفعة موجودة» (batch_created)",
             "المجموع"
+          ]
+        },
+        {
+          "key": "W05-reverse",
+          "label": "عكس إدخال",
+          "drawn": true,
+          "when": {
+            "ui": "«عكس الإدخال» من الدرج (canReverse)"
+          },
+          "ui": [
+            "ReasonDialog: «عكس الإدخال RCV-…؟» والسبب إلزامي والزر معطّل حتى يُكتب",
+            "يُسجَّل قيد معاكس ولا يُحذف الإدخال الأصلي",
+            "خطأ العقد (errorCode) تحت حقل السبب"
           ]
         },
         {
@@ -1276,13 +1366,21 @@
         {
           "on": "W04: «سجل الإدخال» أو «إلغاء»",
           "to": "W05"
+        },
+        {
+          "on": "click «عكس الإدخال» ثم تأكيد",
+          "to": "إغلاق الدرج وإعادة جلب القائمة"
         }
       ],
-      "after_mutation": [],
+      "after_mutation": [
+        "بعد reverseStockReceipt: إبطال استعلامات stock-receipts وstock/balances وstock/movements"
+      ],
       "notes": [
         "صف لكل إدخال لأن الصنف والدفعة والكمية أسطر داخل StockReceipt (SCREENS يعدّدها كأعمدة)؛ الأسطر تظهر في الدرج.",
-        "للقراءة فقط: لا endpoint لعكس إدخال خاطئ (docs/backend-requests.md §8).",
-        "الكمية في الصف مجموع كميات الأسطر (أعداد صحيحة)."
+        "فلتر الصنف والدفعة وعكس الإدخال ومفتاحه غير موجودة في العقد: أُضيفت في الواجهة بصفة مؤقتة وطلبها في docs/backend-requests.md §8.",
+        "لم تُضف علامة «معكوس» في القائمة لعدم وجود حقل reversed_at/reversed_by في StockReceipt.",
+        "الكمية في الصف مجموع كميات الأسطر (أعداد صحيحة).",
+        "القرار (12 تشرين الثاني): عكس الإدخال مسموح (اللوجستي، والمدير التنفيذي إن اعتمدتم)، لإدخال كامل وبسبب إلزامي؛ الرفض من الخادم يُعرض بنصه."
       ]
     },
     "W06": {
@@ -1290,7 +1388,7 @@
       "name": "صرف جديد",
       "group": "warehouse",
       "design_source": {
-        "view": "src/features/stock/views/TransferFormView.tsx",
+        "view": "src/features/transfers/views/TransferFormView.tsx",
         "page": "src/app/warehouse/w06-new-dispatch/page.tsx"
       },
       "route": "/dashboard/warehouse/dispatch/new",
@@ -1340,7 +1438,9 @@
           "method": "GET",
           "path": "/locations",
           "request": {
-            "type": "AGENT"
+            "type": "AGENT",
+            "q": "نص بحث المستلم (مقترح: غير موجود في العقد، §9.4)",
+            "is_active": true
           },
           "success": {
             "status": 200,
@@ -1353,7 +1453,9 @@
           "method": "GET",
           "path": "/locations",
           "request": {
-            "type": "REP"
+            "type": "REP",
+            "q": "نص بحث المستلم (مقترح: غير موجود في العقد، §9.4)",
+            "is_active": true
           },
           "success": {
             "status": 200,
@@ -1429,7 +1531,8 @@
         "onCancel": "العودة إلى W07",
         "onNewTransfer": "يفرّغ النموذج",
         "onOpenTransfers": "التنقل إلى W07",
-        "onRetry": "يعيد جلب الخيارات"
+        "onRetry": "يعيد جلب الخيارات",
+        "onRecipientQueryChange": "نص بحث المستلم ← إعادة listAgents/listReps بـ q (تصفية الخادم؛ بدونه يصفّي المكوّن محلياً)"
       },
       "permissions": [
         "transfers.create"
@@ -1631,7 +1734,3067 @@
       "notes": [
         "للوكيل منتجات فقط، وللمندوب عينات ومواد فقط؛ تُصفّى قائمة الأصناف بالمستلم، وأي صنف خارجها في الأسطر يُعلَّم ويمنع الاعتماد.",
         "ينقص رصيد المستودع عند الاعتماد (بقفل) ولا يزيد رصيد المستلم قبل تأكيده؛ لا رصيد سالب للمستودع.",
-        "في الإنتاج يُسقط معرّف السطر (id) عند الإرسال، وتُحوَّل الأسماء المختصرة إلى أسماء العقد."
+        "في الإنتاج يُسقط معرّف السطر (id) عند الإرسال، وتُحوَّل الأسماء المختصرة إلى أسماء العقد.",
+        "القرار (12 تشرين الثاني): «من» و«وكيل | مندوب» يبقيان؛ «من» يُقفل باسم المستودع حين يكون للمستخدم مستودع واحد."
+      ]
+    },
+    "W07": {
+      "id": "W07",
+      "name": "الصرف",
+      "group": "warehouse",
+      "design_source": {
+        "view": "src/features/transfers/views/TransfersListView.tsx",
+        "page": "src/app/warehouse/w07-dispatch/page.tsx"
+      },
+      "route": "/dashboard/warehouse/dispatch",
+      "api": [
+        {
+          "id": "listTransfers",
+          "method": "GET",
+          "path": "/transfers",
+          "request": {
+            "page": "state الصفحة",
+            "per_page": "state (20 افتراضي، 50، 100)",
+            "q": "filters.q (مقترح: غير موجود في العقد، docs/backend-requests.md §10.1)",
+            "status": "filters.status",
+            "to_location_id": "filters.toLocationId",
+            "in_transit_over_hours": "filters.overdue ? overdueHours (48) : —",
+            "from": "filters.range.from",
+            "to": "filters.range.to"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<Transfer>"
+          }
+        },
+        {
+          "id": "listAgents",
+          "method": "GET",
+          "path": "/locations",
+          "request": {
+            "type": "AGENT"
+          },
+          "success": {
+            "status": 200,
+            "model": "Location[]"
+          },
+          "note": "خيارات فلتر المستلم"
+        },
+        {
+          "id": "listReps",
+          "method": "GET",
+          "path": "/locations",
+          "request": {
+            "type": "REP"
+          },
+          "success": {
+            "status": 200,
+            "model": "Location[]"
+          },
+          "note": "خيارات فلتر المستلم (مع الوكلاء). q مقترح §9.4"
+        }
+      ],
+      "view_props": {
+        "transfers": "Loadable<{ data: Transfer[]; meta: PaginationMeta }> ← listTransfers (data وmeta من رد Paginated)",
+        "recipients": "Location[] ← listAgents + listReps",
+        "filters": "{ q, status, toLocationId, overdue, range: { from, to } } حالة الصفحة. تغيّرها يعيد الصفحة إلى 1",
+        "onFiltersChange": "يحدّث الفلاتر، ويعيد page إلى 1، ويعيد الطلب (البحث بتأخير قصير)",
+        "onPageChange": "page ← الرقم ويعيد الطلب",
+        "onPerPageChange": "per_page ← القيمة، وpage = 1",
+        "today": "اليوم بتوقيت دمشق",
+        "overdueHours": "transfer_unconfirmed_alert_hours من GET /settings (48)",
+        "onRecipientQueryChange": "q لقوائم المستلمين (مقترح §9.4)",
+        "onOpenTransfer": "التنقل إلى W08 بـ transfer.id",
+        "onNewTransfer": "التنقل إلى W06",
+        "onRetry": "يعيد listTransfers"
+      },
+      "permissions": [
+        "transfers.create (عنصر القائمة، مؤكَّد في العقد)",
+        "transfers.view (قراءة القائمة، مؤقت §10.5)"
+      ],
+      "components": [
+        "PageHeader",
+        "FilterBar",
+        "Combobox",
+        "DateRangePicker",
+        "Checkbox",
+        "DataTable",
+        "DateTimeStackCell",
+        "StatusBadge",
+        "Badge",
+        "Pagination",
+        "EmptyState",
+        "ErrorState",
+        "ForbiddenState"
+      ],
+      "states": [
+        {
+          "key": "W07-default",
+          "label": "كل الصرفيات",
+          "drawn": true,
+          "when": {
+            "data": "بلا فلاتر، الصفحة الأولى"
+          },
+          "ui": [
+            "جدول الصرفيات من الأحدث إلى الأقدم",
+            "شارة «أكثر من 48 ساعة» لما hours_in_transit ≥ 48",
+            "ترقيم، وزر «صرف جديد»"
+          ]
+        },
+        {
+          "key": "W07-unconfirmed",
+          "label": "غير مؤكَّد أكثر من 48 ساعة",
+          "drawn": true,
+          "when": {
+            "data": "filters.overdue (in_transit_over_hours=48) والحالة IN_TRANSIT"
+          },
+          "ui": [
+            "شارة الفلتر «بالطريق أكثر من 48 ساعة»",
+            "صفوف بالطريق ومضى عليها 48 ساعة فأكثر فقط"
+          ]
+        },
+        {
+          "key": "W07-loading",
+          "label": "جارٍ التحميل",
+          "drawn": true,
+          "when": {
+            "data": "transfers.status === loading"
+          },
+          "ui": [
+            "Skeleton في الجدول بلا ترقيم"
+          ]
+        },
+        {
+          "key": "W07-empty",
+          "label": "لا توجد بيانات",
+          "drawn": true,
+          "when": {
+            "data": "لا صرفيات ولا فلاتر"
+          },
+          "ui": [
+            "EmptyState «لا صرفيات بعد» مع «صرف جديد»",
+            "مع فلاتر أو بحث: «لا نتائج للفلتر» و«مسح الفلاتر»"
+          ]
+        },
+        {
+          "key": "W07-error",
+          "label": "تعذّر التحميل",
+          "drawn": true,
+          "when": {
+            "api": "listTransfers",
+            "status": 429,
+            "codes": [
+              "too_many_requests"
+            ]
+          },
+          "ui": [
+            "ErrorState مع «إعادة المحاولة»"
+          ]
+        },
+        {
+          "key": "W07-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "listTransfers",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState (عامل المستودع)"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "click زر «صرف جديد»",
+          "to": "W06"
+        },
+        {
+          "on": "click صف",
+          "to": "W08",
+          "pass": {
+            "id": "row.id"
+          },
+          "note": "W08 مبنية"
+        },
+        {
+          "on": "W06: «الصرفيات» أو «إلغاء»",
+          "to": "W07"
+        }
+      ],
+      "after_mutation": [],
+      "notes": [
+        "q غير موجود في العقد: أُضيف في الواجهة بصفة مؤقتة وطلبه في docs/backend-requests.md §10.1.",
+        "الحالات «معلَّم أكثر من 48 ساعة» تحسبها الواجهة من hours_in_transit؛ و in_transit_over_hours موجود في العقد للتصفية بالخادم.",
+        "للقراءة فقط؛ الإلغاء من W08."
+      ]
+    },
+    "W08": {
+      "id": "W08",
+      "name": "تفاصيل الصرف",
+      "group": "warehouse",
+      "design_source": {
+        "view": "src/features/transfers/views/TransferDetailsView.tsx",
+        "page": "src/app/warehouse/w08-transfer-details/page.tsx"
+      },
+      "route": "/dashboard/warehouse/dispatch/:id",
+      "api": [
+        {
+          "id": "getTransfer",
+          "method": "GET",
+          "path": "/transfers/{id}",
+          "success": {
+            "status": 200,
+            "model": "Transfer"
+          },
+          "errors": [
+            {
+              "status": 404,
+              "codes": [
+                "not_found"
+              ]
+            },
+            {
+              "status": 403,
+              "codes": [
+                "forbidden"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "cancelTransfer",
+          "method": "POST",
+          "path": "/transfers/{id}/cancel",
+          "request": {
+            "reason": "cancellation.reason (إلزامي، ≤1000)"
+          },
+          "success": {
+            "status": 200,
+            "model": "Transfer"
+          },
+          "errors": [
+            {
+              "status": 422,
+              "codes": [
+                "validation_failed"
+              ]
+            },
+            {
+              "status": 409,
+              "codes": [
+                "invalid_status"
+              ]
+            }
+          ],
+          "note": "صلاحية transfers.create، قبل التأكيد فقط، تعود الكمية للمستودع"
+        },
+        {
+          "id": "getSettings",
+          "method": "GET",
+          "path": "/settings",
+          "success": {
+            "status": 200,
+            "model": "Settings"
+          },
+          "note": "transfer_unconfirmed_alert_hours (48) ← overdueHours"
+        }
+      ],
+      "view_props": {
+        "transfer": "Loadable<Transfer> ← getTransfer (خطأ not_found يعرض «غير موجود أو خارج نطاقك»)",
+        "canCancel": "permission transfers.create",
+        "cancellation": "{ reason, loading?, errorCode? } | null: نافذة الإلغاء المفتوحة (حالة الصفحة)",
+        "onStartCancel": "يفتح النافذة (cancellation = { reason: '' })",
+        "onCancelReasonChange": "يحدّث cancellation.reason",
+        "onConfirmCancel": "cancelTransfer ثم إغلاق النافذة وإعادة جلب getTransfer وقائمة W07 (وإبطال stock/balances)",
+        "onDismissCancel": "cancellation = null",
+        "overdueHours": "transfer_unconfirmed_alert_hours من getSettings (48)",
+        "today": "اليوم بتوقيت دمشق",
+        "onOpenSampleRequest": "التنقل إلى W10 بـ sample_request_id",
+        "onBack": "العودة إلى W07",
+        "onRetry": "يعيد getTransfer",
+        "rejectedReceipts": "{ by: UserRef, at }[] ← rejected_receipts في Transfer (مقترح: غير موجود في العقد، docs/backend-requests.md §11.4)",
+        "onNewTransfer": "التنقل إلى W06 (الحل بعد رفض تأكيد: صرف جديد)"
+      },
+      "permissions": [
+        "transfers.view (قراءة، مؤقت)",
+        "transfers.create (الإلغاء، مؤكَّد في العقد)"
+      ],
+      "components": [
+        "PageHeader",
+        "StatusBadge",
+        "Banner",
+        "Card",
+        "DescriptionList",
+        "StockLine",
+        "ActivityLog",
+        "ReasonDialog",
+        "Skeleton",
+        "ErrorState",
+        "NotFoundState",
+        "ForbiddenState"
+      ],
+      "states": [
+        {
+          "key": "W08-in-transit",
+          "label": "بالطريق",
+          "drawn": true,
+          "when": {
+            "data": "status = IN_TRANSIT وhours_in_transit < الحد"
+          },
+          "ui": [
+            "شارة «بالطريق»",
+            "زر «إلغاء الصرف» للوجستي",
+            "السجل: أنشأه"
+          ]
+        },
+        {
+          "key": "W08-cancel",
+          "label": "نافذة الإلغاء",
+          "drawn": true,
+          "when": {
+            "ui": "click «إلغاء الصرف»"
+          },
+          "ui": [
+            "ReasonDialog «إلغاء الصرف TRF-…؟»",
+            "السبب إلزامي والزر معطّل حتى يُكتب",
+            "خطأ العقد (invalid_status/validation_failed) تحت الحقل"
+          ]
+        },
+        {
+          "key": "W08-received",
+          "label": "مستلم",
+          "drawn": true,
+          "when": {
+            "data": "status = RECEIVED"
+          },
+          "ui": [
+            "السجل: من أكّد الاستلام ومتى",
+            "طلب العينات المرتبط رابطاً (إن وُجد)",
+            "لا زر إلغاء"
+          ]
+        },
+        {
+          "key": "W08-cancelled",
+          "label": "ملغى",
+          "drawn": true,
+          "when": {
+            "data": "status = CANCELLED"
+          },
+          "ui": [
+            "Banner info: من ألغى والسبب وأن الكمية عادت للمستودع",
+            "السجل: الإلغاء بسببه",
+            "لا زر إلغاء"
+          ]
+        },
+        {
+          "key": "W08-receipt-rejected",
+          "label": "تأكيد مرفوض بعد الإلغاء",
+          "drawn": true,
+          "when": {
+            "data": "status = CANCELLED وrejectedReceipts غير فارغة (مزامنة المندوب ردّت REJECTED بالرمز transfer_cancelled)"
+          },
+          "ui": [
+            "Banner warning «رُفض تأكيد استلام …» مع «صرف جديد»",
+            "حدث في السجل «رُفض تأكيد استلام {الاسم} لأن الصرف مُلغى»"
+          ]
+        },
+        {
+          "key": "W08-overdue-48h",
+          "label": "غير مؤكَّد بعد 48 ساعة",
+          "drawn": true,
+          "when": {
+            "data": "status = IN_TRANSIT وhours_in_transit ≥ transfer_unconfirmed_alert_hours"
+          },
+          "ui": [
+            "Banner warning بعدد الساعات ليتابع اللوجستي مع المستلم",
+            "زر «إلغاء الصرف» يبقى"
+          ]
+        },
+        {
+          "key": "W08-not-found",
+          "label": "غير موجود",
+          "drawn": true,
+          "when": {
+            "api": "getTransfer",
+            "status": 404,
+            "codes": [
+              "not_found"
+            ]
+          },
+          "ui": [
+            "NotFoundState «العنصر غير موجود أو خارج نطاقك» مع «رجوع»"
+          ]
+        },
+        {
+          "key": "W08-loading",
+          "label": "جارٍ التحميل",
+          "drawn": true,
+          "when": {
+            "data": "transfer.status === loading"
+          },
+          "ui": [
+            "Skeleton بشكل الرأس والبطاقات"
+          ]
+        },
+        {
+          "key": "W08-error",
+          "label": "تعذّر التحميل",
+          "drawn": true,
+          "when": {
+            "api": "getTransfer",
+            "status": 429,
+            "codes": [
+              "too_many_requests"
+            ]
+          },
+          "ui": [
+            "ErrorState مع «إعادة المحاولة»"
+          ]
+        },
+        {
+          "key": "W08-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "getTransfer",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState (عامل المستودع)"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "من W07 click صف",
+          "to": "W08",
+          "pass": {
+            "id": "row.id"
+          }
+        },
+        {
+          "on": "click رابط طلب العينات",
+          "to": "W10",
+          "pass": {
+            "id": "transfer.sample_request_id"
+          }
+        },
+        {
+          "on": "click «رجوع» (not_found)",
+          "to": "W07"
+        },
+        {
+          "on": "click «صرف جديد» (شريط التأكيد المرفوض)",
+          "to": "W06"
+        }
+      ],
+      "after_mutation": [
+        "بعد cancelTransfer: إبطال transfers وtransfers/{id} وstock/balances وstock/movements وlow-stock"
+      ],
+      "notes": [
+        "السجل (ActivityLog) يُبنى من حقول Transfer: created_by/at وreceived_by/at وcancelled_by/at/cancel_reason، لا endpoint له (docs/backend-requests.md §11.1).",
+        "التأكيد من المستلم (POST /transfers/{id}/receive للوكيل، والمندوب عبر المزامنة): لا زر استلام للوجستي.",
+        "الإلغاء لخطأ في الإدخال وقبل التأكيد فقط؛ 409 invalid_status إن استُلم.",
+        "القرارات (12 تشرين الثاني): السجل من حقول Transfer فقط؛ يلغي أي حامل لـ transfers.create؛ التأكيد المرفوض يُعرض بشريط وحدث والحل صرف جديد (الإلغاء نهائي).",
+        "ربط الصرف المستلم بطلب العينات في المعرض: TRF-000156 ← طلب #17 (مصروف)، لا #21 (جديد في W06)."
+      ]
+    },
+    "W09": {
+      "id": "W09",
+      "name": "طلبات العينات",
+      "group": "warehouse",
+      "design_source": {
+        "view": "src/features/transfers/views/SampleRequestsListView.tsx",
+        "page": "src/app/warehouse/w09-sample-requests/page.tsx"
+      },
+      "route": "/dashboard/warehouse/sample-requests",
+      "api": [
+        {
+          "id": "listSampleRequests",
+          "method": "GET",
+          "path": "/sample-requests",
+          "request": {
+            "page": "state الصفحة",
+            "per_page": "state (20 افتراضي، 50، 100)",
+            "status": "filters.status",
+            "rep_id": "filters.repUserId (معرّف المستخدم)",
+            "from": "filters.range.from (مقترح: غير موجود في العقد، docs/backend-requests.md §12.1)",
+            "to": "filters.range.to (مقترح)"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<SampleRequest>"
+          }
+        },
+        {
+          "id": "listReps",
+          "method": "GET",
+          "path": "/locations",
+          "request": {
+            "type": "REP"
+          },
+          "success": {
+            "status": 200,
+            "model": "Location[]"
+          },
+          "note": "خيارات فلتر المندوب بقيمة location.user.id"
+        }
+      ],
+      "view_props": {
+        "requests": "Loadable<{ data: SampleRequest[]; meta: PaginationMeta }> ← listSampleRequests",
+        "reps": "Location[] ← listReps",
+        "filters": "{ status, repUserId, range: { from, to } } حالة الصفحة. تغيّرها يعيد الصفحة إلى 1",
+        "onFiltersChange": "يحدّث الفلاتر، ويعيد page إلى 1، ويعيد الطلب",
+        "onPageChange": "page ← الرقم ويعيد الطلب",
+        "onPerPageChange": "per_page ← القيمة، وpage = 1",
+        "today": "اليوم بتوقيت دمشق",
+        "onOpenRequest": "التنقل إلى W10 بـ request.id",
+        "onRetry": "يعيد listSampleRequests"
+      },
+      "permissions": [
+        "transfers.create (مفتاح عقد مؤكَّد: رفض الطلب وصرفه به، docs/backend-requests.md §12.2 و§13)"
+      ],
+      "components": [
+        "PageHeader",
+        "FilterBar",
+        "Combobox",
+        "DateRangePicker",
+        "DataTable",
+        "DateTimeStackCell",
+        "StatusBadge",
+        "Pagination",
+        "EmptyState",
+        "ErrorState",
+        "ForbiddenState"
+      ],
+      "states": [
+        {
+          "key": "W09-default",
+          "label": "كل الطلبات",
+          "drawn": true,
+          "when": {
+            "data": "بلا فلاتر، الصفحة الأولى"
+          },
+          "ui": [
+            "الطلبات من الأحدث إلى الأقدم بحالاتها: جديد ومصروف ومرفوض وملغى",
+            "ترقيم تحت الجدول"
+          ]
+        },
+        {
+          "key": "W09-loading",
+          "label": "جارٍ التحميل",
+          "drawn": true,
+          "when": {
+            "data": "requests.status === loading"
+          },
+          "ui": [
+            "Skeleton في الجدول بلا ترقيم"
+          ]
+        },
+        {
+          "key": "W09-empty",
+          "label": "لا توجد بيانات",
+          "drawn": true,
+          "when": {
+            "data": "لا طلبات ولا فلاتر"
+          },
+          "ui": [
+            "EmptyState «لا طلبات عينات بعد»",
+            "مع فلاتر: «لا نتائج للفلتر» و«مسح الفلاتر»"
+          ]
+        },
+        {
+          "key": "W09-error",
+          "label": "تعذّر التحميل",
+          "drawn": true,
+          "when": {
+            "api": "listSampleRequests",
+            "status": 429,
+            "codes": [
+              "too_many_requests"
+            ]
+          },
+          "ui": [
+            "ErrorState مع «إعادة المحاولة»"
+          ]
+        },
+        {
+          "key": "W09-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "listSampleRequests",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState (عامل المستودع)"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "click صف",
+          "to": "W10",
+          "pass": {
+            "id": "row.id"
+          }
+        }
+      ],
+      "after_mutation": [],
+      "notes": [
+        "الأصناف في الصف: اسم الأول وعدد الأسطر؛ التفاصيل (المطلوب والمصروف) في W10.",
+        "rep_id معرّف المستخدم؛ خيارات الفلتر من مواقع المندوبين (location.user.id).",
+        "فلتر الفترة غير موجود في العقد: أُضيف في الواجهة بصفة مؤقتة وطلبه في docs/backend-requests.md §12.1."
+      ]
+    },
+    "W10": {
+      "id": "W10",
+      "name": "تفاصيل طلب العينات",
+      "group": "warehouse",
+      "design_source": {
+        "view": "src/features/transfers/views/SampleRequestDetailsView.tsx",
+        "page": "src/app/warehouse/w10-sample-request-details/page.tsx"
+      },
+      "route": "/dashboard/warehouse/sample-requests/[id]",
+      "api": [
+        {
+          "id": "getSampleRequest",
+          "method": "GET",
+          "path": "/sample-requests/{id}",
+          "request": {
+            "id": "معامل المسار"
+          },
+          "success": {
+            "status": 200,
+            "model": "SampleRequest"
+          },
+          "errors": [
+            {
+              "status": 404,
+              "code": "not_found"
+            }
+          ]
+        },
+        {
+          "id": "rejectSampleRequest",
+          "method": "POST",
+          "path": "/sample-requests/{id}/reject",
+          "request": {
+            "reason": "rejection.reason (إلزامي، حتى 1000 حرف)"
+          },
+          "success": {
+            "status": 200,
+            "model": "SampleRequest"
+          },
+          "errors": [
+            {
+              "status": 409,
+              "code": "invalid_status"
+            },
+            {
+              "status": 422,
+              "code": "validation_failed"
+            },
+            {
+              "status": 403,
+              "code": "forbidden"
+            }
+          ]
+        }
+      ],
+      "view_props": {
+        "request": "Loadable<SampleRequest> ← getSampleRequest. خطأ not_found يعرض «غير موجود أو خارج نطاقك»",
+        "canDecide": "me.permissions يحوي transfers.create (يُظهر «صرف» و«رفض» للطلب الجديد فقط)",
+        "rejection": "{ reason, loading?, errorCode? } | null: حالة نافذة الرفض (null = مغلقة)",
+        "onStartReject": "يفتح النافذة: rejection = { reason: '' }",
+        "onRejectReasonChange": "يحدّث reason",
+        "onConfirmReject": "rejectSampleRequest ثم يغلق النافذة ويعيد جلب الطلب والقائمة؛ عند الخطأ يضع errorCode",
+        "onDismissReject": "rejection = null",
+        "onDispatch": "التنقل إلى W06 بـ sample_request_id",
+        "onOpenTransfer": "التنقل إلى W08 بـ request.transfer_id",
+        "onBack": "الرجوع إلى W09",
+        "onRetry": "يعيد getSampleRequest"
+      },
+      "permissions": [
+        "transfers.create (الصرف والرفض)",
+        "مفتاح القراءة غير محدد في العقد (نفترض transfers.view أو transfers.create، docs/backend-requests.md §13.6)"
+      ],
+      "components": [
+        "PageHeader",
+        "StatusBadge",
+        "Banner",
+        "Card",
+        "DescriptionList",
+        "DataTable",
+        "Badge",
+        "ActivityLog",
+        "ReasonDialog",
+        "Skeleton",
+        "NotFoundState",
+        "ErrorState",
+        "ForbiddenState"
+      ],
+      "states": [
+        {
+          "key": "W10-new",
+          "label": "جديد",
+          "drawn": true,
+          "when": {
+            "data": "status === NEW"
+          },
+          "ui": [
+            "«رفض» و«صرف» في الرأس للوجستي",
+            "الأصناف: المطلوب والمصروف «—»"
+          ]
+        },
+        {
+          "key": "W10-reject",
+          "label": "نافذة الرفض",
+          "drawn": true,
+          "when": {
+            "data": "rejection !== null"
+          },
+          "ui": [
+            "ReasonDialog: السبب إلزامي والزر معطّل حتى يُكتب"
+          ]
+        },
+        {
+          "key": "W10-dispatched",
+          "label": "مصروف",
+          "drawn": true,
+          "when": {
+            "data": "status === DISPATCHED"
+          },
+          "ui": [
+            "شريط نجاح «صُرف الطلب» مع «عرض الصرف»",
+            "تنبيه «صُرف أقل من المطلوب في N من M أصناف» وشارة «أقل من المطلوب» على السطر",
+            "السجل: رُفع ثم صُرف"
+          ]
+        },
+        {
+          "key": "W10-rejected",
+          "label": "مرفوض",
+          "drawn": true,
+          "when": {
+            "data": "status === REJECTED"
+          },
+          "ui": [
+            "شريط خطر بالسبب (reject_reason)",
+            "السجل: رُفع ثم رُفض بسببه",
+            "لا أزرار قرار"
+          ]
+        },
+        {
+          "key": "W10-cancelled",
+          "label": "ملغى",
+          "drawn": true,
+          "when": {
+            "data": "status === CANCELLED"
+          },
+          "ui": [
+            "شريط معلومات: ألغاه الطالب قبل الصرف",
+            "لا أزرار قرار (الإلغاء للطالب وحده)"
+          ]
+        },
+        {
+          "key": "W10-not-found",
+          "label": "غير موجود",
+          "drawn": true,
+          "when": {
+            "api": "getSampleRequest",
+            "status": 404,
+            "codes": [
+              "not_found"
+            ]
+          },
+          "ui": [
+            "NotFoundState مع «رجوع»"
+          ]
+        },
+        {
+          "key": "W10-loading",
+          "label": "جارٍ التحميل",
+          "drawn": true,
+          "when": {
+            "data": "request.status === loading"
+          },
+          "ui": [
+            "Skeleton للرأس والبطاقات"
+          ]
+        },
+        {
+          "key": "W10-error",
+          "label": "تعذّر التحميل",
+          "drawn": true,
+          "when": {
+            "api": "getSampleRequest",
+            "status": 429,
+            "codes": [
+              "too_many_requests"
+            ]
+          },
+          "ui": [
+            "ErrorState مع «إعادة المحاولة»"
+          ]
+        },
+        {
+          "key": "W10-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "getSampleRequest",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState (عامل المستودع)"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "«صرف»",
+          "to": "W06",
+          "pass": {
+            "sample_request_id": "request.id"
+          }
+        },
+        {
+          "on": "رابط الصرف المرتبط",
+          "to": "W08",
+          "pass": {
+            "id": "request.transfer_id"
+          }
+        },
+        {
+          "on": "رجوع من not_found",
+          "to": "W09"
+        }
+      ],
+      "after_mutation": [
+        {
+          "after": "rejectSampleRequest",
+          "do": "إعادة جلب الطلب (يصير REJECTED بالسبب) وقائمة W09 وعدّاد «جديد» في القائمة الجانبية"
+        }
+      ],
+      "notes": [
+        "الإلغاء للطالب وحده (POST /sample-requests/{id}/cancel بصلاحية sample_requests.create): لا زر إلغاء هنا.",
+        "السجل مبني من created_at وdecided_at وstatus وreject_reason؛ لا اسم لمن قرّر لأن decided_by غير موجود في العقد (docs/backend-requests.md §13.1).",
+        "الصرف المرتبط يظهر «الصرف #id» لأن مرجعه المقروء غير موجود (§13.2).",
+        "غلاف SampleRequestDetailsDemo في app/ للعرض ولا يُنقل."
+      ]
+    },
+    "W11": {
+      "id": "W11",
+      "name": "طلبات السحب",
+      "group": "warehouse",
+      "design_source": {
+        "view": "src/features/transfers/views/WithdrawRequestsListView.tsx",
+        "form": "src/features/transfers/views/WithdrawRequestFormView.tsx",
+        "page": "src/app/warehouse/w11-withdraw-requests/page.tsx"
+      },
+      "route": "/dashboard/warehouse/withdraw-requests",
+      "api": [
+        {
+          "id": "listWithdrawRequests",
+          "method": "GET",
+          "path": "/withdraw-requests",
+          "request": {
+            "page": "state الصفحة",
+            "per_page": "state (20 افتراضي، 50، 100)",
+            "status": "filters.status",
+            "rep_id": "filters.repUserId (معرّف المستخدم)"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<WithdrawRequest>"
+          }
+        },
+        {
+          "id": "listReps",
+          "method": "GET",
+          "path": "/locations",
+          "request": {
+            "type": "REP"
+          },
+          "success": {
+            "status": 200,
+            "model": "Location[]"
+          },
+          "note": "خيارات المندوب بقيمة location.user.id (= rep_id)"
+        },
+        {
+          "id": "listWarehouses",
+          "method": "GET",
+          "path": "/locations",
+          "request": {
+            "type": "WAREHOUSE"
+          },
+          "success": {
+            "status": 200,
+            "model": "Location[]"
+          },
+          "note": "مستودع الاستلام (to_location_id)"
+        },
+        {
+          "id": "getRepBalance",
+          "method": "GET",
+          "path": "/stock/balances",
+          "request": {
+            "location_id": "موقع المندوب المختار (لا معرّف المستخدم)",
+            "group_by": "batch"
+          },
+          "success": {
+            "status": 200,
+            "model": "{ data: BalanceLine[] }"
+          },
+          "note": "أصناف المندوب ودفعاته ومتاحها لسطور النموذج. docs/backend-requests.md §14.2"
+        },
+        {
+          "id": "createWithdrawRequest",
+          "method": "POST",
+          "path": "/withdraw-requests",
+          "request": {
+            "rep_id": "form.repUserId",
+            "to_location_id": "form.toLocationId",
+            "reason": "form.reason",
+            "lines": "form.lines → [{ item_id, batch_id, quantity }]"
+          },
+          "success": {
+            "status": 201,
+            "model": "WithdrawRequest"
+          },
+          "errors": [
+            {
+              "status": 422,
+              "code": "validation_failed"
+            },
+            {
+              "status": 403,
+              "code": "forbidden"
+            }
+          ]
+        }
+      ],
+      "view_props": {
+        "requests": "Loadable<{ data: WithdrawRequest[]; meta: PaginationMeta }> ← listWithdrawRequests",
+        "reps": "Location[] ← listReps",
+        "filters": "{ status, repUserId } حالة الصفحة. تغيّرها يعيد الصفحة إلى 1",
+        "canCreate": "me.permissions يحوي withdraw.create",
+        "onCreate": "يفتح نافذة الطلب (WithdrawRequestFormView.open = true)",
+        "onOpenRequest": "التنقل إلى W12 بـ request.id",
+        "form (WithdrawRequestFormView)": "open، options { reps, destinations }، balance: Loadable<{ items, batches }> | null ← getRepBalance عند اختيار مندوب، form { repUserId, toLocationId, reason, lines }، errors (validation_failed كما هي)، submitError، submitting، onSubmit ← createWithdrawRequest ثم إغلاق النافذة وإعادة جلب القائمة"
+      },
+      "permissions": [
+        "withdraw.create (القائمة والطلب والإلغاء، docs/backend-requests.md §14.1)",
+        "مفتاح قراءة القائمة غير محدد في العقد"
+      ],
+      "components": [
+        "PageHeader",
+        "FilterBar",
+        "Combobox",
+        "DataTable",
+        "StatusBadge",
+        "Pagination",
+        "EmptyState",
+        "ErrorState",
+        "ForbiddenState",
+        "Dialog",
+        "LineItemsEditor",
+        "Field",
+        "Select",
+        "Textarea"
+      ],
+      "states": [
+        {
+          "key": "W11-default",
+          "label": "كل الطلبات",
+          "drawn": true,
+          "when": {
+            "data": "بلا فلاتر، الصفحة الأولى"
+          },
+          "ui": [
+            "الطلبات من الأحدث إلى الأقدم بحالاتها: مطلوب ومسلَّم وملغى",
+            "ترقيم تحت الجدول"
+          ]
+        },
+        {
+          "key": "W11-new-form",
+          "label": "نافذة الطلب",
+          "drawn": true,
+          "when": {
+            "data": "فتح «طلب سحب»"
+          },
+          "ui": [
+            "مندوب ومستودع (مقفل) وسبب وأصناف",
+            "الأصناف تظهر بعد اختيار المندوب",
+            "الزر معطّل وسببه ظاهر"
+          ]
+        },
+        {
+          "key": "W11-new-form-filled",
+          "label": "نافذة معبّأة",
+          "drawn": true,
+          "when": {
+            "data": "مندوب وأسطر من رصيده"
+          },
+          "ui": [
+            "دفعة موقوفة معلّمة ومسموحة (العقد)",
+            "المتاح بجانب كل دفعة"
+          ]
+        },
+        {
+          "key": "W11-new-form-validation",
+          "label": "خطأ من الخادم",
+          "drawn": true,
+          "when": {
+            "api": "createWithdrawRequest",
+            "status": 422,
+            "codes": [
+              "validation_failed"
+            ]
+          },
+          "ui": [
+            "نص الخادم تحت السطر المعني كما هو"
+          ]
+        },
+        {
+          "key": "W11-loading",
+          "label": "جارٍ التحميل",
+          "drawn": true,
+          "when": {
+            "data": "requests.status === loading"
+          },
+          "ui": [
+            "Skeleton في الجدول بلا ترقيم"
+          ]
+        },
+        {
+          "key": "W11-empty",
+          "label": "لا توجد بيانات",
+          "drawn": true,
+          "when": {
+            "data": "لا طلبات ولا فلاتر"
+          },
+          "ui": [
+            "EmptyState «لا طلبات سحب بعد» مع «طلب سحب»",
+            "مع فلاتر: «لا نتائج للفلتر» و«مسح الفلاتر»"
+          ]
+        },
+        {
+          "key": "W11-error",
+          "label": "تعذّر التحميل",
+          "drawn": true,
+          "when": {
+            "api": "listWithdrawRequests",
+            "status": 429,
+            "codes": [
+              "too_many_requests"
+            ]
+          },
+          "ui": [
+            "ErrorState مع «إعادة المحاولة»"
+          ]
+        },
+        {
+          "key": "W11-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "listWithdrawRequests",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState (عامل المستودع)"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "click صف",
+          "to": "W12",
+          "pass": {
+            "id": "row.id"
+          }
+        }
+      ],
+      "after_mutation": [
+        {
+          "after": "createWithdrawRequest",
+          "do": "إغلاق النافذة وإعادة جلب القائمة (الطلب الجديد في الأعلى) من الصفحة الأولى بلا فلاتر"
+        }
+      ],
+      "notes": [
+        "rep_id معرّف المستخدم؛ وget balances بمعرّف موقع المندوب (location.id).",
+        "المندوب المعطَّل يُستثنى من النموذج (location.is_active) ويبقى في فلتر القائمة.",
+        "كمية أكبر من رصيد المندوب تُمنع في الواجهة (زر معطّل بسببه)؛ رفض الخادم لها غير مؤكَّد (§14.3)."
+      ]
+    },
+    "W12": {
+      "id": "W12",
+      "name": "تفاصيل طلب السحب",
+      "group": "warehouse",
+      "design_source": {
+        "view": "src/features/transfers/views/WithdrawRequestDetailsView.tsx",
+        "page": "src/app/warehouse/w12-withdraw-request-details/page.tsx"
+      },
+      "route": "/dashboard/warehouse/withdraw-requests/[id]",
+      "api": [
+        {
+          "id": "getWithdrawRequest",
+          "method": "GET",
+          "path": "/withdraw-requests/{id}",
+          "request": {
+            "id": "معامل المسار"
+          },
+          "success": {
+            "status": 200,
+            "model": "WithdrawRequest"
+          },
+          "errors": [
+            {
+              "status": 404,
+              "code": "not_found"
+            }
+          ]
+        },
+        {
+          "id": "cancelWithdrawRequest",
+          "method": "POST",
+          "path": "/withdraw-requests/{id}/cancel",
+          "request": {
+            "reason": "cancellation.reason (إلزامي، حتى 1000 حرف)"
+          },
+          "success": {
+            "status": 200,
+            "model": "WithdrawRequest"
+          },
+          "errors": [
+            {
+              "status": 409,
+              "code": "invalid_status"
+            },
+            {
+              "status": 422,
+              "code": "validation_failed"
+            },
+            {
+              "status": 403,
+              "code": "forbidden"
+            }
+          ]
+        },
+        {
+          "id": "confirmWithdrawOnBehalf",
+          "method": "POST",
+          "path": "/withdraw-requests/{id}/confirm-on-behalf",
+          "request": {
+            "lines": "onBehalf.quantities → [{ item_id, batch_id, actual_quantity ≥ 0 }]"
+          },
+          "success": {
+            "status": 200,
+            "model": "WithdrawRequest"
+          },
+          "errors": [
+            {
+              "status": 409,
+              "code": "rep_active"
+            },
+            {
+              "status": 409,
+              "code": "invalid_status"
+            },
+            {
+              "status": 422,
+              "code": "validation_failed"
+            },
+            {
+              "status": 403,
+              "code": "forbidden"
+            }
+          ]
+        }
+      ],
+      "view_props": {
+        "request": "Loadable<WithdrawRequest> ← getWithdrawRequest. خطأ not_found يعرض «غير موجود أو خارج نطاقك»",
+        "repActive": "هل المندوب فعّال؟ العقد بلا حالة للمندوب: مضاف في الواجهة، من rep.is_active المطلوب (docs/backend-requests.md §15.1)",
+        "canCancel": "me.permissions يحوي withdraw.create (للمطلوب فقط)",
+        "canConfirmOnBehalf": "me.permissions يحوي withdraw.confirm_on_behalf (للمطلوب والمندوب معطَّل فقط)",
+        "cancellation": "{ reason, loading?, errorCode? } | null: حالة نافذة الإلغاء (null = مغلقة)",
+        "onBehalf": "{ quantities: Record<'itemId-batchId', number|null>, loading?, errorCode? } | null: نافذة التأكيد عن المندوب",
+        "callbacks": "onStartCancel / onCancelReasonChange / onConfirmCancel ← cancelWithdrawRequest / onDismissCancel؛ onStartOnBehalf / onOnBehalfQuantityChange(key, qty) / onConfirmOnBehalf ← confirmWithdrawOnBehalf / onDismissOnBehalf؛ onBack ← W11؛ onRetry"
+      },
+      "permissions": [
+        "withdraw.create (الإلغاء)",
+        "withdraw.confirm_on_behalf (التأكيد عن المعطَّل)",
+        "مفتاح القراءة غير محدد (نفترض withdraw.create، docs/backend-requests.md §15.3)"
+      ],
+      "components": [
+        "PageHeader",
+        "StatusBadge",
+        "Banner",
+        "Card",
+        "DescriptionList",
+        "DataTable",
+        "BatchCell",
+        "Badge",
+        "ActivityLog",
+        "ReasonDialog",
+        "Dialog",
+        "NumberInput",
+        "Skeleton",
+        "NotFoundState",
+        "ErrorState",
+        "ForbiddenState"
+      ],
+      "states": [
+        {
+          "key": "W12-requested",
+          "label": "مطلوب",
+          "drawn": true,
+          "when": {
+            "data": "status === REQUESTED && repActive"
+          },
+          "ui": [
+            "شريط «بانتظار تسليم المندوب»",
+            "«إلغاء الطلب» للوجستي"
+          ]
+        },
+        {
+          "key": "W12-cancel",
+          "label": "نافذة الإلغاء",
+          "drawn": true,
+          "when": {
+            "data": "cancellation !== null"
+          },
+          "ui": [
+            "ReasonDialog: السبب إلزامي والزر معطّل حتى يُكتب"
+          ]
+        },
+        {
+          "key": "W12-handed-over",
+          "label": "مسلَّم",
+          "drawn": true,
+          "when": {
+            "data": "status === HANDED_OVER && !confirmed_on_behalf"
+          },
+          "ui": [
+            "شريط نجاح «سلّم المندوب الطلب» (وتنبيه إن اختلفت كمية)",
+            "الفعلي بجانب المطلوب وشارة «أقل من المطلوب»"
+          ]
+        },
+        {
+          "key": "W12-cancelled",
+          "label": "ملغى",
+          "drawn": true,
+          "when": {
+            "data": "status === CANCELLED"
+          },
+          "ui": [
+            "شريط بمن ألغى وسببه",
+            "لا أزرار"
+          ]
+        },
+        {
+          "key": "W12-rep-deactivated",
+          "label": "مندوب معطَّل",
+          "drawn": true,
+          "when": {
+            "data": "status === REQUESTED && !repActive"
+          },
+          "ui": [
+            "شارة «معطَّل» بجانب المندوب",
+            "شريط تحذير",
+            "«تأكيد الاستلام عنه» (أساسي) و«إلغاء الطلب»"
+          ]
+        },
+        {
+          "key": "W12-on-behalf",
+          "label": "نافذة التأكيد عن المندوب",
+          "drawn": true,
+          "when": {
+            "data": "onBehalf !== null"
+          },
+          "ui": [
+            "NumberInput لكل سطر والمطلوب فوقه",
+            "المجموع الفعلي مقابل المطلوب",
+            "الزر معطّل حتى تُدخل كل الأسطر"
+          ]
+        },
+        {
+          "key": "W12-handed-over-on-behalf",
+          "label": "مسلَّم عن المندوب",
+          "drawn": true,
+          "when": {
+            "data": "status === HANDED_OVER && confirmed_on_behalf"
+          },
+          "ui": [
+            "شريط: أكّد اللوجستي الاستلام عن المندوب والفرق فرق مخزون",
+            "السجل: أكّد فلان الاستلام عن المندوب (معطَّل)"
+          ]
+        },
+        {
+          "key": "W12-not-found",
+          "label": "غير موجود",
+          "drawn": true,
+          "when": {
+            "api": "getWithdrawRequest",
+            "status": 404,
+            "codes": [
+              "not_found"
+            ]
+          },
+          "ui": [
+            "NotFoundState مع «رجوع»"
+          ]
+        },
+        {
+          "key": "W12-loading",
+          "label": "جارٍ التحميل",
+          "drawn": true,
+          "when": {
+            "data": "request.status === loading"
+          },
+          "ui": [
+            "Skeleton للرأس والبطاقات"
+          ]
+        },
+        {
+          "key": "W12-error",
+          "label": "تعذّر التحميل",
+          "drawn": true,
+          "when": {
+            "api": "getWithdrawRequest",
+            "status": 429,
+            "codes": [
+              "too_many_requests"
+            ]
+          },
+          "ui": [
+            "ErrorState مع «إعادة المحاولة»"
+          ]
+        },
+        {
+          "key": "W12-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "getWithdrawRequest",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState (عامل المستودع)"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "رجوع من not_found",
+          "to": "W11"
+        }
+      ],
+      "after_mutation": [
+        {
+          "after": "cancelWithdrawRequest",
+          "do": "إعادة جلب الطلب (يصير CANCELLED) وقائمة W11"
+        },
+        {
+          "after": "confirmWithdrawOnBehalf",
+          "do": "إعادة جلب الطلب (HANDED_OVER بـ confirmed_on_behalf) وقائمة W11"
+        }
+      ],
+      "notes": [
+        "السجل من created_at وconfirmed_at؛ لا cancelled_at فلا حدث للإلغاء (الشريط بمن ألغى وسببه). docs/backend-requests.md §15.2.",
+        "الفرق في التأكيد عن المعطَّل هو عن رصيد المندوب (فرق مخزون بعلامة)؛ الواجهة تعرض المطلوب مقابل الفعلي فقط (§15.4).",
+        "غلاف WithdrawRequestDetailsDemo في app/ للعرض ولا يُنقل."
+      ]
+    },
+    "W13": {
+      "id": "W13",
+      "name": "إرجاعات الوكلاء",
+      "group": "warehouse",
+      "design_source": {
+        "view": "src/features/returns/views/AgentReturnsListView.tsx",
+        "page": "src/app/warehouse/w13-agent-returns/page.tsx"
+      },
+      "route": "/dashboard/warehouse/agent-returns",
+      "api": [
+        {
+          "id": "listAgentReturns",
+          "method": "GET",
+          "path": "/agent-returns",
+          "request": {
+            "page": "state الصفحة",
+            "per_page": "state (20 افتراضي، 50، 100)",
+            "status": "filters.status (IN_TRANSIT افتراضي أو RECEIVED)",
+            "agent_id": "filters.agentId (معرّف الوكيل location.agent.id)"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<AgentReturn>"
+          }
+        },
+        {
+          "id": "listAgents",
+          "method": "GET",
+          "path": "/locations",
+          "request": {
+            "type": "AGENT"
+          },
+          "success": {
+            "status": 200,
+            "model": "Location[]"
+          },
+          "note": "خيارات فلتر الوكيل بقيمة location.agent.id"
+        },
+        {
+          "id": "receiveAgentReturn",
+          "method": "POST",
+          "path": "/agent-returns/{id}/receive",
+          "request": {},
+          "success": {
+            "status": 200,
+            "model": "AgentReturn"
+          },
+          "errors": [
+            {
+              "status": 409,
+              "code": "invalid_status"
+            },
+            {
+              "status": 403,
+              "code": "forbidden"
+            }
+          ],
+          "note": "كامل فقط (لا استلام جزئي)"
+        }
+      ],
+      "view_props": {
+        "returns": "Loadable<{ data: AgentReturn[]; meta: PaginationMeta }> ← listAgentReturns",
+        "agents": "Location[] ← listAgents",
+        "filters": "{ status: 'IN_TRANSIT'|'RECEIVED', agentId } حالة الصفحة. تغيّرها يعيد الصفحة إلى 1",
+        "selected": "AgentReturn | null: الإرجاع المفتوح في الدرج، من عنصر القائمة (لا GET بالمعرّف في العقد، §16.3)",
+        "canReceive": "me.permissions يحوي agent_returns.receive (لـ IN_TRANSIT فقط)",
+        "confirmOpen / receiving / receiveError": "نافذة التأكيد، وطلب الاستلام قيد التنفيذ، ورمز الخطأ (invalid_status) يظهر في الدرج",
+        "callbacks": "onOpenReturn / onCloseReturn؛ onStartReceive / onConfirmReceive ← receiveAgentReturn / onDismissReceive؛ onPageChange / onPerPageChange / onFiltersChange؛ onRetry",
+        "today": "اليوم بتوقيت دمشق"
+      },
+      "permissions": [
+        "agent_returns.receive (القائمة والاستلام)"
+      ],
+      "components": [
+        "PageHeader",
+        "FilterBar",
+        "Combobox",
+        "DataTable",
+        "StatusBadge",
+        "Pagination",
+        "Drawer",
+        "StockLine",
+        "DescriptionList",
+        "Banner",
+        "ConfirmDialog",
+        "EmptyState",
+        "ErrorState",
+        "ForbiddenState"
+      ],
+      "states": [
+        {
+          "key": "W13-in-transit",
+          "label": "بالطريق",
+          "drawn": true,
+          "when": {
+            "data": "filters.status === IN_TRANSIT"
+          },
+          "ui": [
+            "الإرجاعات المعتمدة بالطريق بالوكيل والأصناف والسبب والوجهة والاعتماد",
+            "ترقيم تحت الجدول"
+          ]
+        },
+        {
+          "key": "W13-details",
+          "label": "تفاصيل الإرجاع",
+          "drawn": true,
+          "when": {
+            "data": "selected !== null && status === IN_TRANSIT"
+          },
+          "ui": [
+            "درج بالأسطر ودفعاتها (منها موقوفة) والسبب والملاحظة ومن اعتمد",
+            "«تأكيد الاستلام» في التذييل"
+          ]
+        },
+        {
+          "key": "W13-confirm",
+          "label": "نافذة التأكيد",
+          "drawn": true,
+          "when": {
+            "data": "confirmOpen"
+          },
+          "ui": [
+            "ConfirmDialog: الاستلام كامل بلا جزئي، بمجموع الكمية والوجهة"
+          ]
+        },
+        {
+          "key": "W13-received",
+          "label": "مستلم",
+          "drawn": true,
+          "when": {
+            "data": "status === RECEIVED"
+          },
+          "ui": [
+            "شريط نجاح بمن استلم ومتى",
+            "لا زر تأكيد"
+          ]
+        },
+        {
+          "key": "W13-loading",
+          "label": "جارٍ التحميل",
+          "drawn": true,
+          "when": {
+            "data": "returns.status === loading"
+          },
+          "ui": [
+            "Skeleton في الجدول بلا ترقيم"
+          ]
+        },
+        {
+          "key": "W13-empty",
+          "label": "لا توجد بيانات",
+          "drawn": true,
+          "when": {
+            "data": "لا إرجاعات في الحالة المختارة"
+          },
+          "ui": [
+            "EmptyState لكل حالة (بالطريق / مستلمة)",
+            "مع وكيل: «لا نتائج للفلتر»"
+          ]
+        },
+        {
+          "key": "W13-error",
+          "label": "تعذّر التحميل",
+          "drawn": true,
+          "when": {
+            "api": "listAgentReturns",
+            "status": 429,
+            "codes": [
+              "too_many_requests"
+            ]
+          },
+          "ui": [
+            "ErrorState مع «إعادة المحاولة»"
+          ]
+        },
+        {
+          "key": "W13-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "listAgentReturns",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState (عامل المستودع)"
+          ]
+        }
+      ],
+      "navigation": [],
+      "after_mutation": [
+        {
+          "after": "receiveAgentReturn",
+          "do": "إغلاق نافذة التأكيد وإعادة جلب القائمة (يخرج الإرجاع من «بالطريق») وتحديث العنصر المفتوح في الدرج"
+        }
+      ],
+      "notes": [
+        "PENDING وREJECTED قرار مدير المبيعات (returns.decide) ولا تُعرضان هنا (docs/backend-requests.md §16.1).",
+        "إرجاع أنشأه مدير المبيعات عن وكيل معطَّل يظهر في الدرج «(عن وكيل معطَّل)» (created_on_behalf_of_agent).",
+        "غلاف AgentReturnsDemo في app/ للعرض ولا يُنقل."
+      ]
+    },
+    "W14": {
+      "id": "W14",
+      "name": "الجرد",
+      "group": "warehouse",
+      "design_source": {
+        "view": "src/features/stock-counts/views/StockCountsListView.tsx",
+        "form": "src/features/stock-counts/views/StockCountFormView.tsx",
+        "page": "src/app/warehouse/w14-stock-counts/page.tsx"
+      },
+      "route": "/dashboard/warehouse/stock-counts",
+      "api": [
+        {
+          "id": "listStockCounts",
+          "method": "GET",
+          "path": "/stock-counts",
+          "request": {
+            "page": "state الصفحة",
+            "per_page": "state (20 افتراضي، 50، 100)",
+            "status": "filters.status",
+            "location_id": "filters.locationId",
+            "assigned_to": "filters.assignedToId (معرّف المستخدم)"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<StockCount>"
+          }
+        },
+        {
+          "id": "listWarehouses",
+          "method": "GET",
+          "path": "/locations",
+          "request": {
+            "type": "WAREHOUSE"
+          },
+          "success": {
+            "status": 200,
+            "model": "Location[]"
+          }
+        },
+        {
+          "id": "listWorkers",
+          "method": "GET",
+          "path": "/users",
+          "request": {
+            "role": "عامل المستودع (غير موجود في العقد، docs/backend-requests.md §17.5)"
+          },
+          "success": {
+            "status": 200,
+            "model": "User[]"
+          },
+          "note": "خيارات الإسناد وفلتر المكلَّف"
+        },
+        {
+          "id": "createStockCount",
+          "method": "POST",
+          "path": "/stock-counts",
+          "request": {
+            "location_id": "form.locationId",
+            "assigned_to": "form.assignedToId (اختياري)",
+            "note": "form.note (اختياري)"
+          },
+          "success": {
+            "status": 201,
+            "model": "StockCount"
+          },
+          "errors": [
+            {
+              "status": 422,
+              "code": "validation_failed"
+            },
+            {
+              "status": 403,
+              "code": "forbidden"
+            }
+          ]
+        }
+      ],
+      "view_props": {
+        "counts": "Loadable<{ data: StockCount[]; meta: PaginationMeta }> ← listStockCounts",
+        "locations": "Location[] ← listWarehouses",
+        "workers": "UserRef[] ← listWorkers",
+        "filters": "{ status, locationId, assignedToId } حالة الصفحة. تغيّرها يعيد الصفحة إلى 1",
+        "canCreate": "me.permissions يحوي stock_counts.create",
+        "showAssigneeFilter": "false لمن يملك stock_counts.count وحدها (عامل المستودع)",
+        "onCreate": "يفتح نافذة الجرد الجديد",
+        "onOpenCount": "التنقل إلى W15 بـ count.id",
+        "form (StockCountFormView)": "open، options { locations, workers }، form { locationId, assignedToId, note }، errors، submitError، submitting، onSubmit ← createStockCount ثم إغلاق النافذة والتنقل إلى W15 بالجرد الجديد"
+      },
+      "permissions": [
+        "stock_counts.create (إنشاء الجرد)",
+        "stock_counts.count (العدّ، ويكفي لرؤية القائمة)",
+        "مفتاح القراءة غير محدد في العقد"
+      ],
+      "components": [
+        "PageHeader",
+        "FilterBar",
+        "Combobox",
+        "DataTable",
+        "StatusCell",
+        "Badge",
+        "Pagination",
+        "EmptyState",
+        "ErrorState",
+        "ForbiddenState",
+        "Dialog",
+        "Field",
+        "Select",
+        "Textarea"
+      ],
+      "states": [
+        {
+          "key": "W14-default",
+          "label": "كل الجرود",
+          "drawn": true,
+          "when": {
+            "data": "بلا فلاتر، الصفحة الأولى"
+          },
+          "ui": [
+            "الجرود من الأحدث إلى الأقدم بحالاتها",
+            "عدد الأسطر التي فيها فرق لكل جرد",
+            "ترقيم تحت الجدول"
+          ]
+        },
+        {
+          "key": "W14-new-form",
+          "label": "نافذة الجرد الجديد",
+          "drawn": true,
+          "when": {
+            "data": "فتح «جرد جديد»"
+          },
+          "ui": [
+            "الموقع (مطلوب) وإسناد لعامل (اختياري) وملاحظة",
+            "الزر معطّل وسببه ظاهر"
+          ]
+        },
+        {
+          "key": "W14-new-form-filled",
+          "label": "نافذة معبّأة",
+          "drawn": true,
+          "when": {
+            "data": "موقع وعامل"
+          },
+          "ui": [
+            "«إنشاء الجرد» ينشئه قيد العدّ"
+          ]
+        },
+        {
+          "key": "W14-new-form-validation",
+          "label": "خطأ من الخادم",
+          "drawn": true,
+          "when": {
+            "api": "createStockCount",
+            "status": 422,
+            "codes": [
+              "validation_failed"
+            ]
+          },
+          "ui": [
+            "نص الخادم تحت الحقل كما هو"
+          ]
+        },
+        {
+          "key": "W14-worker",
+          "label": "عامل المستودع",
+          "drawn": true,
+          "when": {
+            "data": "stock_counts.count بلا create"
+          },
+          "ui": [
+            "المسنَد إليه فقط",
+            "بلا «جرد جديد» وبلا فلتر المكلَّف"
+          ]
+        },
+        {
+          "key": "W14-loading",
+          "label": "جارٍ التحميل",
+          "drawn": true,
+          "when": {
+            "data": "counts.status === loading"
+          },
+          "ui": [
+            "Skeleton في الجدول بلا ترقيم"
+          ]
+        },
+        {
+          "key": "W14-empty",
+          "label": "لا توجد بيانات",
+          "drawn": true,
+          "when": {
+            "data": "لا جرود ولا فلاتر"
+          },
+          "ui": [
+            "EmptyState «لا جرود بعد» (مع «جرد جديد» للوجستي)",
+            "مع فلاتر: «لا نتائج للفلتر»"
+          ]
+        },
+        {
+          "key": "W14-error",
+          "label": "تعذّر التحميل",
+          "drawn": true,
+          "when": {
+            "api": "listStockCounts",
+            "status": 429,
+            "codes": [
+              "too_many_requests"
+            ]
+          },
+          "ui": [
+            "ErrorState مع «إعادة المحاولة»"
+          ]
+        },
+        {
+          "key": "W14-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "listStockCounts",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "click صف",
+          "to": "W15",
+          "pass": {
+            "id": "row.id"
+          }
+        }
+      ],
+      "after_mutation": [
+        {
+          "after": "createStockCount",
+          "do": "إغلاق النافذة والتنقل إلى W15 بالجرد الجديد (قيد العدّ)"
+        }
+      ],
+      "notes": [
+        "عدد الفروق يُحسب من الأسطر الحالية (غير superseded) في عنصر القائمة؛ إن لم تصل الأسطر في القائمة فنحتاج differences_count (§17.3).",
+        "عامل المستودع: الخادم يحصر القائمة بالمسنَد إليه (§17.2).",
+        "غلاف StockCountsDemo في app/ للعرض ولا يُنقل."
+      ]
+    },
+    "W15": {
+      "id": "W15",
+      "name": "العدّ",
+      "group": "warehouse",
+      "design_source": {
+        "view": "src/features/stock-counts/views/StockCountDetailsView.tsx",
+        "page": "src/app/warehouse/w15-stock-count/page.tsx"
+      },
+      "route": "/dashboard/warehouse/stock-counts/[id]",
+      "api": [
+        {
+          "id": "getStockCount",
+          "method": "GET",
+          "path": "/stock-counts/{id}",
+          "request": {
+            "id": "معامل المسار"
+          },
+          "success": {
+            "status": 200,
+            "model": "StockCount (مع lines)"
+          },
+          "errors": [
+            {
+              "status": 404,
+              "code": "not_found"
+            }
+          ]
+        },
+        {
+          "id": "getLocationBalances",
+          "method": "GET",
+          "path": "/stock/balances",
+          "request": {
+            "location_id": "count.location.id",
+            "group_by": "batch"
+          },
+          "success": {
+            "status": 200,
+            "model": "{ data: BalanceLine[] }"
+          },
+          "note": "أصناف الموقع ودفعاته لاختيار السطر. docs/backend-requests.md §18.1"
+        },
+        {
+          "id": "saveCountLine",
+          "method": "POST",
+          "path": "/stock-counts/{id}/lines",
+          "request": {
+            "item_id": "entry.itemId",
+            "batch_id": "entry.batchId",
+            "actual_qty": "entry.quantity (≥ 0)"
+          },
+          "success": {
+            "status": 201,
+            "model": "StockCountLine (بمتوقعه وفرقه ووقت الخادم)"
+          },
+          "errors": [
+            {
+              "status": 409,
+              "code": "lines_locked"
+            },
+            {
+              "status": 422,
+              "code": "validation_failed"
+            },
+            {
+              "status": 403,
+              "code": "forbidden"
+            }
+          ],
+          "note": "نفس (الصنف، الدفعة) قبل الإرسال يستبدل السطر"
+        },
+        {
+          "id": "submitStockCount",
+          "method": "POST",
+          "path": "/stock-counts/{id}/submit",
+          "request": {},
+          "success": {
+            "status": 200,
+            "model": "StockCount"
+          },
+          "errors": [
+            {
+              "status": 409,
+              "code": "invalid_status"
+            },
+            {
+              "status": 403,
+              "code": "forbidden"
+            }
+          ]
+        },
+        {
+          "id": "cancelStockCount",
+          "method": "POST",
+          "path": "/stock-counts/{id}/cancel",
+          "request": {
+            "reason": "cancellation.reason (إلزامي، حتى 1000 حرف)"
+          },
+          "success": {
+            "status": 200,
+            "model": "StockCount"
+          },
+          "errors": [
+            {
+              "status": 409,
+              "code": "invalid_status"
+            },
+            {
+              "status": 422,
+              "code": "validation_failed"
+            },
+            {
+              "status": 403,
+              "code": "forbidden"
+            }
+          ]
+        }
+      ],
+      "view_props": {
+        "count": "Loadable<StockCount> ← getStockCount. خطأ not_found يعرض «غير موجود أو خارج نطاقك»",
+        "canCount": "me.permissions يحوي stock_counts.count (الإدخال والإرسال)",
+        "canCancel": "me.permissions يحوي stock_counts.create (الإلغاء قبل الإرسال)",
+        "canDecide": "me.permissions يحوي stock_counts.approve (W16)",
+        "items / batches": "EditorItem[] وRecord<String(itemId), Loadable<EditorBatch[]>> ← getLocationBalances (available = المتاح للعرض فقط)",
+        "entry / onEntryChange / onSaveLine / savingLine": "السطر قيد الإدخال {itemId, batchId, quantity}. الحفظ ← saveCountLine ثم يُضاف الرد إلى الأسطر (أو يستبدل السطر نفسه) ويُفرَّغ الإدخال",
+        "lineError / lineErrors / savedLineId": "رمز الخطأ (lines_locked) · errors من validation_failed · معرّف السطر المحفوظ للتو (شريط بمتوقعه وفرقه)",
+        "submit / submitError": "نافذة التأكيد { loading? } | null ← submitStockCount",
+        "cancellation / returning": "{ reason, loading?, errorCode? } | null: نافذتا السبب (إلغاء الجرد، وإرجاعه في W16)",
+        "approving / approveError / onApprove": "الاعتماد ← approveStockCount (W16)",
+        "decisionState": "awaiting-me أو self-decision-forbidden (المفوَّض في جرده)"
+      },
+      "permissions": [
+        "stock_counts.count (العدّ والإرسال)",
+        "stock_counts.create (الإلغاء)",
+        "مفتاح القراءة غير محدد في العقد (docs/backend-requests.md §18.10)"
+      ],
+      "components": [
+        "PageHeader",
+        "StatusBadge",
+        "Banner",
+        "Card",
+        "Grid",
+        "Field",
+        "Combobox",
+        "NumberInput",
+        "Button",
+        "DataTable",
+        "BatchCell",
+        "QuantityCell",
+        "Badge",
+        "ActivityLog",
+        "ConfirmDialog",
+        "ReasonDialog",
+        "DecisionPanel",
+        "DecisionRecord",
+        "Skeleton",
+        "NotFoundState",
+        "ErrorState",
+        "ForbiddenState"
+      ],
+      "states": [
+        {
+          "key": "W15-in-progress",
+          "label": "قيد العدّ",
+          "drawn": true,
+          "when": {
+            "data": "status === IN_PROGRESS && canCount"
+          },
+          "ui": [
+            "بطاقة «عدّ صنف»: الصنف والدفعة (الموقوفة معلّمة وقابلة للعدّ) والكمية",
+            "الأسطر بالفعلي والمتوقع والفرق ومن عدّ ومتى",
+            "«إرسال للاعتماد» و«إلغاء الجرد»"
+          ]
+        },
+        {
+          "key": "W15-line-saved",
+          "label": "سطر حُفظ للتو",
+          "drawn": true,
+          "when": {
+            "data": "savedLineId !== null"
+          },
+          "ui": [
+            "شريط نجاح بالسطر ومتوقعه وفرقه",
+            "السطر في الجدول"
+          ]
+        },
+        {
+          "key": "W15-with-diff",
+          "label": "أسطر فيها فرق",
+          "drawn": true,
+          "when": {
+            "data": "أسطر difference ≠ 0"
+          },
+          "ui": [
+            "ملخص: عدد الأسطر وفروقها ونقصها وزيادتها",
+            "شارة لكل سطر: مطابق · نقص · زيادة"
+          ]
+        },
+        {
+          "key": "W15-submit",
+          "label": "نافذة الإرسال",
+          "drawn": true,
+          "when": {
+            "data": "submit !== null"
+          },
+          "ui": [
+            "ConfirmDialog: تُقفل الأسطر ولا تُعدَّل، وكم منها فيه فرق"
+          ]
+        },
+        {
+          "key": "W15-submitted",
+          "label": "مرسل",
+          "drawn": true,
+          "when": {
+            "data": "status === SUBMITTED && !canDecide"
+          },
+          "ui": [
+            "شريط «بانتظار قرار المدير التنفيذي»",
+            "الأسطر مقفلة: لا إدخال ولا إلغاء"
+          ]
+        },
+        {
+          "key": "W15-returned",
+          "label": "أُرجع لإعادة العدّ",
+          "drawn": true,
+          "when": {
+            "data": "status === IN_PROGRESS && return_history.length > 0"
+          },
+          "ui": [
+            "شريط تحذير بالسبب ومن أرجع",
+            "الأسطر القديمة في بطاقة «أسطر سابقة»",
+            "السجل بحدث الإرجاع وسببه"
+          ]
+        },
+        {
+          "key": "W15-cancel",
+          "label": "نافذة الإلغاء",
+          "drawn": true,
+          "when": {
+            "data": "cancellation !== null"
+          },
+          "ui": [
+            "ReasonDialog: السبب إلزامي والزر معطّل حتى يُكتب"
+          ]
+        },
+        {
+          "key": "W15-cancelled",
+          "label": "ملغى",
+          "drawn": true,
+          "when": {
+            "data": "status === CANCELLED"
+          },
+          "ui": [
+            "شريط بسبب الإلغاء",
+            "لا أزرار"
+          ]
+        },
+        {
+          "key": "W15-worker",
+          "label": "عامل المستودع",
+          "drawn": true,
+          "when": {
+            "data": "canCount && !canCancel"
+          },
+          "ui": [
+            "يدخل الأسطر ويرسل",
+            "بلا «إلغاء الجرد»"
+          ]
+        },
+        {
+          "key": "W15-not-found",
+          "label": "غير موجود",
+          "drawn": true,
+          "when": {
+            "api": "getStockCount",
+            "status": 404,
+            "codes": [
+              "not_found"
+            ]
+          },
+          "ui": [
+            "NotFoundState مع «رجوع»"
+          ]
+        },
+        {
+          "key": "W15-loading",
+          "label": "جارٍ التحميل",
+          "drawn": true,
+          "when": {
+            "data": "count.status === loading"
+          },
+          "ui": [
+            "Skeleton للرأس والبطاقات"
+          ]
+        },
+        {
+          "key": "W15-error",
+          "label": "تعذّر التحميل",
+          "drawn": true,
+          "when": {
+            "api": "getStockCount",
+            "status": 429,
+            "codes": [
+              "too_many_requests"
+            ]
+          },
+          "ui": [
+            "ErrorState مع «إعادة المحاولة»"
+          ]
+        },
+        {
+          "key": "W15-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "getStockCount",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "رجوع من not_found",
+          "to": "W14"
+        }
+      ],
+      "after_mutation": [
+        {
+          "after": "saveCountLine",
+          "do": "إضافة السطر المردود إلى الأسطر (أو استبدال سطر الصنف والدفعة نفسيهما) وإظهار شريطه وتفريغ الإدخال"
+        },
+        {
+          "after": "submitStockCount",
+          "do": "إعادة جلب الجرد (يصير SUBMITTED والأسطر مقفلة) وقائمة W14"
+        },
+        {
+          "after": "cancelStockCount",
+          "do": "إعادة جلب الجرد (CANCELLED) وقائمة W14"
+        }
+      ],
+      "notes": [
+        "الشاشة نفسها لـ W16 بأعلام مختلفة (canDecide): انظر W16.",
+        "المتوقع = رصيد النظام لحظة حفظ السطر (القرار 3)؛ لا يُحسب في الواجهة.",
+        "السجل من created_at وsubmitted_at وreturn_history وapproved_at؛ لا submitted_by ولا cancelled_at (§18.2).",
+        "غلاف StockCountDetailsDemo في app/ للعرض ولا يُنقل."
+      ]
+    },
+    "W16": {
+      "id": "W16",
+      "name": "اعتماد الجرد",
+      "group": "warehouse",
+      "design_source": {
+        "view": "src/features/stock-counts/views/StockCountDetailsView.tsx",
+        "page": "src/app/warehouse/w16-stock-count-approval/page.tsx"
+      },
+      "route": "/dashboard/stock-counts/[id]/approval (من «بانتظار قراري»)",
+      "api": [
+        {
+          "id": "getStockCount",
+          "method": "GET",
+          "path": "/stock-counts/{id}",
+          "request": {
+            "id": "معامل المسار"
+          },
+          "success": {
+            "status": 200,
+            "model": "StockCount (مع lines)"
+          },
+          "errors": [
+            {
+              "status": 404,
+              "code": "not_found"
+            }
+          ]
+        },
+        {
+          "id": "approveStockCount",
+          "method": "POST",
+          "path": "/stock-counts/{id}/approve",
+          "request": {},
+          "success": {
+            "status": 200,
+            "model": "StockCount"
+          },
+          "errors": [
+            {
+              "status": 409,
+              "code": "invalid_status"
+            },
+            {
+              "status": 403,
+              "code": "forbidden"
+            }
+          ],
+          "note": "تتولّد التسويات وتُحال الفروق للمراقبة. المفوَّض يعتمد بالتفويض، لا لجرده"
+        },
+        {
+          "id": "returnStockCount",
+          "method": "POST",
+          "path": "/stock-counts/{id}/return",
+          "request": {
+            "reason": "returning.reason (إلزامي، حتى 1000 حرف)"
+          },
+          "success": {
+            "status": 200,
+            "model": "StockCount"
+          },
+          "errors": [
+            {
+              "status": 409,
+              "code": "invalid_status"
+            },
+            {
+              "status": 422,
+              "code": "validation_failed"
+            },
+            {
+              "status": 403,
+              "code": "forbidden"
+            }
+          ]
+        }
+      ],
+      "view_props": {
+        "(كما W15)": "count ← getStockCount، canCount = false، canCancel = false، canDecide = me.permissions يحوي stock_counts.approve",
+        "decisionState": "self-decision-forbidden إن كان الجرد يخصّ المفوَّض نفسه (created_by أو assigned_to = me.id)، وإلا awaiting-me",
+        "approving / approveError / onApprove": "approveStockCount ثم إعادة جلب الجرد (APPROVED وبطاقة القرار)",
+        "returning / onStartReturn / onConfirmReturn": "نافذة السبب ← returnStockCount ثم إعادة الجلب (IN_PROGRESS بسجل الإرجاع)"
+      },
+      "permissions": [
+        "stock_counts.approve (الاعتماد والإرجاع: المدير التنفيذي أو المفوَّض، لا لجرده)"
+      ],
+      "components": [
+        "DecisionPanel (rejectLabel)",
+        "DecisionRecord",
+        "StockCountDetailsView ومكوّناتها (W15)"
+      ],
+      "states": [
+        {
+          "key": "W16-awaiting-me",
+          "label": "بانتظار قراري",
+          "drawn": true,
+          "when": {
+            "data": "status === SUBMITTED && canDecide"
+          },
+          "ui": [
+            "ملخص الفروق",
+            "DecisionPanel: «اعتماد» و«إرجاع لإعادة العدّ»"
+          ]
+        },
+        {
+          "key": "W16-return-dialog",
+          "label": "نافذة الإرجاع",
+          "drawn": true,
+          "when": {
+            "data": "returning !== null"
+          },
+          "ui": [
+            "ReasonDialog: السبب إلزامي والزر معطّل حتى يُكتب"
+          ]
+        },
+        {
+          "key": "W16-returned",
+          "label": "أُرجع",
+          "drawn": true,
+          "when": {
+            "data": "status === IN_PROGRESS && return_history.length > 0"
+          },
+          "ui": [
+            "شريط السبب",
+            "الأسطر القديمة في «أسطر سابقة»",
+            "لا لوحة قرار حتى يُرسل من جديد"
+          ]
+        },
+        {
+          "key": "W16-approved",
+          "label": "معتمد",
+          "drawn": true,
+          "when": {
+            "data": "status === APPROVED"
+          },
+          "ui": [
+            "شريط نجاح وبطاقة القرار (DecisionRecord)"
+          ]
+        },
+        {
+          "key": "W16-approved-delegated",
+          "label": "معتمد بالتفويض",
+          "drawn": true,
+          "when": {
+            "data": "approved_by والمفوِّض on_behalf_of"
+          },
+          "ui": [
+            "شارة «بالتفويض عن المدير التنفيذي»",
+            "السجل: اعتمد فلان الجرد بالتفويض عن فلان"
+          ]
+        },
+        {
+          "key": "W16-self-decision-forbidden",
+          "label": "جرد المفوَّض نفسه",
+          "drawn": true,
+          "when": {
+            "data": "decisionState === self-decision-forbidden"
+          },
+          "ui": [
+            "الأزرار معطّلة وتحتها «لا تقرر فيما يخصّك. ينتظر قرار المدير التنفيذي.»"
+          ]
+        },
+        {
+          "key": "W16-approve-failed",
+          "label": "تعذّر الاعتماد",
+          "drawn": true,
+          "when": {
+            "api": "approveStockCount",
+            "status": 409,
+            "codes": [
+              "invalid_status"
+            ]
+          },
+          "ui": [
+            "شريط خطر برسالة الخادم"
+          ]
+        },
+        {
+          "key": "W16-not-found",
+          "label": "غير موجود",
+          "drawn": true,
+          "when": {
+            "api": "getStockCount",
+            "status": 404,
+            "codes": [
+              "not_found"
+            ]
+          },
+          "ui": [
+            "NotFoundState"
+          ]
+        },
+        {
+          "key": "W16-loading",
+          "label": "جارٍ التحميل",
+          "drawn": true,
+          "when": {
+            "data": "count.status === loading"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "W16-error",
+          "label": "تعذّر التحميل",
+          "drawn": true,
+          "when": {
+            "api": "getStockCount",
+            "status": 429,
+            "codes": [
+              "too_many_requests"
+            ]
+          },
+          "ui": [
+            "ErrorState مع «إعادة المحاولة»"
+          ]
+        },
+        {
+          "key": "W16-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "getStockCount",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "الوصول",
+          "to": "G04",
+          "pass": {
+            "note": "من «بانتظار قراري»، docs/backend-requests.md §19.1"
+          }
+        }
+      ],
+      "after_mutation": [
+        {
+          "after": "approveStockCount",
+          "do": "إعادة جلب الجرد (APPROVED) وبانتظار قراري وعدّاد القائمة"
+        },
+        {
+          "after": "returnStockCount",
+          "do": "إعادة جلب الجرد (IN_PROGRESS) وبانتظار قراري وعدّاد القائمة"
+        }
+      ],
+      "notes": [
+        "DecisionPanel أُضيفت إليه الخاصية rejectLabel (الافتراضي «رفض»).",
+        "invalid_status وحده عند التعارض (لا already_decided ولا من قرّر): §19.3."
+      ]
+    },
+    "W17": {
+      "id": "W17",
+      "name": "الدفعات",
+      "group": "warehouse",
+      "design_source": {
+        "view": "src/features/batches/views/BatchesListView.tsx",
+        "page": "src/app/warehouse/w17-batches/page.tsx"
+      },
+      "route": "/dashboard/warehouse/batches",
+      "api": [
+        {
+          "id": "listBatches",
+          "method": "GET",
+          "path": "/batches",
+          "request": {
+            "page": "state الصفحة",
+            "per_page": "state (20 افتراضي، 50، 100)",
+            "item_id": "filters.itemId",
+            "status": "filters.status (ACTIVE | SUSPENDED)",
+            "in_stock": "filters.inStock (true فقط، وإلا لا يُرسل)"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<Batch>"
+          }
+        }
+      ],
+      "view_props": {
+        "batches": "Loadable<{ data: Batch[], meta }> ← listBatches",
+        "items": "خيارات فلتر الصنف ← GET /items",
+        "filters / onFiltersChange": "state في الحاوية، وأي تغيير يعيد الصفحة إلى 1",
+        "onPageChange / onPerPageChange": "state الصفحة وper_page",
+        "onOpenBatch": "ينقل إلى W18 بـ batch.id",
+        "expiryAlertDays": "expiry_alert_days من الإعدادات (الافتراضي 60)"
+      },
+      "permissions": [
+        "batches.suspend (مفتاح عنصر القائمة، مؤكَّد: اللوجستي والمدير التنفيذي)",
+        "مفتاح قراءة GET /batches غير مذكور في العقد"
+      ],
+      "components": [
+        "DataTable",
+        "FilterBar",
+        "Combobox",
+        "Checkbox",
+        "Pagination",
+        "StatusBadge",
+        "Badge"
+      ],
+      "states": [
+        {
+          "key": "W17-default",
+          "label": "كل الدفعات",
+          "drawn": true,
+          "when": {
+            "data": "الفلاتر فارغة وفي الصفحة صفوف"
+          },
+          "ui": [
+            "جدول: الصنف، رقم الدفعة، تاريخ الانتهاء مع شارة التنبيه، الكمية الكلية، في المستودع، الحالة",
+            "فلاتر الصنف والحالة و«المتوفرة فقط»",
+            "Pagination"
+          ]
+        },
+        {
+          "key": "W17-suspended-filter",
+          "label": "فلتر الموقوفة",
+          "drawn": true,
+          "when": {
+            "data": "filters.status === SUSPENDED"
+          },
+          "ui": [
+            "شارة «الحالة: موقوفة» تحت الشريط بزر إزالة",
+            "الموقوفة وحدها"
+          ]
+        },
+        {
+          "key": "W17-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "listBatches",
+            "data": "loading"
+          },
+          "ui": [
+            "Skeleton بشكل الجدول"
+          ]
+        },
+        {
+          "key": "W17-empty",
+          "label": "لا دفعات",
+          "drawn": true,
+          "when": {
+            "api": "listBatches",
+            "data": "meta.total === 0 بلا فلاتر"
+          },
+          "ui": [
+            "EmptyState «لا دفعات بعد»"
+          ]
+        },
+        {
+          "key": "W17-error",
+          "label": "تعذّر التحميل",
+          "drawn": true,
+          "when": {
+            "api": "listBatches",
+            "status": 429,
+            "codes": [
+              "too_many_requests"
+            ]
+          },
+          "ui": [
+            "ErrorState مع «إعادة المحاولة»"
+          ]
+        },
+        {
+          "key": "W17-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "listBatches",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "click صف",
+          "to": "W18",
+          "pass": {
+            "id": "row.id"
+          }
+        }
+      ],
+      "after_mutation": {},
+      "notes": [
+        "الكمية الكلية = received_total، وبجانبها warehouse_on_hand: §20.2.",
+        "قرب الانتهاء من days_to_expiry في العقد، والمنتهية (سالبة) تُعلَّم «منتهية منذ N يوماً»."
+      ]
+    },
+    "W18": {
+      "id": "W18",
+      "name": "تفاصيل الدفعة",
+      "group": "warehouse",
+      "design_source": {
+        "view": "src/features/batches/views/BatchDetailsView.tsx",
+        "page": "src/app/warehouse/w18-batch/page.tsx"
+      },
+      "route": "/dashboard/warehouse/batches/[id]",
+      "api": [
+        {
+          "id": "getBatch",
+          "method": "GET",
+          "path": "/batches/{id}",
+          "request": {
+            "id": "معامل المسار"
+          },
+          "success": {
+            "status": 200,
+            "model": "Batch"
+          },
+          "errors": [
+            {
+              "status": 404,
+              "code": "not_found"
+            }
+          ]
+        },
+        {
+          "id": "getBatchBalances",
+          "method": "GET",
+          "path": "/stock/balances",
+          "request": {
+            "batch_id": "معرّف الدفعة"
+          },
+          "success": {
+            "status": 200,
+            "model": "BalanceLine[]"
+          },
+          "note": "رصيد الدفعة في كل موقع. يُحمَّل مستقلاً عن بيانات الدفعة (balances: Loadable)"
+        },
+        {
+          "id": "listBatchRecalls",
+          "method": "GET",
+          "path": "/recalls",
+          "request": {
+            "batch_id": "معرّف الدفعة"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<RecallEvent> (الصفحة الأولى)"
+          }
+        },
+        {
+          "id": "suspendBatch",
+          "method": "POST",
+          "path": "/batches/{id}/suspend",
+          "request": {
+            "reason": "dialog.reason (إلزامي، حتى 1000 حرف)"
+          },
+          "success": {
+            "status": 200,
+            "model": "Batch"
+          },
+          "errors": [
+            {
+              "status": 409,
+              "code": "invalid_status"
+            },
+            {
+              "status": 422,
+              "code": "validation_failed"
+            },
+            {
+              "status": 403,
+              "code": "forbidden"
+            }
+          ],
+          "note": "لا يُنقص رصيداً. يمنع ما يُبعد الكمية عن المستودع ويسمح بما يعيدها أو يوثّقها. تنبيه للوكلاء والمندوبين. رمز الـ409 غير مسمّى في العقد (§21.3)"
+        },
+        {
+          "id": "unsuspendBatch",
+          "method": "POST",
+          "path": "/batches/{id}/unsuspend",
+          "request": {
+            "reason": "dialog.reason (إلزامي، حتى 1000 حرف)"
+          },
+          "success": {
+            "status": 200,
+            "model": "Batch"
+          },
+          "errors": [
+            {
+              "status": 409,
+              "code": "invalid_status"
+            },
+            {
+              "status": 422,
+              "code": "validation_failed"
+            },
+            {
+              "status": 403,
+              "code": "forbidden"
+            }
+          ],
+          "note": "المدير التنفيذي وحده (يشمله التفويض). تنبيه لمن يحمل منها"
+        }
+      ],
+      "view_props": {
+        "batch": "Loadable<Batch> ← getBatch (not_found ← NotFoundState)",
+        "balances": "Loadable<BalanceLine[]> ← getBatchBalances",
+        "recalls": "Loadable<RecallEvent[]> ← listBatchRecalls (الأحدث أولاً)",
+        "canSuspend": "me.permissions يحوي batches.suspend",
+        "canUnsuspend": "me.permissions يحوي batches.unsuspend (المدير التنفيذي أو المفوَّض)",
+        "dialog": "{ kind: suspend | unsuspend, reason, loading?, errorCode? } | null",
+        "onStartSuspend / onStartUnsuspend / onDialogReasonChange / onConfirmDialog / onDismissDialog": "يفتح النافذة ← suspendBatch أو unsuspendBatch ثم إعادة جلب الدفعة والسجل والأرصدة",
+        "onOpenTrace": "ينقل إلى W19",
+        "expiryAlertDays": "expiry_alert_days من الإعدادات (الافتراضي 60)"
+      },
+      "permissions": [
+        "batches.suspend (الإيقاف: اللوجستي والمدير التنفيذي)",
+        "batches.unsuspend (الفك: المدير التنفيذي وحده، يشمله التفويض)",
+        "مفتاح قراءة GET /batches/{id} غير مذكور"
+      ],
+      "components": [
+        "PageHeader",
+        "DescriptionList",
+        "DataTable",
+        "ActivityLog",
+        "ReasonDialog",
+        "Banner",
+        "StatusBadge"
+      ],
+      "states": [
+        {
+          "key": "W18-active",
+          "label": "فعّالة",
+          "drawn": true,
+          "when": {
+            "data": "batch.status === ACTIVE"
+          },
+          "ui": [
+            "بيانات الدفعة والكمية في كل موقع",
+            "زر «إيقاف الدفعة» إن canSuspend",
+            "السجل فارغ أو بتاريخ سابق"
+          ]
+        },
+        {
+          "key": "W18-suspend",
+          "label": "نافذة الإيقاف",
+          "drawn": true,
+          "when": {
+            "data": "dialog.kind === suspend"
+          },
+          "ui": [
+            "ReasonDialog: «ستتوقف حركتها في كل المواقع، ولا ينقص أي رصيد…»",
+            "الزر معطّل حتى يُكتب السبب"
+          ]
+        },
+        {
+          "key": "W18-suspended",
+          "label": "موقوفة",
+          "drawn": true,
+          "when": {
+            "data": "batch.status === SUSPENDED && canUnsuspend"
+          },
+          "ui": [
+            "شريط خطر بسبب الإيقاف",
+            "زر «فك الإيقاف» فعّال",
+            "السجل بأحداث الإيقاف والفك وشارة التفويض"
+          ]
+        },
+        {
+          "key": "W18-unsuspend",
+          "label": "نافذة الفك",
+          "drawn": true,
+          "when": {
+            "data": "dialog.kind === unsuspend"
+          },
+          "ui": [
+            "ReasonDialog: «تعود الدفعة إلى الحركة… ويصل إشعار لكل من يحمل منها»"
+          ]
+        },
+        {
+          "key": "W18-suspended-logistics",
+          "label": "موقوفة · اللوجستي",
+          "drawn": true,
+          "when": {
+            "data": "batch.status === SUSPENDED && canSuspend && !canUnsuspend"
+          },
+          "ui": [
+            "زر «فك الإيقاف» معطّل بسبب «فك الإيقاف للمدير التنفيذي وحده»",
+            "شريط info يشرح"
+          ]
+        },
+        {
+          "key": "W18-suspend-failed",
+          "label": "إيقاف مرفوض (409)",
+          "drawn": true,
+          "when": {
+            "api": "suspendBatch",
+            "status": 409,
+            "codes": [
+              "invalid_status"
+            ]
+          },
+          "ui": [
+            "نص الخطأ تحت حقل السبب",
+            "تبقى النافذة مفتوحة"
+          ]
+        },
+        {
+          "key": "W18-not-found",
+          "label": "غير موجودة",
+          "drawn": true,
+          "when": {
+            "api": "getBatch",
+            "status": 404,
+            "codes": [
+              "not_found"
+            ]
+          },
+          "ui": [
+            "NotFoundState مع زر رجوع"
+          ]
+        },
+        {
+          "key": "W18-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "getBatch",
+            "data": "loading"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "W18-error",
+          "label": "تعذّر التحميل",
+          "drawn": true,
+          "when": {
+            "api": "getBatch",
+            "status": 429,
+            "codes": [
+              "too_many_requests"
+            ]
+          },
+          "ui": [
+            "ErrorState مع «إعادة المحاولة»"
+          ]
+        },
+        {
+          "key": "W18-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "getBatch",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "click «تقرير التتبع»",
+          "to": "W19",
+          "pass": {
+            "id": "batch.id"
+          }
+        },
+        {
+          "on": "رجوع",
+          "to": "W17"
+        }
+      ],
+      "after_mutation": {
+        "suspendBatch / unsuspendBatch": "إعادة جلب الدفعة (حالتها وsuspended_reason) والسجل، وإبطال قائمة W17"
+      },
+      "notes": [
+        "الإيقاف لا ينقص رصيداً (القرار 2). اللوجستي والمدير التنفيذي يوقفان، والمدير التنفيذي وحده يفك.",
+        "أخطاء بقسمين: الدفعة (not_found/خطأ) تحجب الصفحة، والأرصدة والسجل لكل منهما خطؤه داخل بطاقته مع «إعادة المحاولة».",
+        "RecallEvent.on_behalf_of يُظهر شارة «بالتفويض عن المدير التنفيذي» ولا يُكتب اسم المفوِّض: §21.5."
+      ]
+    },
+    "W19": {
+      "id": "W19",
+      "name": "تقرير تتبع السحب",
+      "group": "warehouse",
+      "design_source": {
+        "view": "src/features/batches/views/RecallTraceView.tsx",
+        "page": "src/app/warehouse/w19-recall-trace/page.tsx"
+      },
+      "route": "/dashboard/warehouse/batches/[id]/recall-trace",
+      "api": [
+        {
+          "id": "getRecallTrace",
+          "method": "GET",
+          "path": "/batches/{id}/recall-trace",
+          "request": {
+            "id": "معامل المسار",
+            "format": "json للعرض"
+          },
+          "success": {
+            "status": 200,
+            "model": "RecallTrace"
+          },
+          "errors": [
+            {
+              "status": 404,
+              "code": "not_found"
+            }
+          ]
+        },
+        {
+          "id": "exportRecallTrace",
+          "method": "GET",
+          "path": "/batches/{id}/recall-trace",
+          "request": {
+            "format": "pdf | xlsx"
+          },
+          "success": {
+            "status": 200,
+            "model": "ملف للتنزيل"
+          },
+          "note": "يعطّل زرّي التصدير حتى يصل الملف (exporting)"
+        }
+      ],
+      "view_props": {
+        "trace": "Loadable<RecallTrace> ← getRecallTrace",
+        "exporting": "'pdf' | 'xlsx' | null: الصيغة قيد التصدير",
+        "onExport": "exportRecallTrace بالصيغة ثم تنزيل الملف",
+        "onBack": "يعود إلى W18"
+      },
+      "permissions": [
+        "مفتاح التقرير غير مذكور في العقد؛ نفترض من يرى الدفعة (§22.1)"
+      ],
+      "components": [
+        "PageHeader",
+        "Card",
+        "DescriptionList",
+        "DataTable",
+        "Banner",
+        "Badge",
+        "StatusBadge"
+      ],
+      "states": [
+        {
+          "key": "W19-default",
+          "label": "الافتراضي",
+          "drawn": true,
+          "when": {
+            "data": "trace.visit_distributions بلا after_suspension"
+          },
+          "ui": [
+            "بيانات الدفعة",
+            "الباقي في كل موقع (مع ما بالطريق)",
+            "ما وصل للعملاء بتاريخه وهاتفه",
+            "التوزيع في الزيارات"
+          ]
+        },
+        {
+          "key": "W19-distributed-after",
+          "label": "وُزّع بعد الإيقاف",
+          "drawn": true,
+          "when": {
+            "data": "visit_distributions.some(after_suspension)"
+          },
+          "ui": [
+            "Banner خطر بمجموع ما وُزّع بعد الإيقاف وعدد الزيارات",
+            "شارة «بعد الإيقاف» على الصفوف المعلَّمة"
+          ]
+        },
+        {
+          "key": "W19-exporting",
+          "label": "جارٍ التصدير",
+          "drawn": true,
+          "when": {
+            "data": "exporting !== null"
+          },
+          "ui": [
+            "زرّا التصدير معطّلان، والمضغوط يكتب «جارٍ التصدير…»"
+          ]
+        },
+        {
+          "key": "W19-not-found",
+          "label": "غير موجودة",
+          "drawn": true,
+          "when": {
+            "api": "getRecallTrace",
+            "status": 404,
+            "codes": [
+              "not_found"
+            ]
+          },
+          "ui": [
+            "NotFoundState مع زر رجوع"
+          ]
+        },
+        {
+          "key": "W19-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "getRecallTrace",
+            "data": "loading"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "W19-error",
+          "label": "تعذّر التحميل",
+          "drawn": true,
+          "when": {
+            "api": "getRecallTrace",
+            "status": 429,
+            "codes": [
+              "too_many_requests"
+            ]
+          },
+          "ui": [
+            "ErrorState مع «إعادة المحاولة»"
+          ]
+        },
+        {
+          "key": "W19-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "getRecallTrace",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "رجوع",
+          "to": "W18",
+          "pass": {
+            "id": "batch.id"
+          }
+        }
+      ],
+      "after_mutation": {},
+      "notes": [
+        "after_suspension موجود في visit_distributions وحدها، وليس في customer_deliveries: §22.3.",
+        "لا وقت للإيقاف في التقرير (suspended_at مطلوب): §22.4.",
+        "المجاميع (الباقي، المسلَّم، الموزَّع) تحسبها الواجهة وهي أعداد صحيحة."
       ]
     }
   }

@@ -23,7 +23,7 @@ const screen: ScreenDefinition = {
     {
       key: "default",
       label: "كل الإدخالات",
-      when: "سجل ما أُدخل إلى المستودع من الأحدث إلى الأقدم: الوقت والمرجع والموقع والأصناف ومجموع الكمية والمنفّذ. جرّب فلاتر الموقع والفترة والترقيم، وانقر صفاً.",
+      when: "سجل ما أُدخل إلى المستودع من الأحدث إلى الأقدم: الوقت والمرجع والموقع والأصناف ومجموع الكمية والمنفّذ. جرّب فلاتر الموقع والصنف والفترة والترقيم، وانقر صفاً.",
       node: logistics(<StockReceiptsDemo />),
     },
     {
@@ -31,6 +31,12 @@ const screen: ScreenDefinition = {
       label: "تفاصيل إدخال",
       when: "النقر على صف يفتح درجاً بأسطر الإدخال: الصنف والدفعة والكمية، وهل أُنشئت الدفعة أم أُضيفت لدفعة موجودة، مع الموقع والمنفّذ والملاحظة.",
       node: logistics(<StockReceiptsDemo initialSelectedId={75} />),
+    },
+    {
+      key: "reverse",
+      label: "عكس إدخال",
+      when: "من الدرج: «عكس الإدخال» لتصحيح إدخال خاطئ. نافذة تطلب السبب (إلزامي) والزر معطّل حتى يُكتب. يُسجَّل قيد معاكس ولا يُحذف الإدخال الأصلي.",
+      node: logistics(<StockReceiptsDemo initialSelectedId={75} initialReverseOpen />),
     },
     ...systemStates({
       loading: logistics(<StockReceiptsDemo mode="loading" />),

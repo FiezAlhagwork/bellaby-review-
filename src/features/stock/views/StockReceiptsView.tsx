@@ -12,20 +12,31 @@ import { Combobox } from "@/components/ui/Combobox";
 import { DateRangePicker, type DateRange } from "@/components/ui/DateRangePicker";
 import { Drawer } from "@/components/ui/Drawer";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { Field } from "@/components/ui/Field";
 import type { Option } from "@/components/ui/OptionList";
-import type { Location, StockReceipt } from "@/lib/api/types";
+import { ReasonDialog } from "@/components/ui/ReasonDialog";
+import { errorMessage } from "@/lib/api/error-messages";
+import type { BatchRef, ItemRef, Location, StockReceipt } from "@/lib/api/types";
 import { dayLabel, type IsoDate } from "@/lib/calendar";
 import { formatDateTime, formatQuantity, isolate } from "@/lib/format";
 import type { Loadable } from "@/lib/loadable";
 import { ReceiptLinesList, receiptTotal } from "../components/ReceiptLinesList";
 
-/** الفلاتر كما يرسلها العقد: `location_id` و`from` و`to` (لا فلتر صنف ولا دفعة في `GET /stock-receipts`). تغيّرها يعيد الأب إلى الصفحة الأولى. */
+/**
+ * الفلاتر كما يرسلها العقد: `location_id` و`from` و`to`، ومعها `item_id` و`batch_id`: غير موجودين في `GET /stock-receipts` بعد، مضافان هنا
+ * بصفة مؤقتة وطلبهما في docs/backend-requests.md. تغيّرها يعيد الأب إلى الصفحة الأولى.
+ */
 export type StockReceiptFilters = {
   locationId: string | null;
+  itemId: string | null;
+  batchId: string | null;
   range: DateRange;
 };
 
-export const noStockReceiptFilters: StockReceiptFilters = { locationId: null, range: { from: null, to: null } };
+export const noStockReceiptFilters: StockReceiptFilters = { locationId: null, itemId: null, batchId: null, range: { from: null, to: null } };
+
+/** نافذة «عكس الإدخال» المفتوحة: السبب المكتوب وحالة الطلب. null = مغلقة. */
+export type ReceiptReversal = { reason: string; loading?: boolean; /** رمز خطأ العقد (422 وغيره) إن رُفض العكس. */ errorCode?: string };
 
 /** صفحة من `GET /stock-receipts` (`Paginated`): الإدخالات و`meta` بأسلوب Laravel. */
 export type StockReceiptsPage = { data: readonly StockReceipt[]; meta: PaginationMeta };
@@ -34,6 +45,10 @@ type StockReceiptsViewProps = {
   receipts: Loadable<StockReceiptsPage>;
   /** `GET /locations`: خيارات فلتر الموقع. */
   locations: readonly Location[];
+  /** خيارات فلتر الصنف. */
+  items: readonly ItemRef[];
+  /** خيارات فلتر الدفعة (دفعات الصنف المختار إن وُجد). */
+  batches: readonly BatchRef[];
   filters: StockReceiptFilters;
   onFiltersChange: (filters: StockReceiptFilters) => void;
   onPageChange: (page: number) => void;
@@ -47,6 +62,17 @@ type StockReceiptsViewProps = {
   expiryAlertDays?: number;
   /** ينقل إلى W04. بدونه لا يظهر زر «إدخال بضاعة». */
   onNewReceipt?: () => void;
+  /**
+   * عكس إدخال خاطئ (`POST /stock-receipts/{id}/reverse`، مضاف مؤقتاً وطلبه في docs/backend-requests.md §8). علم الصلاحية المقترحة
+   * `stock_receipts.reverse`. بدونه لا يظهر الزر في الدرج.
+   */
+  canReverse?: boolean;
+  /** نافذة السبب المفتوحة. null أو غائب = مغلقة. */
+  reversal?: ReceiptReversal | null;
+  onStartReverse?: () => void;
+  onReversalReasonChange?: (reason: string) => void;
+  onConfirmReverse?: () => void;
+  onCancelReverse?: () => void;
   onRetry?: () => void;
 };
 
@@ -59,11 +85,13 @@ function linesPhrase(count: number): string {
 
 /**
  * سجل الإدخال (W05): كل إدخال في صف (الوقت والمرجع والموقع والأصناف ومجموع الكمية والمنفّذ)، يُفتح بالنقر في درج بأسطره ودفعاتها.
- * فلاتر الموقع والفترة، وترقيم. للقراءة فقط: التصحيح لا يتم من هنا (انظر docs/backend-requests.md).
+ * فلاتر الموقع والصنف والفترة (والدفعة في «فلاتر أخرى»)، وترقيم. من الدرج يعكس اللوجستي إدخالاً خاطئاً بسبب إلزامي.
  */
 export function StockReceiptsView({
   receipts,
   locations,
+  items,
+  batches,
   filters,
   onFiltersChange,
   onPageChange,
@@ -73,9 +101,18 @@ export function StockReceiptsView({
   today,
   expiryAlertDays = 60,
   onNewReceipt,
+  canReverse = false,
+  reversal = null,
+  onStartReverse,
+  onReversalReasonChange,
+  onConfirmReverse,
+  onCancelReverse,
   onRetry,
 }: StockReceiptsViewProps) {
   const locationOptions: Option[] = locations.flatMap((location) => (location.id !== undefined && location.name ? [{ value: String(location.id), label: location.name }] : []));
+
+  const itemOptions: Option[] = items.flatMap((item) => (item.id !== undefined && item.name ? [{ value: String(item.id), label: item.name }] : []));
+  const batchOptions: Option[] = batches.flatMap((batch) => (batch.id !== undefined && batch.batch_no ? [{ value: String(batch.id), label: batch.batch_no }] : []));
 
   const set = (patch: Partial<StockReceiptFilters>) => onFiltersChange({ ...filters, ...patch });
   const clearAll = () => onFiltersChange(noStockReceiptFilters);
@@ -85,6 +122,8 @@ export function StockReceiptsView({
 
   const active: ActiveFilter[] = [
     ...(filters.locationId ? [{ key: "location", label: `الموقع: ${locationOptions.find((o) => o.value === filters.locationId)?.label ?? ""}`, onRemove: () => set({ locationId: null }) }] : []),
+    ...(filters.itemId ? [{ key: "item", label: `الصنف: ${itemOptions.find((o) => o.value === filters.itemId)?.label ?? ""}`, onRemove: () => set({ itemId: null, batchId: null }) }] : []),
+    ...(filters.batchId ? [{ key: "batch", label: `الدفعة: ${batchOptions.find((o) => o.value === filters.batchId)?.label ?? ""}`, onRemove: () => set({ batchId: null }) }] : []),
     ...(rangeLabel ? [{ key: "range", label: rangeLabel, onRemove: () => set({ range: { from: null, to: null } }) }] : []),
   ];
 
@@ -177,8 +216,22 @@ export function StockReceiptsView({
               onValueChange={(locationId) => set({ locationId })}
               clearable
             />,
+            <Combobox
+              key="item"
+              aria-label="الصنف"
+              placeholder="كل الأصناف"
+              options={itemOptions}
+              value={filters.itemId}
+              onValueChange={(itemId) => set({ itemId, batchId: null })}
+              clearable
+            />,
             <DateRangePicker key="range" aria-label="الفترة" placeholder="كل الأوقات" value={filters.range} onValueChange={(range) => set({ range })} max={today} today={today} />,
           ]}
+          moreFilters={
+            <Field label="الدفعة" hint="دفعات الصنف المختار إن اخترت صنفاً.">
+              <Combobox aria-label="الدفعة" placeholder="كل الدفعات" options={batchOptions} value={filters.batchId} onValueChange={(batchId) => set({ batchId })} clearable />
+            </Field>
+          }
           active={active}
           onClearAll={clearAll}
         />
@@ -197,7 +250,19 @@ export function StockReceiptsView({
         {receipts.status === "ready" ? <Pagination meta={receipts.data.meta} onPageChange={onPageChange} onPerPageChange={onPerPageChange} /> : null}
       </div>
 
-      <Drawer open={selected !== null} onOpenChange={(open) => (open ? undefined : onSelect(null))} title={selected?.reference ?? "تفاصيل الإدخال"} description={selected?.received_at ? formatDateTime(selected.received_at) : undefined} size="md">
+      <Drawer open={selected !== null} onOpenChange={(open) => (open ? undefined : onSelect(null))} title={selected?.reference ?? "تفاصيل الإدخال"}
+        description={selected?.received_at ? formatDateTime(selected.received_at) : undefined}
+        size="md"
+        actions={
+          canReverse && selected
+            ? [
+                <Button key="reverse" variant="danger" onClick={onStartReverse}>
+                  عكس الإدخال
+                </Button>,
+              ]
+            : undefined
+        }
+      >
         {selected ? (
           <div className="flex flex-col gap-6">
             <DescriptionList
@@ -214,6 +279,20 @@ export function StockReceiptsView({
           </div>
         ) : null}
       </Drawer>
+
+      <ReasonDialog
+        open={reversal !== null}
+        onOpenChange={(open) => (open ? undefined : onCancelReverse?.())}
+        title={`عكس الإدخال ${selected?.reference ?? ""}؟`}
+        description="يُسجَّل قيد معاكس بكميات هذا الإدخال، ولا يُحذف الإدخال الأصلي."
+        confirmLabel="عكس الإدخال"
+        reason={reversal?.reason ?? ""}
+        onReasonChange={(reason) => onReversalReasonChange?.(reason)}
+        error={reversal?.errorCode ? errorMessage(reversal.errorCode) : undefined}
+        danger
+        loading={reversal?.loading}
+        onConfirm={() => onConfirmReverse?.()}
+      />
     </>
   );
 }
