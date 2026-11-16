@@ -115,7 +115,7 @@ export const navItems: readonly NavItem[] = [
   { key: "agent-returns-warehouse", label: "إرجاعات الوكلاء", icon: ArrowUUpLeft, screen: "W13", group: "stock", permission: "agent_returns.receive" },
   { key: "stock-counts", label: "الجرد", icon: ListChecks, screen: "W14", group: "stock", permission: ["stock_counts.create", "stock_counts.count"] },
   { key: "batches", label: "الدفعات", icon: Barcode, screen: "W17", group: "stock", permission: "batches.suspend" },
-  { key: "warehouse-damage", label: "التالف", icon: Warning, screen: "W21", group: "stock", permission: "damage.view" },
+  { key: "warehouse-damage", label: "التالف", icon: Warning, screen: "W21", group: "stock", permission: "damage.create" },
   { key: "scientific-sample-balances", label: "أرصدة العينات", icon: Cube, screen: "M17", group: "stock", permission: "sample_stock.view" },
   { key: "scientific-sample-requests", label: "طلبات العينات", icon: Tag, screen: "M18", group: "stock", permission: "sample_requests.create" },
 
@@ -134,7 +134,7 @@ export const navItems: readonly NavItem[] = [
   { key: "site-messages", label: "رسائل الموقع", icon: ChatCircleText, screen: "M11", group: "sales", permission: "site_messages.view" },
 
   // الفريق
-  { key: "daily-reports", label: "التقارير اليومية", icon: Notebook, screen: "S02", group: "team", permission: "daily_reports.rate" },
+  { key: "daily-reports", label: "التقارير اليومية", icon: Notebook, screen: "S02", group: "team", permission: ["daily_reports.view", "daily_reports.rate"] },
   { key: "attendance", label: "الدوام", icon: Clock, screen: "S04", group: "team", permission: "attendance.view" },
   { key: "visits", label: "الزيارات", icon: MapPin, screen: "S05", group: "team", permission: ["visits.view", "visits.decide"] },
   { key: "reps", label: "المندوبون", icon: UserList, screen: "M13", group: "team", permission: "reps.view" },

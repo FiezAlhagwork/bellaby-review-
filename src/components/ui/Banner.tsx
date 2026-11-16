@@ -37,6 +37,8 @@ type BannerProps = {
   kind?: BannerKind;
   /** عنوان قصير بخط عريض فوق النص. */
   title?: string;
+  /** أيقونة خاصة بدل أيقونة النوع (السرية: ShieldCheck). */
+  icon?: Icon;
   /** النص: ما حدث وما أثره. */
   children: ReactNode;
   /** إجراء اختياري في النهاية (زر ghost صغير مثلاً). */
@@ -50,8 +52,8 @@ type BannerProps = {
  * التنبيه (DESIGN.md 9.10): شريط بعرض المحتوى لحالة تخص الصفحة كلها: دفعة موقوفة، شهر مغلق، سجل مقفل، تفويض نشط، قرار سبقك.
  * لا يُستعمل لخطأ في حقل (تحت الحقل) ولا لتأكيد نجاح عابر (Toast).
  */
-export function Banner({ kind = "info", title, children, action, onClose, className }: BannerProps) {
-  const BannerIcon = kindIcon[kind];
+export function Banner({ kind = "info", title, icon, children, action, onClose, className }: BannerProps) {
+  const BannerIcon = icon ?? kindIcon[kind];
   const edge = useCaptureClass("border-s-3", "border-e-3");
 
   return (

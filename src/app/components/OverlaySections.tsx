@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import { ConfidentialBanner } from "@/components/data/ConfidentialBanner";
 import { Banner, type BannerKind } from "@/components/ui/Banner";
 import { BottomSheet, Dialog } from "@/components/ui/Dialog";
 import { Button } from "@/components/ui/Button";
@@ -83,6 +84,10 @@ export function BannerSection() {
             { label: "قرار سبقك", node: <Banner kind="neutral" title="قرّر غيرك أولاً">اعتمد سامر الحلبي هذا الطلب في 9 تشرين الثاني الساعة 14:05.</Banner> },
           ]}
         />
+      </GalleryGroup>
+
+      <GalleryGroup title="السرية (ConfidentialBanner)">
+        <StateStack alignLabel="top" states={[{ label: "ملف التحقيق والنزاع", node: <ConfidentialBanner /> }]} />
       </GalleryGroup>
     </GallerySection>
   );

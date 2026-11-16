@@ -7,7 +7,7 @@ import { CheckboxSection, RadioSection, SegmentedSection, SwitchSection } from "
 import { BannerSection, DialogSection, ToastSection } from "./OverlaySections";
 import { CardSection, DrawerSection, FloatingSection, PersonSection, TabsSection } from "./SurfaceSections";
 import { LayoutPrimitivesSection, ShellSection } from "./LayoutSections";
-import { ChartSection, DataTableSection, FilterBarSection, KpiSection, PaginationSection } from "./DataSections";
+import { ChartSection, DataTableSection, FilterBarSection, KpiSection, MapSection, PaginationSection } from "./DataSections";
 import { BatchEntrySection, BatchSection, LineItemsSection } from "./StockSections";
 import { ActivitySection, DecisionSection, NotificationSection, StageSection } from "./ProcessSections";
 import { BadgeSection, SkeletonSection, SpinnerSection, StatusBadgeSection } from "./DisplaySections";
@@ -56,6 +56,7 @@ const sections: readonly { id: string; node: ReactNode }[] = [
   { id: "filter-bar", node: <FilterBarSection /> },
   { id: "kpi", node: <KpiSection /> },
   { id: "chart", node: <ChartSection /> },
+  { id: "map", node: <MapSection /> },
   { id: "batch", node: <BatchSection /> },
   { id: "line-items", node: <LineItemsSection /> },
   { id: "batch-entry", node: <BatchEntrySection /> },

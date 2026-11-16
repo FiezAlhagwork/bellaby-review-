@@ -4796,6 +4796,3527 @@
         "لا وقت للإيقاف في التقرير (suspended_at مطلوب): §22.4.",
         "المجاميع (الباقي، المسلَّم، الموزَّع) تحسبها الواجهة وهي أعداد صحيحة."
       ]
+    },
+    "W20": {
+      "id": "W20",
+      "name": "تقرير تالف المستودع",
+      "group": "warehouse",
+      "design_source": {
+        "view": "src/features/damage/views/DamageReportFormView.tsx",
+        "page": "src/app/warehouse/w20-damage-report/page.tsx"
+      },
+      "route": "/dashboard/warehouse/damage/new",
+      "api": [
+        {
+          "id": "getLists",
+          "method": "GET",
+          "path": "/lists",
+          "request": {},
+          "success": {
+            "status": 200,
+            "model": "damage_reasons: ListEntry[]"
+          },
+          "note": "خيارات «السبب» (is_active فقط، بترتيب order)"
+        },
+        {
+          "id": "getWarehouseLocations",
+          "method": "GET",
+          "path": "/locations",
+          "request": {
+            "type": "WAREHOUSE"
+          },
+          "success": {
+            "status": 200,
+            "model": "Location[]"
+          }
+        },
+        {
+          "id": "getLocationBatches",
+          "method": "GET",
+          "path": "/stock/balances",
+          "request": {
+            "location_id": "form.locationId",
+            "group_by": "batch",
+            "item_id": "الصنف المختار"
+          },
+          "success": {
+            "status": 200,
+            "model": "BalanceLine[]"
+          },
+          "note": "متاح كل دفعة في الموقع المختار. يُعاد عند تبديل الموقع"
+        },
+        {
+          "id": "uploadDamagePhoto",
+          "method": "POST",
+          "path": "/uploads",
+          "request": {
+            "file": "multipart",
+            "purpose": "damage_photo"
+          },
+          "success": {
+            "status": 201,
+            "model": "Upload { upload_id, url, mime, size_bytes }"
+          },
+          "errors": [
+            {
+              "status": 413,
+              "code": "file_too_large"
+            },
+            {
+              "status": 422,
+              "code": "validation_failed"
+            }
+          ],
+          "note": "لكل ملف على حدة: attachments[].status uploading ← done أو error"
+        },
+        {
+          "id": "createDamageReport",
+          "method": "POST",
+          "path": "/damage-reports",
+          "request": {
+            "location_id": "form.locationId",
+            "reason_id": "form.reasonId",
+            "note": "form.note (اختيارية، 500 حرف)",
+            "attachments": "form.attachments (المرفوعة وحدها) ← upload_id",
+            "lines": "form.lines ← { item_id, batch_id, quantity ≥ 1 }"
+          },
+          "success": {
+            "status": 201,
+            "model": "DamageReport (PENDING)"
+          },
+          "errors": [
+            {
+              "status": 422,
+              "code": "validation_failed",
+              "note": "errors.reason_id وlines.N.quantity… تحت حقولها"
+            },
+            {
+              "status": 403,
+              "code": "forbidden"
+            }
+          ]
+        }
+      ],
+      "view_props": {
+        "options": "Loadable<{ locations, items, reasons }> ← getWarehouseLocations + GET /items + getLists",
+        "batches": "Record<itemId, Loadable<EditorBatch[]>> ← getLocationBatches",
+        "form / onFormChange": "state في الحاوية { locationId, reasonId, note, lines, attachments }",
+        "errors / submitError": "errors من validation_failed كما هي، ورمز 422 بلا حقل",
+        "onFilesSelect / onFilesReject / onFileRemove / attachmentError": "uploadDamagePhoto لكل ملف صالح (damageAttachmentLimits)، ورفض النوع والحجم قبل الرفع بـ fileRejectionMessage",
+        "saved": "DamageReport ← createDamageReport (يعرض الملخص بدل النموذج)",
+        "onSubmit": "createDamageReport",
+        "onReportAnother / onOpenReports": "يصفّر النموذج / ينقل إلى W21"
+      },
+      "permissions": [
+        "damage.create (مؤكَّد في العقد: اللوجستي من المستودع، والوكيل من موقعه في A14)"
+      ],
+      "components": [
+        "LineItemsEditor (allowSuspended)",
+        "FileUpload",
+        "AttachmentList",
+        "StockLine",
+        "Select",
+        "Textarea",
+        "Field",
+        "Card",
+        "Banner",
+        "StatusBadge"
+      ],
+      "states": [
+        {
+          "key": "W20-empty",
+          "label": "فارغ",
+          "drawn": true,
+          "when": {
+            "data": "form بلا أسطر مكتملة"
+          },
+          "ui": [
+            "المستودع الافتراضي وسطر فارغ",
+            "الزر معطّل وسببه ظاهر"
+          ]
+        },
+        {
+          "key": "W20-filled",
+          "label": "معبّأ",
+          "drawn": true,
+          "when": {
+            "data": "location + reason + أسطر مكتملة"
+          },
+          "ui": [
+            "الدفعة الأقرب انتهاءً مختارة تلقائياً",
+            "صور مرفوعة",
+            "الزر فعّال"
+          ]
+        },
+        {
+          "key": "W20-uploading",
+          "label": "مرفق قيد الرفع",
+          "drawn": true,
+          "when": {
+            "data": "attachments.some(status === uploading)"
+          },
+          "ui": [
+            "شريط تقدّم على الصف",
+            "الزر معطّل: «انتظر اكتمال رفع المرفقات»"
+          ]
+        },
+        {
+          "key": "W20-suspended-batch",
+          "label": "دفعة موقوفة",
+          "drawn": true,
+          "when": {
+            "data": "دفعة SUSPENDED في الأسطر"
+          },
+          "ui": [
+            "الدفعة معلَّمة «موقوفة» في اسمها",
+            "Banner info: يُسمح بتوثيق تلفها",
+            "الزر فعّال"
+          ]
+        },
+        {
+          "key": "W20-insufficient",
+          "label": "رصيد غير كافٍ",
+          "drawn": true,
+          "when": {
+            "data": "quantity > available"
+          },
+          "ui": [
+            "خطأ فوري «أكبر من المتاح» تحت السطر",
+            "الزر معطّل وسببه ظاهر"
+          ]
+        },
+        {
+          "key": "W20-validation-failed",
+          "label": "خطأ من الخادم",
+          "drawn": true,
+          "when": {
+            "api": "createDamageReport",
+            "status": 422,
+            "codes": [
+              "validation_failed"
+            ]
+          },
+          "ui": [
+            "نص الخادم تحت السبب وتحت السطر",
+            "يختفي بعد أول تعديل"
+          ]
+        },
+        {
+          "key": "W20-submitted",
+          "label": "معلّق بعد الرفع",
+          "drawn": true,
+          "when": {
+            "api": "createDamageReport",
+            "status": 201,
+            "data": "saved.status === PENDING"
+          },
+          "ui": [
+            "Banner نجاح «رُفع التقرير» برقمه وحالة «بانتظار القرار»",
+            "الموقع والسبب والأسطر والمرفقات",
+            "«تقرير آخر» و«تقارير التالف»"
+          ]
+        },
+        {
+          "key": "W20-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "getLists",
+            "data": "loading"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "W20-error",
+          "label": "تعذّر التحميل",
+          "drawn": true,
+          "when": {
+            "api": "getLists",
+            "status": 429,
+            "codes": [
+              "too_many_requests"
+            ]
+          },
+          "ui": [
+            "ErrorState مع «إعادة المحاولة»"
+          ]
+        },
+        {
+          "key": "W20-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "createDamageReport",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "«تقارير التالف» بعد الرفع",
+          "to": "W21"
+        }
+      ],
+      "after_mutation": {
+        "createDamageReport": "إبطال قائمة W21، وإشعار مدير المبيعات (سؤال §23.6)"
+      },
+      "notes": [
+        "حدود المرفقات مؤقتة في الواجهة (صور، حتى 5، 10MB): §23.2.",
+        "لا نكتب أن الرصيد تغيّر بعد الرفع: §23.3.",
+        "تبديل الموقع بعد اختيار أصناف يفرغ الأسطر (متاح الدفعات تغيّر).",
+        "الصفحة (خادم) لا تستدعي دوال من ملفات الـ view (عميل): النماذج الابتدائية في mocks تُبنى حرفياً."
+      ]
+    },
+    "W21": {
+      "id": "W21",
+      "name": "تقارير تالف المستودع",
+      "group": "warehouse",
+      "design_source": {
+        "view": "src/features/damage/views/DamageReportsListView.tsx",
+        "page": "src/app/warehouse/w21-damage-reports/page.tsx"
+      },
+      "route": "/dashboard/warehouse/damage",
+      "api": [
+        {
+          "id": "listDamageReports",
+          "method": "GET",
+          "path": "/damage-reports",
+          "request": {
+            "page": "state الصفحة",
+            "per_page": "state (20 افتراضي، 50، 100)",
+            "status": "filters.status (PENDING | DAMAGED | REJECTED؛ RESTOCKED لا تنطبق)",
+            "location_id": "filters.locationId"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<DamageReport>"
+          }
+        }
+      ],
+      "view_props": {
+        "reports": "Loadable<{ data: DamageReport[], meta }> ← listDamageReports",
+        "locations": "GET /locations?type=WAREHOUSE (فلتر الموقع)",
+        "filters / onFiltersChange": "state في الحاوية، وأي تغيير يعيد الصفحة إلى 1",
+        "onPageChange / onPerPageChange": "state الصفحة وper_page",
+        "canCreate": "me.permissions يحوي damage.create",
+        "onCreate": "ينقل إلى W20",
+        "onOpenReport": "ينقل إلى M08 للقراءة (لم تُرسم بعد)"
+      },
+      "permissions": [
+        "damage.create (مفتاح عنصر القائمة وزر «تقرير تالف»، مؤكَّد)",
+        "مفتاح قراءة GET /damage-reports غير مذكور في العقد"
+      ],
+      "components": [
+        "DataTable",
+        "FilterBar",
+        "Combobox",
+        "Pagination",
+        "StatusBadge"
+      ],
+      "states": [
+        {
+          "key": "W21-default",
+          "label": "كل التقارير",
+          "drawn": true,
+          "when": {
+            "data": "الفلاتر فارغة وفي الصفحة صفوف"
+          },
+          "ui": [
+            "جدول: التاريخ، الأصناف (الأول و«وصنف آخر»)، الموقع، السبب، الحالة، المسؤولية",
+            "المسؤولية «—» لغير المقبول",
+            "سطر «المسؤولية للعلم، ولا ذمة مالية عليها»"
+          ]
+        },
+        {
+          "key": "W21-pending-filter",
+          "label": "فلتر المعلّقة",
+          "drawn": true,
+          "when": {
+            "data": "filters.status === PENDING"
+          },
+          "ui": [
+            "شارة «الحالة: بانتظار القرار» بزر إزالة",
+            "المعلّقة وحدها"
+          ]
+        },
+        {
+          "key": "W21-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "listDamageReports",
+            "data": "loading"
+          },
+          "ui": [
+            "Skeleton بشكل الجدول"
+          ]
+        },
+        {
+          "key": "W21-empty",
+          "label": "لا تقارير",
+          "drawn": true,
+          "when": {
+            "api": "listDamageReports",
+            "data": "meta.total === 0 بلا فلاتر"
+          },
+          "ui": [
+            "EmptyState «لا تقارير تالف بعد» مع «تقرير تالف»"
+          ]
+        },
+        {
+          "key": "W21-error",
+          "label": "تعذّر التحميل",
+          "drawn": true,
+          "when": {
+            "api": "listDamageReports",
+            "status": 429,
+            "codes": [
+              "too_many_requests"
+            ]
+          },
+          "ui": [
+            "ErrorState مع «إعادة المحاولة»"
+          ]
+        },
+        {
+          "key": "W21-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "listDamageReports",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "click صف",
+          "to": "M08",
+          "pass": {
+            "id": "row.id"
+          },
+          "note": "للقراءة للوجستي؛ M08 لم تُرسم بعد"
+        },
+        {
+          "on": "click «تقرير تالف»",
+          "to": "W20"
+        }
+      ],
+      "after_mutation": {},
+      "notes": [
+        "الترتيب من الأحدث إلى الأقدم (ترتيب الخادم: §24.7).",
+        "تسميات المسؤولية العربية من components/data/responsibility.ts للتأكيد: §24.5."
+      ]
+    },
+    "S01": {
+      "id": "S01",
+      "name": "لوحة السوبرفايزر",
+      "group": "supervision",
+      "design_source": {
+        "view": "src/features/supervision/views/SupervisorDashboardView.tsx",
+        "page": "src/app/supervision/s01-dashboard/page.tsx"
+      },
+      "route": "/dashboard/supervisor",
+      "api": [
+        {
+          "id": "getDashboardSummary",
+          "method": "GET",
+          "path": "/dashboard/summary",
+          "request": {},
+          "success": {
+            "status": 200,
+            "model": "DashboardSummary (بلا حقول في العقد)"
+          },
+          "note": "المؤشرات تُحسب الآن من القوائم أدناه (§25.1)"
+        },
+        {
+          "id": "listVisitsToday",
+          "method": "GET",
+          "path": "/visits",
+          "request": {
+            "from": "اليوم",
+            "to": "اليوم"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<Visit>"
+          },
+          "note": "المنفَّذة اليوم"
+        },
+        {
+          "id": "listAttendanceToday",
+          "method": "GET",
+          "path": "/attendance-sessions",
+          "request": {
+            "from": "اليوم",
+            "to": "اليوم"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<AttendanceSession>"
+          },
+          "note": "الحاضرون ومجموع planned_visits"
+        },
+        {
+          "id": "listPendingReports",
+          "method": "GET",
+          "path": "/daily-reports",
+          "request": {
+            "rated": "false"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<DailyReport>"
+          },
+          "note": "العدد وأقرب rating_due_at"
+        },
+        {
+          "id": "listPendingLeaves",
+          "method": "GET",
+          "path": "/leaves",
+          "request": {
+            "status": "PENDING"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<Leave>"
+          }
+        }
+      ],
+      "view_props": {
+        "overview": "Loadable<SupervisorOverview> ← تجمعه الحاوية: visits{done, planned}، attendance{present, total}، pendingReports{count, nextDueAt}، pendingLeaves، alerts[]",
+        "now": "الآن (ISO UTC) للموعد المتبقي",
+        "onOpen": "ينقل: visits ← S05، attendance ← S04، reports ← S02، leaves ← G18، alerts ← S04"
+      },
+      "permissions": [
+        "dashboard.supervisor (مؤقت §1)"
+      ],
+      "components": [
+        "KpiTile",
+        "DataTable",
+        "Grid",
+        "Section",
+        "EmptyState",
+        "Badge"
+      ],
+      "states": [
+        {
+          "key": "S01-default",
+          "label": "الافتراضي",
+          "drawn": true,
+          "when": {
+            "data": "alerts.length === 0"
+          },
+          "ui": [
+            "خمس KpiTile",
+            "EmptyState «لا تنبيهات دوام»"
+          ]
+        },
+        {
+          "key": "S01-attendance-alerts",
+          "label": "تنبيهات دوام",
+          "drawn": true,
+          "when": {
+            "data": "alerts.length > 0"
+          },
+          "ui": [
+            "جدول: المندوب، يوم العمل، «دوام ناقص» أو «غياب»"
+          ]
+        },
+        {
+          "key": "S01-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "getDashboardSummary",
+            "data": "loading"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "S01-error",
+          "label": "تعذّر التحميل",
+          "drawn": true,
+          "when": {
+            "api": "getDashboardSummary",
+            "status": 429,
+            "codes": [
+              "too_many_requests"
+            ]
+          },
+          "ui": [
+            "ErrorState مع «إعادة المحاولة»"
+          ]
+        },
+        {
+          "key": "S01-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "getDashboardSummary",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "click خلية",
+          "to": "S05 | S04 | S02 | G18"
+        }
+      ],
+      "after_mutation": {},
+      "notes": [
+        "النطاق (محافظات السوبرفايزر) يُفحص على الخادم في كل طلب.",
+        "المؤشرات محسوبة لأن DashboardSummary بلا حقول: §25.1."
+      ]
+    },
+    "S02": {
+      "id": "S02",
+      "name": "التقارير اليومية",
+      "group": "supervision",
+      "design_source": {
+        "view": "src/features/daily-reports/views/DailyReportsListView.tsx",
+        "page": "src/app/supervision/s02-daily-reports/page.tsx"
+      },
+      "route": "/dashboard/supervision/daily-reports",
+      "api": [
+        {
+          "id": "listDailyReports",
+          "method": "GET",
+          "path": "/daily-reports",
+          "request": {
+            "page": "state الصفحة",
+            "per_page": "state (20 افتراضي، 50، 100)",
+            "rep_id": "filters.repId (معرّف المستخدم)",
+            "from": "filters.range.from",
+            "to": "filters.range.to",
+            "rated": "filters.rated (true | false)"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<DailyReport> + rating_due_at (غير موجود في العقد: §26.2)"
+          }
+        },
+        {
+          "id": "listRepLocations",
+          "method": "GET",
+          "path": "/locations",
+          "request": {
+            "type": "REP"
+          },
+          "success": {
+            "status": 200,
+            "model": "Location[]"
+          },
+          "note": "خيارات فلتر المندوب (location.user.id = rep_id)"
+        }
+      ],
+      "view_props": {
+        "reports": "Loadable<{ data: DailyReportRow[], meta }> ← listDailyReports",
+        "reps": "listRepLocations",
+        "filters / onFiltersChange": "state في الحاوية، وأي تغيير يعيد الصفحة إلى 1",
+        "canRate": "me.permissions يحوي daily_reports.rate (السوبرفايزر)؛ بدونها قراءة فقط",
+        "now / today": "الآن (UTC) واليوم (دمشق)",
+        "onOpenReport": "ينقل إلى S03"
+      },
+      "permissions": [
+        "daily_reports.rate (مؤكَّد: يقيّم السوبرفايزر)",
+        "daily_reports.view (مؤقت للقراءة: §26.1)"
+      ],
+      "components": [
+        "DataTable",
+        "FilterBar",
+        "Combobox",
+        "DateRangePicker",
+        "Pagination",
+        "Badge"
+      ],
+      "states": [
+        {
+          "key": "S02-supervisor",
+          "label": "السوبرفايزر",
+          "drawn": true,
+          "when": {
+            "data": "canRate"
+          },
+          "ui": [
+            "بانتظار التقييم أولاً (ترتيب الخادم §26.3)",
+            "«متبقٍّ N ساعات» أو «متأخر» من rating_due_at",
+            "المقيَّم بدرجته من السلّم الموحّد"
+          ]
+        },
+        {
+          "key": "S02-read-only",
+          "label": "للقراءة فقط",
+          "drawn": true,
+          "when": {
+            "data": "!canRate"
+          },
+          "ui": [
+            "كل المندوبين من الأحدث",
+            "بلا وقت متبقٍّ ولا تقييم"
+          ]
+        },
+        {
+          "key": "S02-empty",
+          "label": "لا تقارير",
+          "drawn": true,
+          "when": {
+            "api": "listDailyReports",
+            "data": "meta.total === 0"
+          },
+          "ui": [
+            "EmptyState"
+          ]
+        },
+        {
+          "key": "S02-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "listDailyReports",
+            "data": "loading"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "S02-error",
+          "label": "تعذّر التحميل",
+          "drawn": true,
+          "when": {
+            "api": "listDailyReports",
+            "status": 429,
+            "codes": [
+              "too_many_requests"
+            ]
+          },
+          "ui": [
+            "ErrorState مع «إعادة المحاولة»"
+          ]
+        },
+        {
+          "key": "S02-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "listDailyReports",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "click صف",
+          "to": "S03",
+          "pass": {
+            "id": "row.id"
+          }
+        }
+      ],
+      "after_mutation": {},
+      "notes": [
+        "اختيار «الحالة» يرسل rated=true|false.",
+        "rating_due_at يحسبه الخادم (العطل وساعات العمل): §26.2."
+      ]
+    },
+    "S03": {
+      "id": "S03",
+      "name": "تقييم التقرير اليومي",
+      "group": "supervision",
+      "design_source": {
+        "view": "src/features/daily-reports/views/DailyReportDetailsView.tsx",
+        "page": "src/app/supervision/s03-daily-report/page.tsx"
+      },
+      "route": "/dashboard/supervision/daily-reports/[id]",
+      "api": [
+        {
+          "id": "getDailyReport",
+          "method": "GET",
+          "path": "/daily-reports/{id}",
+          "request": {
+            "id": "معامل المسار"
+          },
+          "success": {
+            "status": 200,
+            "model": "DailyReport"
+          },
+          "errors": [
+            {
+              "status": 404,
+              "code": "not_found"
+            }
+          ]
+        },
+        {
+          "id": "listReportVisits",
+          "method": "GET",
+          "path": "/visits",
+          "request": {
+            "rep_id": "report.rep.id",
+            "from": "report.work_date",
+            "to": "report.work_date"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<Visit>"
+          },
+          "note": "زيارات اليوم (جدول الزيارات)"
+        },
+        {
+          "id": "rateDailyReport",
+          "method": "POST",
+          "path": "/daily-reports/{id}/rating",
+          "request": {
+            "score": "draft.score (RatingScale: 100|80|60|40|20)",
+            "comment": "draft.comment (اختيارية)"
+          },
+          "success": {
+            "status": 200,
+            "model": "DailyReport (rating مقفل)"
+          },
+          "errors": [
+            {
+              "status": 409,
+              "code": "rating_locked"
+            },
+            {
+              "status": 422,
+              "code": "validation_failed"
+            },
+            {
+              "status": 403,
+              "code": "forbidden"
+            }
+          ],
+          "note": "يُقفل عند الحفظ، فتسبقه نافذة تأكيد"
+        },
+        {
+          "id": "addReportNote",
+          "method": "POST",
+          "path": "/daily-reports/{id}/notes",
+          "request": {
+            "text": "noteDialog.text (إلزامي، حتى 2000 حرف)"
+          },
+          "success": {
+            "status": 201,
+            "model": "DailyReport"
+          },
+          "errors": [
+            {
+              "status": 422,
+              "code": "validation_failed"
+            }
+          ]
+        }
+      ],
+      "view_props": {
+        "report": "Loadable<DailyReportRow> ← getDailyReport",
+        "visits": "Loadable<Visit[]> ← listReportVisits",
+        "canRate": "me.permissions يحوي daily_reports.rate",
+        "draft / onDraftChange": "{ score, comment } في حالة الحاوية",
+        "onSave / confirming / onConfirmSave / onDismissConfirm / saving": "يفتح تأكيد القفل ← rateDailyReport ثم إعادة جلب التقرير",
+        "saveError": "رمز الخطأ (rating_locked…) في شريط فوق التقييم",
+        "noteDialog / onStartNote / onNoteTextChange / onConfirmNote / onDismissNote": "نافذة الملاحظة ← addReportNote ثم إعادة الجلب",
+        "now": "الآن (UTC) للمتبقي من المهلة"
+      },
+      "permissions": [
+        "daily_reports.rate (التقييم والملاحظة: مؤكَّد)",
+        "مفتاح قراءة GET /daily-reports/{id} غير مذكور"
+      ],
+      "components": [
+        "RadioGroup/Radio",
+        "ConfirmDialog",
+        "Dialog",
+        "DescriptionList",
+        "DataTable",
+        "ActivityLog",
+        "Banner",
+        "Textarea",
+        "rating-scale.ts"
+      ],
+      "states": [
+        {
+          "key": "S03-default",
+          "label": "بانتظار التقييم",
+          "drawn": true,
+          "when": {
+            "data": "rating === null && canRate"
+          },
+          "ui": [
+            "بيانات + زيارات + ملخص",
+            "Banner المتبقي من المهلة",
+            "Radio بالسلّم الخماسي، والزر معطّل وسببه «اختر درجة التقييم»"
+          ]
+        },
+        {
+          "key": "S03-confirm",
+          "label": "تأكيد الحفظ",
+          "drawn": true,
+          "when": {
+            "data": "confirming"
+          },
+          "ui": [
+            "ConfirmDialog: «التقييم يُقفل بعد الحفظ»"
+          ]
+        },
+        {
+          "key": "S03-rated",
+          "label": "مقيَّم ومقفل",
+          "drawn": true,
+          "when": {
+            "data": "rating !== null"
+          },
+          "ui": [
+            "Banner «التقييم مقفل»",
+            "الدرجة ومن قيّم ومتى وضمن المهلة",
+            "«إضافة ملاحظة» وسجل الملاحظات"
+          ]
+        },
+        {
+          "key": "S03-late-rating",
+          "label": "متأخر",
+          "drawn": true,
+          "when": {
+            "data": "ratingDeadline(rating_due_at).late"
+          },
+          "ui": [
+            "شارة «متأخر» وBanner تحذير",
+            "يُسجَّل التقييم بعد المهلة"
+          ]
+        },
+        {
+          "key": "S03-rating-locked",
+          "label": "مقيَّم مسبقاً (409)",
+          "drawn": true,
+          "when": {
+            "api": "rateDailyReport",
+            "status": 409,
+            "codes": [
+              "rating_locked"
+            ]
+          },
+          "ui": [
+            "Banner خطر بنص الخطأ فوق التقييم"
+          ]
+        },
+        {
+          "key": "S03-not-found",
+          "label": "غير موجود",
+          "drawn": true,
+          "when": {
+            "api": "getDailyReport",
+            "status": 404,
+            "codes": [
+              "not_found"
+            ]
+          },
+          "ui": [
+            "NotFoundState مع زر رجوع"
+          ]
+        },
+        {
+          "key": "S03-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "getDailyReport",
+            "data": "loading"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "S03-error",
+          "label": "تعذّر التحميل",
+          "drawn": true,
+          "when": {
+            "api": "getDailyReport",
+            "status": 429,
+            "codes": [
+              "too_many_requests"
+            ]
+          },
+          "ui": [
+            "ErrorState مع «إعادة المحاولة»"
+          ]
+        },
+        {
+          "key": "S03-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "getDailyReport",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "رجوع",
+          "to": "S02"
+        }
+      ],
+      "after_mutation": {
+        "rateDailyReport": "إعادة جلب التقرير (rating مقفل) وإبطال قائمة S02 ولوحة S01",
+        "addReportNote": "إعادة جلب التقرير"
+      },
+      "notes": [
+        "القرار 9: يُقفل التقييم عند الحفظ، وللملاحظات بعده فقط.",
+        "الزيارات من GET /visits لا من التقرير: §27.1."
+      ]
+    },
+    "S04": {
+      "id": "S04",
+      "name": "الدوام",
+      "group": "supervision",
+      "design_source": {
+        "view": "src/features/attendance/views/AttendanceSessionsView.tsx",
+        "page": "src/app/supervision/s04-attendance/page.tsx"
+      },
+      "route": "/dashboard/supervision/attendance",
+      "api": [
+        {
+          "id": "listAttendanceSessions",
+          "method": "GET",
+          "path": "/attendance-sessions",
+          "request": {
+            "page": "state الصفحة",
+            "per_page": "state (20 افتراضي، 50، 100)",
+            "rep_id": "filters.repId",
+            "from": "filters.range.from",
+            "to": "filters.range.to",
+            "close_source": "AUTO حين filters.view === auto-closed"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<AttendanceSession> + صفوف الغياب (غير موجودة في العقد: §28.2)"
+          }
+        },
+        {
+          "id": "listRepLocations",
+          "method": "GET",
+          "path": "/locations",
+          "request": {
+            "type": "REP"
+          },
+          "success": {
+            "status": 200,
+            "model": "Location[]"
+          }
+        }
+      ],
+      "view_props": {
+        "rows": "Loadable<{ data: AttendanceRow[], meta }> ← listAttendanceSessions + الغياب",
+        "reps": "listRepLocations",
+        "filters / onFiltersChange": "{ repId, range, view } والتغيير يعيد الصفحة إلى 1",
+        "today": "اليوم (دمشق) حدّاً للفترة"
+      },
+      "permissions": [
+        "attendance.view (مؤقت §1)"
+      ],
+      "components": [
+        "DataTable",
+        "FilterBar",
+        "Combobox",
+        "DateRangePicker",
+        "Pagination",
+        "Badge"
+      ],
+      "states": [
+        {
+          "key": "S04-default",
+          "label": "الافتراضي",
+          "drawn": true,
+          "when": {
+            "data": "filters.view === all"
+          },
+          "ui": [
+            "جلسات وغياب من الأحدث",
+            "العلامات: إغلاق آلي · عطلة · دوام ناقص · غياب · جارية"
+          ]
+        },
+        {
+          "key": "S04-short-day",
+          "label": "دوام ناقص",
+          "drawn": true,
+          "when": {
+            "data": "view === short-day (is_full_day === false && !is_holiday)"
+          },
+          "ui": [
+            "الجلسات المنتهية بأقل من 8 ساعات"
+          ]
+        },
+        {
+          "key": "S04-absent",
+          "label": "غياب",
+          "drawn": true,
+          "when": {
+            "data": "view === absent"
+          },
+          "ui": [
+            "صف يوم بلا جلسة بعلامة «غياب»"
+          ]
+        },
+        {
+          "key": "S04-auto-closed",
+          "label": "إغلاق آلي",
+          "drawn": true,
+          "when": {
+            "api": "listAttendanceSessions",
+            "data": "close_source === AUTO"
+          },
+          "ui": [
+            "علامة «إغلاق آلي»"
+          ]
+        },
+        {
+          "key": "S04-empty",
+          "label": "لا جلسات",
+          "drawn": true,
+          "when": {
+            "api": "listAttendanceSessions",
+            "data": "meta.total === 0"
+          },
+          "ui": [
+            "EmptyState"
+          ]
+        },
+        {
+          "key": "S04-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "listAttendanceSessions",
+            "data": "loading"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "S04-error",
+          "label": "تعذّر التحميل",
+          "drawn": true,
+          "when": {
+            "api": "listAttendanceSessions",
+            "status": 429,
+            "codes": [
+              "too_many_requests"
+            ]
+          },
+          "ui": [
+            "ErrorState مع «إعادة المحاولة»"
+          ]
+        },
+        {
+          "key": "S04-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "listAttendanceSessions",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [],
+      "after_mutation": {},
+      "notes": [
+        "الخصم قرار يدوي للمدير التنفيذي لا آلي: الشاشة للاطلاع وحده.",
+        "جلسة العطلة (is_holiday) لا تُحسب دواماً ناقصاً."
+      ]
+    },
+    "S05": {
+      "id": "S05",
+      "name": "الزيارات",
+      "group": "supervision",
+      "design_source": {
+        "view": "src/features/visits/views/VisitsListView.tsx",
+        "page": "src/app/supervision/s05-visits/page.tsx"
+      },
+      "route": "/dashboard/supervision/visits",
+      "api": [
+        {
+          "id": "listVisits",
+          "method": "GET",
+          "path": "/visits",
+          "request": {
+            "page": "state الصفحة",
+            "per_page": "state (10 افتراضي)",
+            "rep_id": "filters.repId",
+            "from": "filters.range.from",
+            "to": "filters.range.to",
+            "verification_status": "filters.verification"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<Visit>"
+          }
+        },
+        {
+          "id": "listRepLocations",
+          "method": "GET",
+          "path": "/locations",
+          "request": {
+            "type": "REP"
+          },
+          "success": {
+            "status": 200,
+            "model": "Location[]"
+          }
+        }
+      ],
+      "view_props": {
+        "visits": "Loadable<{ data: Visit[], meta }> ← listVisits",
+        "reps": "listRepLocations",
+        "filters / onFiltersChange": "{ repId, range, verification } والتغيير يعيد الصفحة إلى 1",
+        "mode / onModeChange": "list | map: العرضان للبيانات نفسها",
+        "selectedVisitId / onSelectVisit": "الزيارة المحددة على الخريطة (حالة الحاوية)",
+        "onOpenVisit": "ينتقل إلى S06"
+      },
+      "permissions": [
+        "visits.view (مؤقت §1) أو visits.decide"
+      ],
+      "components": [
+        "SegmentedControl",
+        "FilterBar",
+        "Combobox",
+        "DateRangePicker",
+        "DataTable",
+        "Pagination",
+        "MapPlaceholder",
+        "Card",
+        "Badge",
+        "StatusBadge"
+      ],
+      "states": [
+        {
+          "key": "S05-list",
+          "label": "قائمة",
+          "drawn": true,
+          "when": {
+            "data": "mode === list"
+          },
+          "ui": [
+            "جدول: المندوب، الجهة، الوقت، المدة، المسافة، التحقق، العلامات",
+            "الصف يفتح S06"
+          ]
+        },
+        {
+          "key": "S05-map",
+          "label": "خريطة",
+          "drawn": true,
+          "when": {
+            "data": "mode === map"
+          },
+          "ui": [
+            "نقطتا بدء الزيارة (●) وإنهائها (■) لزيارات الصفحة، بلا مسار",
+            "النقطة تحدّد زيارتها: بطاقة وزر «فتح الزيارة»",
+            "الملوّن: مشكوك فيها warning، مرفوضة danger"
+          ]
+        },
+        {
+          "key": "S05-flagged-filter",
+          "label": "المشكوك فيها",
+          "drawn": true,
+          "when": {
+            "api": "listVisits",
+            "data": "filters.verification === FLAGGED"
+          },
+          "ui": [
+            "شريحة فلتر «التحقق: مشكوك فيها»",
+            "علامات الزيارة بأسمائها"
+          ]
+        },
+        {
+          "key": "S05-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "listVisits",
+            "data": "قيد التحميل"
+          },
+          "ui": [
+            "Skeleton للجدول أو الخريطة"
+          ]
+        },
+        {
+          "key": "S05-empty",
+          "label": "لا بيانات",
+          "drawn": true,
+          "when": {
+            "api": "listVisits",
+            "data": "meta.total === 0"
+          },
+          "ui": [
+            "EmptyState (لا زيارات بعد، أو لا نتائج للفلتر مع «مسح الفلاتر»)"
+          ]
+        },
+        {
+          "key": "S05-error",
+          "label": "تعذّر التحميل",
+          "drawn": true,
+          "when": {
+            "api": "listVisits",
+            "status": 429,
+            "codes": [
+              "too_many_requests"
+            ]
+          },
+          "ui": [
+            "ErrorState مع «إعادة المحاولة»"
+          ]
+        },
+        {
+          "key": "S05-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "listVisits",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "الصف أو «فتح الزيارة»",
+          "to": "S06"
+        }
+      ],
+      "after_mutation": {},
+      "notes": [
+        "الخريطة مستطيل وهمي بنقاط (لا مكتبة خرائط في المرحلة 1). خريطة الإنتاج تحلّ محل MapPlaceholder بالواجهة نفسها.",
+        "الخريطة تعرض نقاط الصفحة الحالية: نمط خريطة يعيد كل نقاط الفلتر مطلوب (§29.1).",
+        "حالة التحقق وأسماء العلامات من status-map.ts وflag-types.ts: لا نص حالة في الشاشة."
+      ]
+    },
+    "S06": {
+      "id": "S06",
+      "name": "تفاصيل الزيارة",
+      "group": "supervision",
+      "design_source": {
+        "view": "src/features/visits/views/VisitDetailsView.tsx",
+        "page": "src/app/supervision/s06-visit/page.tsx"
+      },
+      "route": "/dashboard/supervision/visits/[id]",
+      "api": [
+        {
+          "id": "getVisit",
+          "method": "GET",
+          "path": "/visits/{id}",
+          "request": {},
+          "success": {
+            "status": 200,
+            "model": "Visit"
+          },
+          "errors": [
+            {
+              "status": 404,
+              "codes": [
+                "not_found"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "decideVisit",
+          "method": "POST",
+          "path": "/visits/{id}/decision",
+          "request": {
+            "decision": "CONFIRMED | REJECTED",
+            "reason": "اختياري في العقد؛ إلزامي للرفض في الواجهة (§29.2)"
+          },
+          "success": {
+            "status": 200,
+            "model": "Visit"
+          },
+          "errors": [
+            {
+              "status": 403,
+              "codes": [
+                "forbidden"
+              ]
+            },
+            {
+              "status": 409,
+              "codes": [
+                "already_decided"
+              ],
+              "note": "غير موثّق لهذه النقطة (§29.3)"
+            }
+          ]
+        }
+      ],
+      "view_props": {
+        "visit": "Loadable<Visit> ← getVisit (not_found يعرض NotFoundState)",
+        "canDecide": "visits.decide",
+        "decision / onStartDecision / onReasonChange / onSubmitDecision / onDismissDecision": "حالة النافذة: confirm (ConfirmDialog) أو reject (ReasonDialog)",
+        "decisionError": "رمز خطأ decideVisit خارج النافذة (already_decided)",
+        "onDownloadPhoto": "تنزيل صورة الزيارة"
+      },
+      "permissions": [
+        "visits.decide (مؤكَّد): اللوحة وزراها",
+        "visits.view (مؤقت §1): القراءة"
+      ],
+      "components": [
+        "Card",
+        "DescriptionList",
+        "DataTable",
+        "DecisionPanel",
+        "DecisionRecord",
+        "ConfirmDialog",
+        "ReasonDialog",
+        "MapPlaceholder",
+        "AttachmentList",
+        "Banner",
+        "StatusBadge"
+      ],
+      "states": [
+        {
+          "key": "S06-read-only",
+          "label": "للقراءة فقط",
+          "drawn": true,
+          "when": {
+            "api": "getVisit",
+            "data": "visits.decide غير ممنوحة"
+          },
+          "ui": [
+            "كل الحقول والخريطة والعلامات",
+            "المشكوك فيها: شريط «بانتظار المراقبة» بلا لوحة"
+          ]
+        },
+        {
+          "key": "S06-qa-flagged",
+          "label": "مشكوك فيها (المراقبة)",
+          "drawn": true,
+          "when": {
+            "api": "getVisit",
+            "data": "verification_status === FLAGGED && visits.decide"
+          },
+          "ui": [
+            "DecisionPanel «بانتظار قرارك»: «تأكيد الزيارة» و«رفض الزيارة»",
+            "القرار يحل DecisionRecord محل اللوحة"
+          ]
+        },
+        {
+          "key": "S06-confirm",
+          "label": "تأكيد الزيارة",
+          "drawn": true,
+          "when": {
+            "data": "ضغط «تأكيد الزيارة»"
+          },
+          "ui": [
+            "ConfirmDialog بلا سبب: تُغلق العلامات CLEARED وتبقى الزيارة في المؤشرات"
+          ]
+        },
+        {
+          "key": "S06-reject",
+          "label": "رفض الزيارة",
+          "drawn": true,
+          "when": {
+            "data": "ضغط «رفض الزيارة»"
+          },
+          "ui": [
+            "ReasonDialog: الزر معطّل حتى يُكتب السبب",
+            "تُغلق العلامات CONFIRMED وتُستبعد الزيارة من المؤشرات"
+          ]
+        },
+        {
+          "key": "S06-confirmed",
+          "label": "مؤكَّدة",
+          "drawn": true,
+          "when": {
+            "api": "getVisit",
+            "data": "verification_status === CONFIRMED"
+          },
+          "ui": [
+            "DecisionRecord: من قرّر ومتى والسبب",
+            "علامتها «لا مشكلة»"
+          ]
+        },
+        {
+          "key": "S06-rejected",
+          "label": "مرفوضة",
+          "drawn": true,
+          "when": {
+            "api": "getVisit",
+            "data": "verification_status === REJECTED"
+          },
+          "ui": [
+            "DecisionRecord بسببه",
+            "Banner «مستبعدة من المؤشرات»",
+            "علامتها «مؤكَّدة»"
+          ]
+        },
+        {
+          "key": "S06-photo-pending",
+          "label": "الصورة معلّقة",
+          "drawn": true,
+          "when": {
+            "api": "getVisit",
+            "data": "photo_status === PENDING"
+          },
+          "ui": [
+            "شارة «معلّقة» وشريط «الصورة لم تُرفع بعد»",
+            "علامة «صورة معلّقة»"
+          ]
+        },
+        {
+          "key": "S06-already-decided",
+          "label": "قرّر غيرك",
+          "drawn": true,
+          "when": {
+            "api": "decideVisit",
+            "status": 409,
+            "codes": [
+              "already_decided"
+            ]
+          },
+          "ui": [
+            "Banner warning «قرّر غيرك قبلك»",
+            "DecisionRecord بدل اللوحة بعد إعادة الجلب"
+          ]
+        },
+        {
+          "key": "S06-not-found",
+          "label": "غير موجودة",
+          "drawn": true,
+          "when": {
+            "api": "getVisit",
+            "status": 404,
+            "codes": [
+              "not_found"
+            ]
+          },
+          "ui": [
+            "NotFoundState: «غير موجود أو خارج نطاقك» وزر رجوع"
+          ]
+        },
+        {
+          "key": "S06-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "getVisit",
+            "data": "قيد التحميل"
+          },
+          "ui": [
+            "Skeleton بشكل الصفحة"
+          ]
+        },
+        {
+          "key": "S06-error",
+          "label": "تعذّر التحميل",
+          "drawn": true,
+          "when": {
+            "api": "getVisit",
+            "status": 429,
+            "codes": [
+              "too_many_requests"
+            ]
+          },
+          "ui": [
+            "ErrorState مع «إعادة المحاولة»"
+          ]
+        },
+        {
+          "key": "S06-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "getVisit",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "رجوع",
+          "to": "S05"
+        }
+      ],
+      "after_mutation": {
+        "decideVisit": "استبدال الزيارة بالرد (حالة التحقق والعلامات والقرار) وإبطال قائمة S05 ومؤشرات S07"
+      },
+      "notes": [
+        "القرار 4: المراقبة لا تملك عقوبة؛ القرار تأكيد الزيارة أو رفضها فقط.",
+        "الزيارة لا تحمل decided_at: وقت القرار من آخر closed_at بين علاماتها (§29.6).",
+        "الصورة: مسار الرفع بعد المزامنة سؤال مفتوح (progress #1)."
+      ]
+    },
+    "S07": {
+      "id": "S07",
+      "name": "صفحة المندوب",
+      "group": "supervision",
+      "design_source": {
+        "view": "src/features/reps/views/RepProfileView.tsx",
+        "page": "src/app/supervision/s07-rep/page.tsx"
+      },
+      "route": "/dashboard/supervision/reps/[id]",
+      "api": [
+        {
+          "id": "getUser",
+          "method": "GET",
+          "path": "/users/{id}",
+          "request": {},
+          "success": {
+            "status": 200,
+            "model": "User"
+          },
+          "errors": [
+            {
+              "status": 404,
+              "codes": [
+                "not_found"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "listRepSessions",
+          "method": "GET",
+          "path": "/attendance-sessions",
+          "request": {
+            "rep_id": "id",
+            "from": "اليوم",
+            "to": "اليوم"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<AttendanceSession>"
+          }
+        },
+        {
+          "id": "listRepVisits",
+          "method": "GET",
+          "path": "/visits",
+          "request": {
+            "rep_id": "id",
+            "from": "اليوم",
+            "to": "اليوم"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<Visit>"
+          }
+        },
+        {
+          "id": "getRepBalances",
+          "method": "GET",
+          "path": "/stock/balances",
+          "request": {
+            "location_id": "موقع المندوب من GET /locations?type=REP (§30.2)"
+          },
+          "success": {
+            "status": 200,
+            "model": "BalanceLine[]"
+          }
+        },
+        {
+          "id": "listRepReports",
+          "method": "GET",
+          "path": "/daily-reports",
+          "request": {
+            "rep_id": "id",
+            "per_page": "5"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<DailyReport>"
+          }
+        },
+        {
+          "id": "getRepScores",
+          "method": "GET",
+          "path": "/scores",
+          "request": {
+            "user_id": "id",
+            "month": "الحالي والسابق"
+          },
+          "success": {
+            "status": 200,
+            "model": "MonthlyScore[]"
+          }
+        }
+      ],
+      "view_props": {
+        "rep": "Loadable<User> ← getUser",
+        "session": "Loadable<AttendanceSession | null> ← listRepSessions (null: لم يبدأ)",
+        "todayVisits": "Loadable<Visit[]> ← listRepVisits",
+        "balances": "Loadable<BalanceLine[]> ← getRepBalances",
+        "distributed": "Loadable<{ item, quantity }[]> ← مجاميع زيارات الشهر (§30.3)",
+        "reports": "Loadable<DailyReport[]> ← listRepReports",
+        "scores": "Loadable<MonthlyScore[]> ← getRepScores (الأحدث أولاً)"
+      },
+      "permissions": [
+        "users.view (مؤقت: §30.1)",
+        "stock.view (مؤقت: §30.2)",
+        "daily_reports.view",
+        "visits.view"
+      ],
+      "components": [
+        "Card",
+        "DescriptionList",
+        "DataTable",
+        "KpiTile",
+        "Banner",
+        "Badge",
+        "Grid"
+      ],
+      "states": [
+        {
+          "key": "S07-default",
+          "label": "الافتراضي",
+          "drawn": true,
+          "when": {
+            "api": "getUser",
+            "data": "كل الأقسام جاهزة"
+          },
+          "ui": [
+            "البيانات، دوام اليوم، زيارات اليوم، ما وزّعه، الرصيد، التقارير، المؤشرات الشهرية"
+          ]
+        },
+        {
+          "key": "S07-negative-balance",
+          "label": "رصيد سالب",
+          "drawn": true,
+          "when": {
+            "api": "getRepBalances",
+            "data": "أي quantity < 0"
+          },
+          "ui": [
+            "Banner warning «رصيد سالب»",
+            "شارة «سالب» وكمية بلون danger على السطر"
+          ]
+        },
+        {
+          "key": "S07-partial-error",
+          "label": "فشل قسم",
+          "drawn": true,
+          "when": {
+            "api": "getRepBalances",
+            "status": 429,
+            "codes": [
+              "too_many_requests"
+            ]
+          },
+          "ui": [
+            "ErrorState داخل بطاقة الرصيد وبقية الأقسام سليمة"
+          ]
+        },
+        {
+          "key": "S07-not-found",
+          "label": "غير موجود",
+          "drawn": true,
+          "when": {
+            "api": "getUser",
+            "status": 404,
+            "codes": [
+              "not_found"
+            ]
+          },
+          "ui": [
+            "NotFoundState"
+          ]
+        },
+        {
+          "key": "S07-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "getUser",
+            "data": "قيد التحميل"
+          },
+          "ui": [
+            "Skeleton بشكل الصفحة"
+          ]
+        },
+        {
+          "key": "S07-error",
+          "label": "تعذّر التحميل",
+          "drawn": true,
+          "when": {
+            "api": "getUser",
+            "status": 429,
+            "codes": [
+              "too_many_requests"
+            ]
+          },
+          "ui": [
+            "ErrorState مع «إعادة المحاولة»"
+          ]
+        },
+        {
+          "key": "S07-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "getUser",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "صف زيارة",
+          "to": "S06"
+        },
+        {
+          "on": "«كل زياراته»",
+          "to": "S05 بفلتر المندوب"
+        },
+        {
+          "on": "صف تقرير",
+          "to": "S03"
+        }
+      ],
+      "after_mutation": {},
+      "notes": [
+        "المندوب تابع للشركة (المكتب العلمي) لا لوكيل.",
+        "السالب جائز لرصيد المندوب وحده (العقد).",
+        "لكل قسم طلبه وحالته: فشل قسم لا يهدم الصفحة."
+      ]
+    },
+    "S08": {
+      "id": "S08",
+      "name": "العلامات",
+      "group": "supervision",
+      "design_source": {
+        "view": "src/features/flags/views/FlagsListView.tsx",
+        "page": "src/app/supervision/s08-flags/page.tsx"
+      },
+      "route": "/dashboard/monitoring/flags",
+      "api": [
+        {
+          "id": "listFlags",
+          "method": "GET",
+          "path": "/qa-flags",
+          "request": {
+            "page": "state",
+            "per_page": "state (10)",
+            "type": "filters.type",
+            "subject_user_id": "filters.personId",
+            "status": "OPEN حين filters.status === OPEN (CLOSED وNEAR مشتقان: §31.5)"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<Flag> + due_at (§31.2)"
+          }
+        }
+      ],
+      "view_props": {
+        "flags": "Loadable<{ data: FlagRow[], meta }> ← listFlags",
+        "people": "أشخاص الفلتر (§31.3)",
+        "filters / onFiltersChange": "{ type, status, personId } والتغيير يعيد الصفحة إلى 1",
+        "now": "الآن (UTC) للعمر والمهلة",
+        "onOpenFlag": "يفتح S09 أو S06 أو S10 أو S11 بحسب نوع العلامة"
+      },
+      "permissions": [
+        "flags.view (مؤكَّد)"
+      ],
+      "components": [
+        "Card",
+        "DataTable",
+        "FilterBar",
+        "Combobox",
+        "Pagination",
+        "Badge",
+        "StatusBadge"
+      ],
+      "states": [
+        {
+          "key": "S08-default",
+          "label": "الافتراضي",
+          "drawn": true,
+          "when": {
+            "api": "listFlags",
+            "data": "status=OPEN"
+          },
+          "ui": [
+            "مجمّعة حسب الشخص: الأكثر علامات مفتوحة أولاً",
+            "النوع، السجل المرتبط، العمر، المهلة (متبقٍّ/متأخر)، الحالة"
+          ]
+        },
+        {
+          "key": "S08-by-type",
+          "label": "بالنوع",
+          "drawn": true,
+          "when": {
+            "api": "listFlags",
+            "data": "type=STOCK_DISCREPANCY"
+          },
+          "ui": [
+            "شريحة فلتر «النوع: فرق مخزون»"
+          ]
+        },
+        {
+          "key": "S08-near-deadline",
+          "label": "قاربت المهلة",
+          "drawn": true,
+          "when": {
+            "data": "مشتق: OPEN وdue_at ≤ 8 ساعات أو متأخر"
+          },
+          "ui": [
+            "«متأخر» بشارة خطر و«متبقٍّ…» بتحذير"
+          ]
+        },
+        {
+          "key": "S08-closed",
+          "label": "المغلقة",
+          "drawn": true,
+          "when": {
+            "data": "مشتق: status !== OPEN"
+          },
+          "ui": [
+            "لا مشكلة · مؤكَّدة · محالة · زال سببها",
+            "«عولجت خلال N ساعة عمل»"
+          ]
+        },
+        {
+          "key": "S08-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "listFlags",
+            "data": "قيد التحميل"
+          },
+          "ui": [
+            "Skeleton بمجموعتين"
+          ]
+        },
+        {
+          "key": "S08-empty",
+          "label": "لا بيانات",
+          "drawn": true,
+          "when": {
+            "api": "listFlags",
+            "data": "meta.total === 0"
+          },
+          "ui": [
+            "EmptyState (لا علامات، أو لا نتائج للفلتر مع «مسح الفلاتر»)"
+          ]
+        },
+        {
+          "key": "S08-error",
+          "label": "تعذّر التحميل",
+          "drawn": true,
+          "when": {
+            "api": "listFlags",
+            "status": 429,
+            "codes": [
+              "too_many_requests"
+            ]
+          },
+          "ui": [
+            "ErrorState مع «إعادة المحاولة»"
+          ]
+        },
+        {
+          "key": "S08-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "listFlags",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "الصف: علامة زيارة",
+          "to": "S06"
+        },
+        {
+          "on": "الصف: NEW_VISIT_POINT",
+          "to": "S10"
+        },
+        {
+          "on": "الصف: DUPLICATE_POINT",
+          "to": "S11"
+        },
+        {
+          "on": "الصف: غيرها",
+          "to": "S09 (درج)"
+        }
+      ],
+      "after_mutation": {},
+      "notes": [
+        "القرار 4: المراقبة لا تملك عقوبة.",
+        "التجميع حسب الشخص في الواجهة لصفحة واحدة: §31.1.",
+        "`due_at` مضاف في الواجهة ويُطلب من الباك: §31.2."
+      ]
+    },
+    "S09": {
+      "id": "S09",
+      "name": "معالجة العلامة",
+      "group": "supervision",
+      "design_source": {
+        "view": "src/features/flags/views/FlagDrawerView.tsx",
+        "page": "src/app/supervision/s09-flag/page.tsx"
+      },
+      "route": "/dashboard/monitoring/flags (درج)",
+      "api": [
+        {
+          "id": "decideFlag",
+          "method": "POST",
+          "path": "/qa-flags/{id}/decision",
+          "request": {
+            "decision": "CLEARED | CONFIRMED | ESCALATED",
+            "note": "اختياري",
+            "investigation_title": "اختياري عند ESCALATED"
+          },
+          "success": {
+            "status": 200,
+            "model": "Flag"
+          },
+          "errors": [
+            {
+              "status": 409,
+              "codes": [
+                "already_decided",
+                "invalid_status"
+              ]
+            },
+            {
+              "status": 422,
+              "codes": [
+                "validation_failed"
+              ]
+            },
+            {
+              "status": 404,
+              "codes": [
+                "not_found"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "getLinkedRecord",
+          "method": "—",
+          "path": "بحسب ref_type (لا endpoint موحّد: §32.2)",
+          "request": {},
+          "success": {
+            "status": 200,
+            "model": "FlagLinkedRecord"
+          }
+        }
+      ],
+      "view_props": {
+        "flag": "FlagRow | null (null يغلق الدرج)",
+        "linked": "Loadable<FlagLinkedRecord | null> ← getLinkedRecord",
+        "canDecide": "flags.decide",
+        "draft / onDraftChange": "{ outcome, note, investigationTitle }",
+        "onSubmit": "decideFlag",
+        "decisionError": "رمز خطأ decideFlag",
+        "onOpenRoute": "S06 أو S10 أو S11",
+        "onOpenInvestigation": "S15"
+      },
+      "permissions": [
+        "flags.decide (مؤكَّد)"
+      ],
+      "components": [
+        "Drawer",
+        "DescriptionList",
+        "RadioGroup",
+        "RadioCard",
+        "Field",
+        "Textarea",
+        "Input",
+        "Banner",
+        "StatusBadge"
+      ],
+      "states": [
+        {
+          "key": "S09-open",
+          "label": "مفتوحة",
+          "drawn": true,
+          "when": {
+            "api": "listFlags",
+            "data": "status === OPEN && flags.decide"
+          },
+          "ui": [
+            "النهايات الثلاث وملاحظة",
+            "«حفظ القرار» معطّل حتى تُختار نهاية"
+          ]
+        },
+        {
+          "key": "S09-stock-discrepancy",
+          "label": "فرق مخزون",
+          "drawn": true,
+          "when": {
+            "data": "type === STOCK_DISCREPANCY"
+          },
+          "ui": [
+            "الصنف والدفعة والمتوقع والفعلي والفرق والصرف المرتبط"
+          ]
+        },
+        {
+          "key": "S09-clock-skew",
+          "label": "انحراف الساعة",
+          "drawn": true,
+          "when": {
+            "data": "type === CLOCK_SKEW"
+          },
+          "ui": [
+            "فرق الساعة وساعتا الجهاز والخادم"
+          ]
+        },
+        {
+          "key": "S09-attendance",
+          "label": "دوام",
+          "drawn": true,
+          "when": {
+            "data": "type === ATTENDANCE"
+          },
+          "ui": [
+            "يوم العمل والمدة والمطلوب",
+            "شريط «تجاوزت المهلة» إن لزم"
+          ]
+        },
+        {
+          "key": "S09-auto-cleared",
+          "label": "زال سببها",
+          "drawn": true,
+          "when": {
+            "data": "status === AUTO_CLEARED"
+          },
+          "ui": [
+            "Banner محايد بلا نهايات"
+          ]
+        },
+        {
+          "key": "S09-escalated",
+          "label": "محوّلة",
+          "drawn": true,
+          "when": {
+            "data": "status === ESCALATED"
+          },
+          "ui": [
+            "سجل القرار ورابط «فتح ملف التحقيق #N»"
+          ]
+        },
+        {
+          "key": "S09-visit-flag",
+          "label": "علامة زيارة",
+          "drawn": true,
+          "when": {
+            "data": "ref_type === visit"
+          },
+          "ui": [
+            "Banner «تُعالَج من تفاصيل الزيارة» وزر «فتح الزيارة»"
+          ]
+        },
+        {
+          "key": "S09-already-decided",
+          "label": "قرّر غيرك",
+          "drawn": true,
+          "when": {
+            "api": "decideFlag",
+            "status": 409,
+            "codes": [
+              "already_decided"
+            ]
+          },
+          "ui": [
+            "Banner warning «قرّر غيرك قبلك» وسجل القرار"
+          ]
+        },
+        {
+          "key": "S09-linked-error",
+          "label": "تعذّر السجل المرتبط",
+          "drawn": true,
+          "when": {
+            "api": "getLinkedRecord",
+            "status": 429,
+            "codes": [
+              "too_many_requests"
+            ]
+          },
+          "ui": [
+            "ErrorState داخل قسم السجل المرتبط فقط"
+          ]
+        },
+        {
+          "key": "S09-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "listFlags",
+            "data": "قيد التحميل"
+          },
+          "ui": [
+            "Skeleton للسجل المرتبط"
+          ]
+        },
+        {
+          "key": "S09-error",
+          "label": "تعذّر التحميل",
+          "drawn": true,
+          "when": {
+            "api": "listFlags",
+            "status": 429,
+            "codes": [
+              "too_many_requests"
+            ]
+          },
+          "ui": [
+            "ErrorState مع «إعادة المحاولة»"
+          ]
+        },
+        {
+          "key": "S09-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "listFlags",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "«فتح الزيارة»",
+          "to": "S06"
+        },
+        {
+          "on": "«فتح ملف التحقيق»",
+          "to": "S15"
+        }
+      ],
+      "after_mutation": {
+        "decideFlag": "استبدال العلامة بالرد وإبطال قائمة S08"
+      },
+      "notes": [
+        "القرار 4 والقرار 12.",
+        "مفاتيح details مفترضة: §32.1."
+      ]
+    },
+    "S10": {
+      "id": "S10",
+      "name": "الجهات الجديدة",
+      "group": "supervision",
+      "design_source": {
+        "view": "src/features/visit-points/views/NewVisitPointsView.tsx",
+        "page": "src/app/supervision/s10-new-places/page.tsx"
+      },
+      "route": "/dashboard/monitoring/new-places",
+      "api": [
+        {
+          "id": "listNewPointFlags",
+          "method": "GET",
+          "path": "/qa-flags",
+          "request": {
+            "type": "NEW_VISIT_POINT",
+            "status": "OPEN"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<Flag>"
+          }
+        },
+        {
+          "id": "listPendingPoints",
+          "method": "GET",
+          "path": "/visit-points",
+          "request": {
+            "review_state": "PENDING_REVIEW"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<VisitPoint> + visits_count (§33.3)"
+          }
+        },
+        {
+          "id": "decideNewPoint",
+          "method": "POST",
+          "path": "/qa-flags/{id}/decision",
+          "request": {
+            "decision": "CLEARED (مقبولة) | CONFIRMED (مرفوضة)",
+            "note": "سبب الرفض (إلزامي في الواجهة)"
+          },
+          "success": {
+            "status": 200,
+            "model": "Flag"
+          },
+          "errors": [
+            {
+              "status": 409,
+              "codes": [
+                "already_decided"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "rejectPointVisits",
+          "method": "POST",
+          "path": "/visit-points/{id}/reject-visits",
+          "request": {
+            "reason": "إلزامي حتى 1000"
+          },
+          "success": {
+            "status": 200,
+            "model": "{ rejected_count }"
+          }
+        }
+      ],
+      "view_props": {
+        "points": "Loadable<{ data: NewPointRow[], meta }>",
+        "canDecide": "flags.decide",
+        "canRejectVisits": "visits.decide",
+        "selected / onSelectedChange": "معرّفات الجهات المحدّدة",
+        "rejectDialog": "نافذة رفض جهة",
+        "bulkDialog / bulkResult": "الرفض الجماعي ونتيجته (مجموع rejected_count)"
+      },
+      "permissions": [
+        "flags.decide (مؤكَّد)",
+        "visits.decide (مؤكَّد)",
+        "visit_points.merge (مؤكَّد: عنصر القائمة)"
+      ],
+      "components": [
+        "DataTable",
+        "BulkBar",
+        "ReasonDialog",
+        "Pagination",
+        "Banner",
+        "Button"
+      ],
+      "states": [
+        {
+          "key": "S10-default",
+          "label": "الافتراضي",
+          "drawn": true,
+          "when": {
+            "api": "listPendingPoints",
+            "data": "review_state === PENDING_REVIEW"
+          },
+          "ui": [
+            "الاسم والنوع والمحافظة ومن أضافها وتاريخه وعدد الزيارات",
+            "«مقبولة» و«مرفوضة»"
+          ]
+        },
+        {
+          "key": "S10-reject",
+          "label": "رفض جهة",
+          "drawn": true,
+          "when": {
+            "data": "ضغط «مرفوضة»"
+          },
+          "ui": [
+            "ReasonDialog: الزر معطّل حتى السبب",
+            "تُعطَّل الجهة وتعود زياراتها FLAGGED"
+          ]
+        },
+        {
+          "key": "S10-bulk-reject",
+          "label": "رفض جماعي",
+          "drawn": true,
+          "when": {
+            "data": "تحديد جهتين فأكثر"
+          },
+          "ui": [
+            "BulkBar «رفض زياراتها»",
+            "نافذة سبب إلزامي، ثم شريط «رُفضت N زيارة»"
+          ]
+        },
+        {
+          "key": "S10-already-decided",
+          "label": "قرّر غيرك",
+          "drawn": true,
+          "when": {
+            "api": "decideNewPoint",
+            "status": 409,
+            "codes": [
+              "already_decided"
+            ]
+          },
+          "ui": [
+            "Banner warning فوق الجدول"
+          ]
+        },
+        {
+          "key": "S10-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "listPendingPoints",
+            "data": "قيد التحميل"
+          },
+          "ui": [
+            "Skeleton للجدول"
+          ]
+        },
+        {
+          "key": "S10-empty",
+          "label": "لا بيانات",
+          "drawn": true,
+          "when": {
+            "api": "listPendingPoints",
+            "data": "meta.total === 0"
+          },
+          "ui": [
+            "EmptyState «لا جهات بانتظار المراجعة»"
+          ]
+        },
+        {
+          "key": "S10-error",
+          "label": "تعذّر التحميل",
+          "drawn": true,
+          "when": {
+            "api": "listPendingPoints",
+            "status": 429,
+            "codes": [
+              "too_many_requests"
+            ]
+          },
+          "ui": [
+            "ErrorState مع «إعادة المحاولة»"
+          ]
+        },
+        {
+          "key": "S10-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "listPendingPoints",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [],
+      "after_mutation": {
+        "decideNewPoint": "إزالة الجهة من القائمة",
+        "rejectPointVisits": "إبطال قائمة S05 ومؤشرات S07"
+      },
+      "notes": [
+        "القرار 4.",
+        "الرفض الجماعي يرسل طلباً لكل جهة: §33.2."
+      ]
+    },
+    "S11": {
+      "id": "S11",
+      "name": "دمج جهتين",
+      "group": "supervision",
+      "design_source": {
+        "view": "src/features/visit-points/views/MergePointsView.tsx",
+        "page": "src/app/supervision/s11-merge-places/page.tsx"
+      },
+      "route": "/dashboard/monitoring/new-places/merge/[flagId]",
+      "api": [
+        {
+          "id": "getPointPair",
+          "method": "GET",
+          "path": "/visit-points/{id}",
+          "request": {
+            "id": "ref_id وdetails.other_point_id (§34.1)"
+          },
+          "success": {
+            "status": 200,
+            "model": "VisitPoint ×2 + visits_count + العميل (§34.2)"
+          }
+        },
+        {
+          "id": "mergePoints",
+          "method": "POST",
+          "path": "/visit-points/merge",
+          "request": {
+            "keep_id": "keepId",
+            "merge_id": "الأخرى"
+          },
+          "success": {
+            "status": 200,
+            "model": "VisitPoint"
+          },
+          "errors": [
+            {
+              "status": 404,
+              "codes": [
+                "not_found"
+              ]
+            },
+            {
+              "status": 422,
+              "codes": [
+                "validation_failed"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "clearDuplicate",
+          "method": "POST",
+          "path": "/qa-flags/{id}/decision",
+          "request": {
+            "decision": "CLEARED"
+          },
+          "success": {
+            "status": 200,
+            "model": "Flag"
+          }
+        }
+      ],
+      "view_props": {
+        "pair": "Loadable<{ first: PointCompare, second: PointCompare }>",
+        "canMerge": "visit_points.merge",
+        "keepId / onKeepChange": "الجهة الباقية (إلزامية)",
+        "dialog": "merge | not-duplicate",
+        "error": "رمز خطأ الحفظ",
+        "done": "merged | not-duplicate"
+      },
+      "permissions": [
+        "visit_points.merge (مؤكَّد)"
+      ],
+      "components": [
+        "Card",
+        "DescriptionList",
+        "RadioGroup",
+        "RadioCard",
+        "ConfirmDialog",
+        "Banner",
+        "Grid"
+      ],
+      "states": [
+        {
+          "key": "S11-default",
+          "label": "الافتراضي",
+          "drawn": true,
+          "when": {
+            "api": "getPointPair",
+            "data": "علامة DUPLICATE_POINT"
+          },
+          "ui": [
+            "الجهتان جنباً إلى جنب والمسافة بينهما",
+            "«دمج» معطّل حتى تُختار الباقية"
+          ]
+        },
+        {
+          "key": "S11-confirm",
+          "label": "تأكيد الدمج",
+          "drawn": true,
+          "when": {
+            "data": "ضغط «دمج»"
+          },
+          "ui": [
+            "ConfirmDialog: تنتقل الزيارات وربط العميل وتُعطَّل الأخرى"
+          ]
+        },
+        {
+          "key": "S11-not-duplicate",
+          "label": "ليستا مكررتين",
+          "drawn": true,
+          "when": {
+            "data": "ضغط «ليستا مكررتين»"
+          },
+          "ui": [
+            "ConfirmDialog: تُغلق العلامة بلا مشكلة"
+          ]
+        },
+        {
+          "key": "S11-merge-failed",
+          "label": "تعذّر الدمج",
+          "drawn": true,
+          "when": {
+            "api": "mergePoints",
+            "status": 422,
+            "codes": [
+              "validation_failed"
+            ]
+          },
+          "ui": [
+            "Banner danger «تعذّر الحفظ»"
+          ]
+        },
+        {
+          "key": "S11-not-found",
+          "label": "غير موجودة",
+          "drawn": true,
+          "when": {
+            "api": "getPointPair",
+            "status": 404,
+            "codes": [
+              "not_found"
+            ]
+          },
+          "ui": [
+            "NotFoundState"
+          ]
+        },
+        {
+          "key": "S11-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "getPointPair",
+            "data": "قيد التحميل"
+          },
+          "ui": [
+            "Skeleton للجهتين"
+          ]
+        },
+        {
+          "key": "S11-error",
+          "label": "تعذّر التحميل",
+          "drawn": true,
+          "when": {
+            "api": "getPointPair",
+            "status": 429,
+            "codes": [
+              "too_many_requests"
+            ]
+          },
+          "ui": [
+            "ErrorState مع «إعادة المحاولة»"
+          ]
+        },
+        {
+          "key": "S11-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "getPointPair",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "رجوع",
+          "to": "S10 أو S08"
+        }
+      ],
+      "after_mutation": {
+        "mergePoints": "إبطال قائمة S10 وS08",
+        "clearDuplicate": "إبطال قائمة S08"
+      },
+      "notes": [
+        "لا رجوع عن الدمج.",
+        "عميلان مربوطان للجهتين: غير مذكور في العقد (§34.4)."
+      ]
+    },
+    "S12": {
+      "id": "S12",
+      "name": "شكاوى الموقع",
+      "group": "supervision",
+      "design_source": {
+        "view": "src/features/site-messages/views/SiteComplaintsView.tsx",
+        "page": "src/app/supervision/s12-complaints/page.tsx"
+      },
+      "route": "/dashboard/monitoring/complaints",
+      "api": [
+        {
+          "id": "listComplaints",
+          "method": "GET",
+          "path": "/site/messages",
+          "request": {
+            "type": "COMPLAINT",
+            "status": "filters.status",
+            "page": "state",
+            "per_page": "state"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<SiteMessage>"
+          }
+        }
+      ],
+      "view_props": {
+        "complaints": "Loadable<{ data: SiteMessage[], meta }>",
+        "filters / onFiltersChange": "{ status } والتغيير يعيد الصفحة إلى 1",
+        "selected / onOpen / onClose": "الشكوى المفتوحة في الدرج"
+      },
+      "permissions": [
+        "complaints.view (مؤقت §35.2؛ المؤكد site_messages.view)"
+      ],
+      "components": [
+        "DataTable",
+        "FilterBar",
+        "Combobox",
+        "Pagination",
+        "Drawer",
+        "DescriptionList",
+        "Badge"
+      ],
+      "states": [
+        {
+          "key": "S12-default",
+          "label": "الافتراضي",
+          "drawn": true,
+          "when": {
+            "api": "listComplaints",
+            "data": "type=COMPLAINT"
+          },
+          "ui": [
+            "الاسم والهاتف ونص الشكوى والتاريخ والحالة (جديدة · عولجت)"
+          ]
+        },
+        {
+          "key": "S12-details",
+          "label": "شكوى مفتوحة",
+          "drawn": true,
+          "when": {
+            "data": "ضغط صف"
+          },
+          "ui": [
+            "النص كاملاً، ومن عالجها ومتى وملاحظة المعالجة",
+            "لا زر معالجة"
+          ]
+        },
+        {
+          "key": "S12-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "listComplaints",
+            "data": "قيد التحميل"
+          },
+          "ui": [
+            "Skeleton للجدول"
+          ]
+        },
+        {
+          "key": "S12-empty",
+          "label": "لا بيانات",
+          "drawn": true,
+          "when": {
+            "api": "listComplaints",
+            "data": "meta.total === 0"
+          },
+          "ui": [
+            "EmptyState (لا شكاوى، أو لا نتائج للفلتر)"
+          ]
+        },
+        {
+          "key": "S12-error",
+          "label": "تعذّر التحميل",
+          "drawn": true,
+          "when": {
+            "api": "listComplaints",
+            "status": 429,
+            "codes": [
+              "too_many_requests"
+            ]
+          },
+          "ui": [
+            "ErrorState مع «إعادة المحاولة»"
+          ]
+        },
+        {
+          "key": "S12-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "listComplaints",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [],
+      "after_mutation": {},
+      "notes": [
+        "للاطلاع: المعالجة لمدير المبيعات (site_messages.handle)."
+      ]
+    },
+    "S13": {
+      "id": "S13",
+      "name": "ملفات التحقيق",
+      "group": "supervision",
+      "design_source": {
+        "view": "src/features/investigations/views/InvestigationsListView.tsx",
+        "page": "src/app/supervision/s13-investigations/page.tsx"
+      },
+      "route": "/dashboard/monitoring/investigations",
+      "api": [
+        {
+          "id": "listInvestigations",
+          "method": "GET",
+          "path": "/investigations",
+          "request": {
+            "page": "state",
+            "per_page": "state (10)",
+            "status": "filters.status (IN_PROGRESS مشتق: §36.1)"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<Investigation>"
+          }
+        }
+      ],
+      "view_props": {
+        "investigations": "Loadable<{ data: Investigation[], meta }> ← listInvestigations",
+        "filters / onFiltersChange": "{ status } والتغيير يعيد الصفحة إلى 1",
+        "canOpen": "investigations.manage",
+        "onOpenNew": "ينتقل إلى S14",
+        "onOpen": "ينتقل إلى S15"
+      },
+      "permissions": [
+        "investigations.view (مؤكَّد)",
+        "investigations.manage (مؤكَّد): فتح ملف"
+      ],
+      "components": [
+        "ConfidentialBanner",
+        "DataTable",
+        "FilterBar",
+        "Combobox",
+        "Pagination",
+        "StatusBadge"
+      ],
+      "states": [
+        {
+          "key": "S13-default",
+          "label": "الافتراضي",
+          "drawn": true,
+          "when": {
+            "api": "listInvestigations",
+            "data": "investigations.manage"
+          },
+          "ui": [
+            "شريط السرية",
+            "العنوان والموظف والمرحلة والتاريخ",
+            "«فتح ملف»"
+          ]
+        },
+        {
+          "key": "S13-executive",
+          "label": "المدير التنفيذي",
+          "drawn": true,
+          "when": {
+            "api": "listInvestigations",
+            "data": "investigations.view فقط"
+          },
+          "ui": [
+            "القائمة نفسها بلا «فتح ملف»"
+          ]
+        },
+        {
+          "key": "S13-awaiting",
+          "label": "بانتظار القرار",
+          "drawn": true,
+          "when": {
+            "api": "listInvestigations",
+            "data": "status=AWAITING_DECISION"
+          },
+          "ui": [
+            "شريحة فلتر «الحالة: بانتظار القرار»"
+          ]
+        },
+        {
+          "key": "S13-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "listInvestigations",
+            "data": "قيد التحميل"
+          },
+          "ui": [
+            "Skeleton للجدول"
+          ]
+        },
+        {
+          "key": "S13-empty",
+          "label": "لا بيانات",
+          "drawn": true,
+          "when": {
+            "api": "listInvestigations",
+            "data": "meta.total === 0"
+          },
+          "ui": [
+            "EmptyState (لا ملفات، أو لا نتائج للفلتر مع «مسح الفلاتر»)"
+          ]
+        },
+        {
+          "key": "S13-error",
+          "label": "تعذّر التحميل",
+          "drawn": true,
+          "when": {
+            "api": "listInvestigations",
+            "status": 429,
+            "codes": [
+              "too_many_requests"
+            ]
+          },
+          "ui": [
+            "ErrorState مع «إعادة المحاولة»"
+          ]
+        },
+        {
+          "key": "S13-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "listInvestigations",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "الصف",
+          "to": "S15"
+        },
+        {
+          "on": "«فتح ملف»",
+          "to": "S14"
+        }
+      ],
+      "after_mutation": {},
+      "notes": [
+        "سرية: كل اطلاع يُسجَّل (الشريط يذكر ذلك).",
+        "«قيد التحقيق» مشتق من المراحل 1 إلى 7: §36.1."
+      ]
+    },
+    "S14": {
+      "id": "S14",
+      "name": "فتح ملف تحقيق",
+      "group": "supervision",
+      "design_source": {
+        "view": "src/features/investigations/views/InvestigationFormView.tsx",
+        "page": "src/app/supervision/s14-new-investigation/page.tsx"
+      },
+      "route": "/dashboard/monitoring/investigations/new",
+      "api": [
+        {
+          "id": "createInvestigation",
+          "method": "POST",
+          "path": "/investigations",
+          "request": {
+            "subject_user_id": "form.subjectId",
+            "title": "form.title",
+            "description": "form.description"
+          },
+          "success": {
+            "status": 201,
+            "model": "Investigation"
+          },
+          "errors": [
+            {
+              "status": 422,
+              "codes": [
+                "validation_failed"
+              ]
+            },
+            {
+              "status": 403,
+              "codes": [
+                "forbidden"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "getSourceFlag",
+          "method": "GET",
+          "path": "/qa-flags",
+          "request": {
+            "ref_id": "العلامة المصدر (§37.3)"
+          },
+          "success": {
+            "status": 200,
+            "model": "Flag"
+          }
+        }
+      ],
+      "view_props": {
+        "form / onFormChange": "{ subjectId, title, description }",
+        "employees": "الموظفون (§37.4)",
+        "sourceFlag": "Flag | null: يقفل الموظف",
+        "errors": "errors من validation_failed",
+        "onSubmit": "createInvestigation"
+      },
+      "permissions": [
+        "investigations.manage (مؤكَّد)"
+      ],
+      "components": [
+        "ConfidentialBanner",
+        "Card",
+        "Combobox",
+        "Input",
+        "Textarea",
+        "DescriptionList"
+      ],
+      "states": [
+        {
+          "key": "S14-direct",
+          "label": "مباشرة",
+          "drawn": true,
+          "when": {
+            "data": "بلا علامة"
+          },
+          "ui": [
+            "الموظف (إلزامي) والعنوان (إلزامي) والوصف",
+            "«فتح الملف» معطّل وسببه ظاهر"
+          ]
+        },
+        {
+          "key": "S14-from-flag",
+          "label": "من علامة",
+          "drawn": true,
+          "when": {
+            "data": "sourceFlag != null"
+          },
+          "ui": [
+            "بطاقة العلامة المصدر",
+            "الموظف مقفل على صاحبها، والعنوان مقترح"
+          ]
+        },
+        {
+          "key": "S14-validation",
+          "label": "خطأ في الحقول",
+          "drawn": true,
+          "when": {
+            "api": "createInvestigation",
+            "status": 422,
+            "codes": [
+              "validation_failed"
+            ]
+          },
+          "ui": [
+            "نص الخادم تحت حقله"
+          ]
+        },
+        {
+          "key": "S14-submitting",
+          "label": "جارٍ الفتح",
+          "drawn": true,
+          "when": {
+            "api": "createInvestigation",
+            "data": "قيد الإرسال"
+          },
+          "ui": [
+            "الزر يحمّل والحقول معطّلة"
+          ]
+        },
+        {
+          "key": "S14-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "createInvestigation",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState (المدير التنفيذي لا يفتح)"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "نجاح الفتح",
+          "to": "S15 (المرحلة 1)"
+        },
+        {
+          "on": "إلغاء",
+          "to": "S13"
+        }
+      ],
+      "after_mutation": {
+        "createInvestigation": "إبطال قائمة S13"
+      },
+      "notes": [
+        "الملف يبدأ في STAGE_1.",
+        "مكان description في الباك: §37.2."
+      ]
+    },
+    "S15": {
+      "id": "S15",
+      "name": "ملف التحقيق",
+      "group": "supervision",
+      "design_source": {
+        "view": "src/features/investigations/views/InvestigationDetailsView.tsx",
+        "page": "src/app/supervision/s15-investigation/page.tsx"
+      },
+      "route": "/dashboard/monitoring/investigations/[id]",
+      "api": [
+        {
+          "id": "getInvestigation",
+          "method": "GET",
+          "path": "/investigations/{id}",
+          "request": {},
+          "success": {
+            "status": 200,
+            "model": "Investigation"
+          },
+          "errors": [
+            {
+              "status": 404,
+              "codes": [
+                "not_found"
+              ]
+            },
+            {
+              "status": 403,
+              "codes": [
+                "forbidden"
+              ]
+            }
+          ],
+          "note": "يُسجَّل الاطلاع"
+        },
+        {
+          "id": "completeStage",
+          "method": "POST",
+          "path": "/investigations/{id}/complete-stage",
+          "request": {
+            "summary": "stageForm.summary",
+            "attachments": "upload_id لكل ملف مرفوع"
+          },
+          "success": {
+            "status": 200,
+            "model": "Investigation"
+          },
+          "errors": [
+            {
+              "status": 409,
+              "codes": [
+                "invalid_status"
+              ]
+            },
+            {
+              "status": 422,
+              "codes": [
+                "validation_failed"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "closeNoViolation",
+          "method": "POST",
+          "path": "/investigations/{id}/close-no-violation",
+          "request": {
+            "reason": "closeDialog.reason (≤ 1000)"
+          },
+          "success": {
+            "status": 200,
+            "model": "Investigation"
+          },
+          "errors": [
+            {
+              "status": 409,
+              "codes": [
+                "invalid_status"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "submitForDecision",
+          "method": "POST",
+          "path": "/investigations/{id}/submit-for-decision",
+          "request": {
+            "classification": "submitForm.classification",
+            "proposed_action": "submitForm.proposedAction"
+          },
+          "success": {
+            "status": 200,
+            "model": "Investigation"
+          },
+          "errors": [
+            {
+              "status": 409,
+              "codes": [
+                "invalid_status"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "decideInvestigation",
+          "method": "POST",
+          "path": "/investigations/{id}/decision",
+          "request": {
+            "text": "decisionForm.text",
+            "deduction": "{ amount, reason } عند التفعيل"
+          },
+          "success": {
+            "status": 200,
+            "model": "Investigation"
+          },
+          "errors": [
+            {
+              "status": 409,
+              "codes": [
+                "invalid_status"
+              ]
+            },
+            {
+              "status": 403,
+              "codes": [
+                "forbidden"
+              ]
+            }
+          ]
+        }
+      ],
+      "view_props": {
+        "investigation": "Loadable<Investigation> ← getInvestigation",
+        "canManage": "investigations.manage",
+        "canDecide": "investigations.decide",
+        "deduction": "{ amount, reason } (§38.7)",
+        "stageForm / onStageFormChange": "{ summary, attachments }",
+        "closeDialog": "{ reason }",
+        "submitForm": "{ classification, proposedAction }",
+        "decisionForm": "{ text, withDeduction, amount, reason }",
+        "actionError": "رمز خطأ إجراء (invalid_status)",
+        "onOpenFlag": "ينتقل إلى S09"
+      },
+      "permissions": [
+        "investigations.view (مؤكَّد)",
+        "investigations.manage (مؤكَّد)",
+        "investigations.decide (مؤكَّد، لا تفويض)"
+      ],
+      "components": [
+        "ConfidentialBanner",
+        "StageTimeline",
+        "Card",
+        "FileUpload",
+        "Textarea",
+        "RadioCard",
+        "MoneyInput",
+        "Checkbox",
+        "ReasonDialog",
+        "ConfirmDialog",
+        "DecisionRecord",
+        "AttachmentList",
+        "StatusBadge"
+      ],
+      "states": [
+        {
+          "key": "S15-stage-1",
+          "label": "المرحلة 1",
+          "drawn": true,
+          "when": {
+            "api": "getInvestigation",
+            "data": "status === STAGE_1"
+          },
+          "ui": [
+            "المرحلة الأولى حالية والباقي قادم",
+            "نموذجها: «ما جرى» إلزامي ومستندات اختيارية",
+            "«إكمال المرحلة» معطّل وسببه ظاهر، و«إغلاق: لا مخالفة»"
+          ]
+        },
+        {
+          "key": "S15-stage-4",
+          "label": "المرحلة 4",
+          "drawn": true,
+          "when": {
+            "api": "getInvestigation",
+            "data": "status === STAGE_4"
+          },
+          "ui": [
+            "ثلاث مراحل مكتملة بملخصها ومرفقاتها",
+            "شريط «فُتح من علامة» برابطها"
+          ]
+        },
+        {
+          "key": "S15-stage-7",
+          "label": "المرحلة 7",
+          "drawn": true,
+          "when": {
+            "api": "getInvestigation",
+            "data": "status === STAGE_7"
+          },
+          "ui": [
+            "نموذج الرفع: التصنيف (5 خيارات) والإجراء المقترح",
+            "«رفع للقرار» معطّل حتى يكتملا"
+          ]
+        },
+        {
+          "key": "S15-awaiting-decision",
+          "label": "بانتظار القرار",
+          "drawn": true,
+          "when": {
+            "api": "getInvestigation",
+            "data": "status === AWAITING_DECISION && !investigations.decide"
+          },
+          "ui": [
+            "Banner «بانتظار قرار المدير التنفيذي»",
+            "التصنيف والإجراء المقترح"
+          ]
+        },
+        {
+          "key": "S15-executive-decision",
+          "label": "قرار المدير التنفيذي",
+          "drawn": true,
+          "when": {
+            "api": "getInvestigation",
+            "data": "AWAITING_DECISION && investigations.decide"
+          },
+          "ui": [
+            "نص القرار (إلزامي)",
+            "«خصم من الراتب» يُظهر المبلغ والسبب",
+            "«إصدار القرار» معطّل وسببه ظاهر"
+          ]
+        },
+        {
+          "key": "S15-decision-confirm",
+          "label": "تأكيد القرار",
+          "drawn": true,
+          "when": {
+            "data": "ضغط «إصدار القرار»"
+          },
+          "ui": [
+            "ConfirmDialog: يُقفل الملف ولا يُعدَّل ولا يُفوَّض"
+          ]
+        },
+        {
+          "key": "S15-decided",
+          "label": "تم القرار",
+          "drawn": true,
+          "when": {
+            "api": "getInvestigation",
+            "data": "status === DECIDED"
+          },
+          "ui": [
+            "DecisionRecord بنص القرار",
+            "بطاقة الخصم (المبلغ والسبب)",
+            "المراحل الثماني مكتملة"
+          ]
+        },
+        {
+          "key": "S15-closed-no-violation",
+          "label": "أُغلق بلا مخالفة",
+          "drawn": true,
+          "when": {
+            "api": "getInvestigation",
+            "data": "status === CLOSED_NO_VIOLATION"
+          },
+          "ui": [
+            "إغلاق مبكر بسببه في الجدول الزمني"
+          ]
+        },
+        {
+          "key": "S15-close-dialog",
+          "label": "إغلاق: لا مخالفة",
+          "drawn": true,
+          "when": {
+            "data": "ضغط «إغلاق: لا مخالفة»"
+          },
+          "ui": [
+            "ReasonDialog: الزر معطّل حتى السبب"
+          ]
+        },
+        {
+          "key": "S15-submit-confirm",
+          "label": "تأكيد الرفع",
+          "drawn": true,
+          "when": {
+            "data": "ضغط «رفع للقرار»"
+          },
+          "ui": [
+            "ConfirmDialog: يُرفع الملف إلى المدير التنفيذي ولا يُعدَّل"
+          ]
+        },
+        {
+          "key": "S15-invalid-status",
+          "label": "تغيّرت الحالة",
+          "drawn": true,
+          "when": {
+            "api": "completeStage",
+            "status": 409,
+            "codes": [
+              "invalid_status"
+            ]
+          },
+          "ui": [
+            "Banner warning «تغيّرت حالة الملف»",
+            "المسودة باقية"
+          ]
+        },
+        {
+          "key": "S15-delegate-forbidden",
+          "label": "المفوَّض: لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "getInvestigation",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState (لا تفويض في التحقيق: القرار 13)"
+          ]
+        },
+        {
+          "key": "S15-not-found",
+          "label": "غير موجود",
+          "drawn": true,
+          "when": {
+            "api": "getInvestigation",
+            "status": 404,
+            "codes": [
+              "not_found"
+            ]
+          },
+          "ui": [
+            "NotFoundState"
+          ]
+        },
+        {
+          "key": "S15-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "getInvestigation",
+            "data": "قيد التحميل"
+          },
+          "ui": [
+            "Skeleton للمراحل والنموذج"
+          ]
+        },
+        {
+          "key": "S15-error",
+          "label": "تعذّر التحميل",
+          "drawn": true,
+          "when": {
+            "api": "getInvestigation",
+            "status": 429,
+            "codes": [
+              "too_many_requests"
+            ]
+          },
+          "ui": [
+            "ErrorState مع «إعادة المحاولة»"
+          ]
+        },
+        {
+          "key": "S15-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "getInvestigation",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "«فتح العلامة»",
+          "to": "S09"
+        },
+        {
+          "on": "رجوع",
+          "to": "S13"
+        }
+      ],
+      "after_mutation": {
+        "completeStage": "إعادة جلب الملف وإبطال S13",
+        "closeNoViolation": "إعادة جلب الملف وإبطال S13",
+        "submitForDecision": "إعادة جلب الملف وإبطال S13 وبانتظار قراري للمدير التنفيذي",
+        "decideInvestigation": "إعادة جلب الملف وإبطال S13 والخصومات"
+      },
+      "notes": [
+        "القرار 9: لا قفز بين المراحل.",
+        "القرار 13: لا تفويض في التحقيق.",
+        "المرحلة 7 بنموذج الرفع لا بـcomplete-stage: §38.2.",
+        "مفتاح الأسماء العربية للتصنيف: §38.8."
+      ]
     }
   }
 }

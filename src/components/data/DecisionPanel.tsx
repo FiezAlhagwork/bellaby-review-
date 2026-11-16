@@ -28,6 +28,8 @@ type DecisionPanelProps = {
   /** تعطيل «اعتماد» (مثل خيار إلزامي لم يُختر). يجب أن يرافقه `approveHint` يشرح السبب. */
   approveDisabled?: boolean;
   approveHint?: string;
+  /** اسم زر الاعتماد. الافتراضي «اعتماد»؛ قرار الزيارة «تأكيد الزيارة». */
+  approveLabel?: string;
   /** اسم الزر الثاني. الافتراضي «رفض»؛ قرار الجرد «إرجاع لإعادة العدّ». */
   rejectLabel?: string;
   /** الاعتماد يُنفَّذ الآن. */
@@ -50,6 +52,7 @@ export function DecisionPanel({
   forbiddenNote,
   approveDisabled = false,
   approveHint,
+  approveLabel = "اعتماد",
   rejectLabel = "رفض",
   approving = false,
   onApprove,
@@ -75,7 +78,7 @@ export function DecisionPanel({
         <div className="flex flex-col gap-2">
           <CaptureRow className="items-center gap-2">
             <Button key="approve" className="flex-1" loading={approving} disabled={forbidden || approveDisabled} onClick={onApprove}>
-              اعتماد
+              {approveLabel}
             </Button>
             <Button key="reject" className="flex-1" variant="danger" disabled={forbidden || approving} onClick={onReject}>
               {rejectLabel}

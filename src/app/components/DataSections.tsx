@@ -8,6 +8,7 @@ import { DataTable, type DataTableColumn, type SortState } from "@/components/da
 import { DateTimeCell, LinkCell, QuantityCell, StatusCell, TextCell } from "@/components/data/cells";
 import { FilterBar, type ActiveFilter } from "@/components/data/FilterBar";
 import { KpiTile } from "@/components/data/KpiTile";
+import { MapPlaceholder, type MapPoint } from "@/components/data/MapPlaceholder";
 import { Pagination } from "@/components/data/Pagination";
 import { Button } from "@/components/ui/Button";
 import { DateRangePicker, type DateRange } from "@/components/ui/DateRangePicker";
@@ -344,6 +345,48 @@ export function ChartSection() {
           </HostFrame>
           <HostFrame label="بلا بيانات" widthClass={DESKTOP}>
             <Chart type="bar" label="المبيعات" data={[]} series={[{ key: "sales", label: "المبيعات" }]} formatValue={format} />
+          </HostFrame>
+        </div>
+      </GalleryGroup>
+    </GallerySection>
+  );
+}
+
+const mapPoints: readonly MapPoint[] = [
+  { id: "s1", lat: 33.5039, lng: 36.2799, kind: "start", label: "بدء زيارة عيادة د. ريم حداد" },
+  { id: "e1", lat: 33.5042, lng: 36.2802, kind: "end", label: "إنهاء زيارة عيادة د. ريم حداد" },
+  { id: "s2", lat: 33.4802, lng: 36.3466, kind: "start", tone: "warning", label: "بدء زيارة مستوصف الأمل" },
+  { id: "e2", lat: 33.4806, lng: 36.3469, kind: "end", tone: "warning", label: "إنهاء زيارة مستوصف الأمل" },
+  { id: "s3", lat: 33.5198, lng: 36.2831, kind: "start", tone: "danger", label: "بدء زيارة صيدلية الربيع" },
+  { id: "e3", lat: 33.5194, lng: 36.2828, kind: "end", tone: "danger", label: "إنهاء زيارة صيدلية الربيع" },
+  { id: "s4", lat: 33.4915, lng: 36.2655, kind: "start", label: "بدء زيارة مركز الرعاية" },
+];
+
+function SelectableMap() {
+  const [selected, setSelected] = useState<string | null>("s2");
+  return <MapPlaceholder points={mapPoints} selectedId={selected} onSelect={setSelected} aria-label="مواقع بدء الزيارات وإنهائها" />;
+}
+
+export function MapSection() {
+  return (
+    <GallerySection
+      name="MapPlaceholder"
+      title="الخريطة الوهمية"
+      usage="مستطيل surface-sunken بحد متقطع واسمه «الخريطة» في الوسط، وفوقه نقاط البدء (دائرة) والإنهاء (مربّع) بإزاحات من الإحداثيات. لا مكتبة خرائط ولا مسار بين النقاط: العقد يلتقط نقطتي البدء والإنهاء فقط. النقاط أزرار حين يمرَّر onSelect، والمحددة بحلقة تركيز. اللون يعبّر عن حالة التحقق (افتراضي، مشكوك فيها warning، مرفوضة danger) ومفتاح الألوان تحتها."
+    >
+      <GalleryGroup title="الحالات">
+        <div className="flex flex-col gap-8">
+          <HostFrame label="مكتب: نقاط قابلة للاختيار (حية)" widthClass={DESKTOP}>
+            <SelectableMap />
+          </HostFrame>
+          <HostFrame label="موبايل" widthClass={MOBILE}>
+            <SelectableMap />
+          </HostFrame>
+          <HostFrame label="مصغّرة للتفاصيل: نقطتان للعرض فقط" widthClass={TABLET}>
+            <MapPlaceholder points={mapPoints.slice(0, 2)} aria-label="موقعا بدء الزيارة وإنهائها" compact />
+          </HostFrame>
+          <HostFrame label="بلا نقاط" widthClass={TABLET}>
+            <MapPlaceholder points={[]} aria-label="لا مواقع" compact legend={false} />
           </HostFrame>
         </div>
       </GalleryGroup>

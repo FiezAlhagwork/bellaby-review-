@@ -87,7 +87,9 @@ export function LineItemsEditor({
     const suggested = suggestedBatch(loadable.data, today);
     return {
       options: sortedBatches(loadable.data).map((batch): Option => {
-        const label = `${isolate(batch.batch_no ?? "")} · ${dayLabel(batch.expiry_date)}${batch.id === suggested?.id ? " · مقترحة" : ""}`;
+        // حين تُسمح الموقوفة (التالف والإرجاع والسحب) تُعلَّم في اسمها فلا تُختار دون أن تُرى.
+        const suspendedMark = allowSuspended && batch.status === "SUSPENDED" ? " · موقوفة" : "";
+        const label = `${isolate(batch.batch_no ?? "")} · ${dayLabel(batch.expiry_date)}${batch.id === suggested?.id ? " · مقترحة" : ""}${suspendedMark}`;
         // الموقوفة والمنتهية معطّلة بسببها (batch_suspended وbatch_expired في العقد)، إلا في حركات القرار 2.
         if (!allowSuspended && batch.status === "SUSPENDED") return { value: String(batch.id), label, disabled: true, reason: "موقوفة" };
         if (!allowSuspended && batch.expiry_date < today) return { value: String(batch.id), label, disabled: true, reason: "منتهية" };

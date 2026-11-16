@@ -12,8 +12,8 @@ import { fileKind, fileKindIcon } from "./file-type";
 export type Attachment = {
   id: string;
   name: string;
-  /** بالبايت. */
-  size: number;
+  /** بالبايت. بدونه (مرفق العقد `Attachment` بلا حجم) لا يظهر سطر الحجم. */
+  size?: number;
   /** رابط مصغّرة الصورة. بدونه تظهر أيقونة النوع. */
   thumbnailUrl?: string;
 };
@@ -66,7 +66,7 @@ export function AttachmentList({ attachments, onDownload, onOpen, className }: A
               )}
               <div className="flex min-w-0 flex-1 flex-col">
                 <FileName name={attachment.name} className="text-body text-fg" />
-                <span className="text-label text-fg-muted">{isolate(formatFileSize(attachment.size))}</span>
+                {attachment.size === undefined ? null : <span className="text-label text-fg-muted">{isolate(formatFileSize(attachment.size))}</span>}
               </div>
               <IconButton variant="ghost" size="sm" icon={DownloadSimple} aria-label={`تنزيل ${attachment.name}`} onClick={() => onDownload(attachment.id)} />
             </CaptureRow>
