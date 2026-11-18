@@ -126,7 +126,7 @@ export function formatFileSize(bytes: number): string {
 }
 
 // صيغ العدد في العربية: 1 مفرد، 2 مثنى، 3–10 جمع، 11 وأكثر مفرد مع العدد. [مفرد، مثنى، جمع].
-function countPhrase(count: number, forms: readonly [string, string, string]): string {
+export function countPhrase(count: number, forms: readonly [string, string, string]): string {
   if (count === 1) return forms[0];
   if (count === 2) return forms[1];
   return count <= 10 ? `${isolate(count)} ${forms[2]}` : `${isolate(count)} ${forms[0]}`;

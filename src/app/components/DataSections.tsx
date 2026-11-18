@@ -313,13 +313,20 @@ export function KpiSection() {
 const months = ["حزيران", "تموز", "آب", "أيلول", "تشرين الأول", "تشرين الثاني"];
 const monthly = months.map((label, index) => ({ label, sales: [420, 510, 380, 560, 610, 482][index] * 100, returns: [30, 42, 25, 38, 51, 33][index] * 10 }));
 
+const rowTargets = [
+  { label: "المرحلة الأولى", sales: 48200, target: 52000 },
+  { label: "المرحلة الثانية", sales: 39600, target: 36000 },
+  { label: "المرحلة الثالثة", sales: 21400, target: 30000 },
+  { label: "خالٍ من اللاكتوز", sales: 12800, target: 12000 },
+];
+
 export function ChartSection() {
   const format = (value: number) => formatQuantity(value);
   return (
     <GallerySection
       name="Chart"
       title="الرسم البياني"
-      usage="Recharts داخل components/data فقط، بأنواع bar وline وbar-target. لا دوائر ولا مكدّسة. الألوان chart-1… بالترتيب وخط الهدف chart-target متقطع، وسيلة الإيضاح فوق الرسم، ومحور الزمن من اليمين (الأقدم يمين). على الموبايل الارتفاع 200 ومحاور مختصرة."
+      usage="Recharts داخل components/data فقط، بأنواع bar وline وbar-target. لا دوائر ولا مكدّسة. الألوان chart-1… بالترتيب وخط الهدف chart-target متقطع (هدف واحد بـtarget، أو هدف لكل عمود بـtargetKey فيُرسم شرطة فوق العمود)، وسيلة الإيضاح فوق الرسم، ومحور الزمن من اليمين (الأقدم يمين). على الموبايل الارتفاع 200 ومحاور مختصرة."
     >
       <GalleryGroup title="الأنواع (مكتب)">
         <div className="flex flex-col gap-8">
@@ -331,6 +338,17 @@ export function ChartSection() {
           </HostFrame>
           <HostFrame label="bar-target: أعمدة مع خط الهدف" widthClass={DESKTOP}>
             <Chart type="bar-target" label="المبيعات مقابل الهدف" data={monthly} series={[{ key: "sales", label: "المبيعات" }]} target={50000} targetLabel="الهدف الشهري" formatValue={format} />
+          </HostFrame>
+          <HostFrame label="bar-target بهدف لكل عمود (targetKey): لكل منتج هدفه" widthClass={DESKTOP}>
+            <Chart
+              type="bar-target"
+              label="المبيعات لكل منتج مقابل أهدافها"
+              data={rowTargets}
+              series={[{ key: "sales", label: "المبيعات" }]}
+              targetKey="target"
+              targetLabel="هدف المنتج"
+              formatValue={format}
+            />
           </HostFrame>
         </div>
       </GalleryGroup>

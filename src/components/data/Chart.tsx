@@ -1,7 +1,7 @@
 "use client";
 
 import { ChartBar } from "@phosphor-icons/react";
-import { Bar, BarChart, CartesianGrid, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, CartesianGrid, ComposedChart, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useOverlay } from "@/components/ui/OverlayHost";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -21,8 +21,10 @@ type ChartProps = {
   /** كل صف نقطة على محور الزمن/الفئة: `{ label: "تشرين الأول", sales: 1200 }`. الصف الأول (الأقدم) يظهر يميناً. */
   data: readonly ChartRow[];
   series: readonly ChartSeries[];
-  /** قيمة الهدف لـ bar-target. */
+  /** قيمة الهدف لـ bar-target: خط أفقي واحد لكل الأعمدة. */
   target?: number;
+  /** بديل عن `target` حين يكون لكل عمود هدفه (منتج ولكل منتج هدف): اسم الحقل الرقمي في كل صف. يُرسم علامة متقطعة فوق العمود. */
+  targetKey?: string;
   targetLabel?: string;
   /** تنسيق القيمة في المحور والتلميح: `formatQuantity` أو `formatMoney`. */
   formatValue: (value: number) => string;
@@ -35,7 +37,13 @@ type ChartProps = {
 const SERIES_COLORS = ["var(--color-chart-1)", "var(--color-chart-2)", "var(--color-chart-3)", "var(--color-chart-4)", "var(--color-chart-5)"];
 const AXIS_TICK = { fill: "var(--color-fg-muted)", fontSize: 12 };
 
-type TooltipPayload = { dataKey?: string | number; value?: number | string; name?: string | number };
+/** علامة هدف العمود: شرطة متقطعة بعرض العمود تقريباً، تُرسم عند قيمة الهدف في منتصف الفئة. */
+function TargetMarker({ cx, cy }: { cx?: number; cy?: number }) {
+  if (cx === undefined || cy === undefined) return null;
+  return <line x1={cx - 22} x2={cx + 22} y1={cy} y2={cy} stroke="var(--color-chart-target)" strokeWidth={3} strokeDasharray="7 3" />;
+}
+
+type TooltipPayload ={ dataKey?: string | number; value?: number | string; name?: string | number };
 
 function ChartTooltip({ active, payload, label, formatValue, series }: { active?: boolean; payload?: TooltipPayload[]; label?: string | number; formatValue: (value: number) => string; series: readonly ChartSeries[] }) {
   if (!active || !payload?.length) return null;
@@ -58,7 +66,7 @@ function ChartTooltip({ active, payload, label, formatValue, series }: { active?
  * الرسم البياني. الارتفاع 200 على الموبايل (بعرض كامل ومحاور مختصرة) و288 من التابلت.
  * وسيلة الإيضاح فوق الرسم في البداية. الحالات: تحميل (مستطيل Skeleton بارتفاع الرسم)، وبلا بيانات.
  */
-export function Chart({ type, data, series, target, targetLabel = "الهدف", formatValue, label, state = "ready", className }: ChartProps) {
+export function Chart({ type, data, series, target, targetKey, targetLabel = "الهدف", formatValue, label, state = "ready", className }: ChartProps) {
   const { breakpoint } = useOverlay();
   const compact = breakpoint === "mobile";
   const height = "h-50 @tablet:h-72";
@@ -66,7 +74,10 @@ export function Chart({ type, data, series, target, targetLabel = "الهدف", 
   if (state === "loading") return <Skeleton className={cn("w-full", height, className)} />;
   if (data.length === 0) return <EmptyState className={cn("justify-center py-0", height, className)} icon={ChartBar} title="لا بيانات" description="لم تُسجَّل بيانات لهذه الفترة." />;
 
-  const legend = [...series.map((item, index) => ({ key: item.key, label: item.label, color: SERIES_COLORS[index % SERIES_COLORS.length], dashed: false })), ...(type === "bar-target" && target !== undefined ? [{ key: "target", label: targetLabel, color: "var(--color-chart-target)", dashed: true }] : [])];
+  const rowTarget = type === "bar-target" && targetKey !== undefined;
+  const hasTarget = type === "bar-target" && (target !== undefined || rowTarget);
+  const tooltipSeries = rowTarget ? [...series, { key: targetKey, label: targetLabel }] : series;
+  const legend = [...series.map((item, index) => ({ key: item.key, label: item.label, color: SERIES_COLORS[index % SERIES_COLORS.length], dashed: false })), ...(hasTarget ? [{ key: "target", label: targetLabel, color: "var(--color-chart-target)", dashed: true }] : [])];
 
   const margin = { top: 8, right: 0, bottom: 0, left: 0 };
   // الأقدم يميناً: XAxis معكوس. وبما أن اتجاه الصفحة RTL، محور القيم يميناً (البداية).
@@ -75,7 +86,7 @@ export function Chart({ type, data, series, target, targetLabel = "الهدف", 
       <CartesianGrid vertical={false} stroke="var(--color-border)" />
       <XAxis dataKey="label" reversed tick={AXIS_TICK} tickLine={false} axisLine={{ stroke: "var(--color-border-strong)" }} interval={compact ? "preserveStartEnd" : 0} />
       <YAxis orientation="right" width={compact ? 40 : 64} tick={AXIS_TICK} tickLine={false} axisLine={false} tickFormatter={formatValue} />
-      <Tooltip cursor={{ fill: "var(--color-surface-sunken)" }} content={<ChartTooltip formatValue={formatValue} series={series} />} />
+      <Tooltip cursor={{ fill: "var(--color-surface-sunken)" }} content={<ChartTooltip formatValue={formatValue} series={tooltipSeries} />} />
     </>
   );
 
@@ -98,6 +109,14 @@ export function Chart({ type, data, series, target, targetLabel = "الهدف", 
                 <Line key={item.key} dataKey={item.key} type="monotone" stroke={SERIES_COLORS[index % SERIES_COLORS.length]} strokeWidth={2} dot={{ r: 3 }} isAnimationActive={false} />
               ))}
             </LineChart>
+          ) : rowTarget ? (
+            <ComposedChart data={data as ChartRow[]} margin={margin}>
+              {axes}
+              {series.map((item, index) => (
+                <Bar key={item.key} dataKey={item.key} fill={SERIES_COLORS[index % SERIES_COLORS.length]} radius={[4, 4, 0, 0]} maxBarSize={48} isAnimationActive={false} />
+              ))}
+              <Line dataKey={targetKey} stroke="none" dot={<TargetMarker />} activeDot={false} isAnimationActive={false} legendType="none" />
+            </ComposedChart>
           ) : (
             <BarChart data={data as ChartRow[]} margin={margin}>
               {axes}

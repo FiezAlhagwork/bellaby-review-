@@ -85,3 +85,9 @@ export function findSampleRequest(id: number): SampleRequest {
   if (!found) throw new Error(`طلب عينات غير موجود في المعرض: ${id}`);
   return found;
 }
+
+/** مدير المكتب العلمي الحالي (M18): «طلباتي» = ما طلبه هو (`requested_by`). */
+export const myUserId = heba.id;
+
+/** أصناف نموذج «طلب عينات»: عينات ومواد دعائية فقط (`GET /items` بنوع SAMPLE أو PROMO). */
+export const sampleFormItems: readonly ItemRef[] = [sample, cerealSample, booklet, flyer, bag];

@@ -16,10 +16,12 @@ type ShellScreenProps = {
   /** عنصر القائمة النشط (key في config/navigation.ts). */
   activeKey: string;
   breadcrumbs: readonly BreadcrumbItem[];
+  /** شريط «فوّضت …» للمدير التنفيذي (E18 وG02). */
+  delegatedTo?: { name: string; to: string };
   children: ReactNode;
 };
 
-export function ShellScreen({ user, activeKey, breadcrumbs, children }: ShellScreenProps) {
+export function ShellScreen({ user, activeKey, breadcrumbs, delegatedTo, children }: ShellScreenProps) {
   const { me, unreadCount, pendingCount } = shellUsers[user];
   const roleName = me.role?.name ?? "";
 
@@ -29,6 +31,7 @@ export function ShellScreen({ user, activeKey, breadcrumbs, children }: ShellScr
       user={{ name: me.name ?? "", roleName }}
       activeKey={activeKey}
       breadcrumbs={breadcrumbs}
+      delegation={delegatedTo ? { kind: "delegator", delegateName: delegatedTo.name, to: delegatedTo.to, onEnd: noop } : undefined}
       unreadCount={unreadCount}
       pendingCount={pendingCount}
       onProfile={noop}

@@ -30,3 +30,42 @@ export const siteComplaints: readonly SiteMessage[] = [
   complaint(905, "محمد الشامي", "+963955100208", "صيدلية في اللاذقية تبيع المنتج دون برّاد وهي تعرّضه للشمس.", "2026-11-03T13:40:00Z"),
   complaint(904, "ميساء ديب", "+963933100209", "طلبت استشارة غذائية ولم يردّ أحد على الرسالة.", "2026-11-02T09:05:00Z", { at: "2026-11-03T08:30:00Z", note: "أُحيلت إلى المكتب العلمي." }),
 ];
+
+// ————— رسائل الموقع كلها لمدير المبيعات (M11): استفسارات وطلبات شراء من الصيدليات والشكاوى أعلاه. الجديدة أولاً ثم بالأحدث. —————
+
+function message(id: number, type: NonNullable<SiteMessage["type"]>, name: string, phone: string, text: string, createdAt: string, handled?: { at: string; note: string }): SiteMessage {
+  return {
+    id,
+    name,
+    phone,
+    type,
+    message: text,
+    status: handled ? "HANDLED" : "NEW",
+    handled_by: handled ? handler : null,
+    handled_at: handled?.at ?? null,
+    handling_note: handled?.note ?? null,
+    created_at: createdAt,
+  };
+}
+
+const others: readonly SiteMessage[] = [
+  message(920, "INQUIRY", "منى الخطيب", "+963944100301", "هل تتوفر المرحلة الثانية خالية من اللاكتوز؟ وما الفرق بينها وبين المرحلة الثانية العادية؟", "2026-11-10T07:40:00Z"),
+  message(919, "PHARMACY_PURCHASE", "صيدلية الربيع", "+963955100302", "نرغب بشراء المنتجات لصيدليتنا في حمص بالجملة. من هو الوكيل المسؤول عن منطقتنا؟", "2026-11-09T14:10:00Z"),
+  message(918, "INQUIRY", "أحمد الصالح", "+963933100303", "ما عمر الطفل المناسب لسيريلاك الأرز وهل يحتوي على سكر مضاف؟", "2026-11-09T10:25:00Z"),
+  message(917, "PHARMACY_PURCHASE", "صيدلية الأصالة", "+963944100304", "نبحث عن وكيل لمنطقة القامشلي. نرجو التواصل مع مسؤول المبيعات.", "2026-11-08T16:00:00Z"),
+  message(916, "INQUIRY", "ريم الدباغ", "+963955100305", "أين أجد منتجاتكم في اللاذقية؟", "2026-11-07T09:15:00Z", { at: "2026-11-07T12:00:00Z", note: "أُرسلت إليها قائمة الصيدليات التي يخدمها وكيل الساحل." }),
+  message(915, "PHARMACY_PURCHASE", "صيدلية الإيمان", "+963933100306", "نريد زيارة من مندوب المبيعات لعرض الأسعار والعروض.", "2026-11-06T11:30:00Z", { at: "2026-11-06T13:20:00Z", note: "حُوّل الطلب إلى وكيل الياسمين وتواصل معهم." }),
+  message(914, "INQUIRY", "سوسن عيسى", "+963944100307", "هل يوجد نشرة مرافقة للمرحلة الأولى بالعربية؟", "2026-11-04T08:45:00Z", { at: "2026-11-05T09:10:00Z", note: "أُرسل ملف النشرة إلى بريدها." }),
+  message(913, "PHARMACY_PURCHASE", "صيدلية السنابل", "+963955100308", "ما شروط التعاقد مع الشركة كصيدلية معتمدة في دير الزور؟", "2026-11-03T15:20:00Z"),
+];
+
+/** الجديدة أولاً ثم الأحدث، كما يرتّب العرض. */
+export const siteMessagesList: readonly SiteMessage[] = [...siteComplaints, ...others].sort((a, b) => {
+  if (a.status !== b.status) return a.status === "NEW" ? -1 : 1;
+  return Date.parse(b.created_at ?? "") - Date.parse(a.created_at ?? "");
+});
+
+/** رد `POST /site/messages/{id}/handle` 200: الرسالة معالَجة بملاحظة. */
+export function handledMessage(item: SiteMessage, note: string): SiteMessage {
+  return { ...item, status: "HANDLED", handled_by: handler, handled_at: "2026-11-10T09:00:00Z", handling_note: note };
+}

@@ -1,4 +1,4 @@
-import type { components } from "./schema";
+import type { components, paths } from "./schema";
 
 // أسماء مختصرة لأنواع العقد. تُضاف هنا حين تحتاجها شاشة فعلاً، لا قبل ذلك.
 
@@ -47,3 +47,44 @@ export type VisitPoint = components["schemas"]["VisitPoint"];
 export type SiteMessage = components["schemas"]["SiteMessage"];
 export type Investigation = components["schemas"]["Investigation"];
 export type Classification = components["schemas"]["Classification"];
+export type Agent = components["schemas"]["Agent"];
+export type AgentRef = components["schemas"]["AgentRef"];
+export type Governorate = components["schemas"]["Governorate"];
+export type Customer = components["schemas"]["Customer"];
+export type Delivery = components["schemas"]["Delivery"];
+export type DeliveryStatus = components["schemas"]["DeliveryStatus"];
+export type MonthlyPlan = components["schemas"]["MonthlyPlan"];
+export type PlanTarget = components["schemas"]["PlanTarget"];
+export type CoverageLine = components["schemas"]["CoverageLine"];
+export type SiteMessageType = NonNullable<SiteMessage["type"]>;
+/** صف من `GET /receivables`: مجمَّع لكل وكيل (لا لكل تسليم). */
+export type Receivable = NonNullable<paths["/receivables"]["get"]["responses"][200]["content"]["application/json"]["data"]>[number];
+export type CustomerReturn = components["schemas"]["CustomerReturn"];
+export type ManagerVisit = components["schemas"]["ManagerVisit"];
+export type DeliveryLine = components["schemas"]["DeliveryLine"];
+export type ConflictDecided = components["schemas"]["ConflictDecided"];
+export type MarketIntel = components["schemas"]["MarketIntel"];
+export type IntelType = components["schemas"]["IntelType"];
+export type ExecutiveDashboard = components["schemas"]["ExecutiveDashboard"];
+export type Budget = components["schemas"]["Budget"];
+export type PendingDecision = components["schemas"]["PendingDecision"];
+export type AuditLog = components["schemas"]["AuditLog"];
+/** صف من `GET /access-logs`: من اطّلع على ملف سري ومتى. */
+export type AccessLog = NonNullable<paths["/access-logs"]["get"]["responses"][200]["content"]["application/json"]["data"]>[number];
+export type ExpenseCategory = components["schemas"]["ExpenseCategory"];
+export type Deduction = components["schemas"]["Deduction"];
+export type MonthClosing = components["schemas"]["MonthClosing"];
+export type MonthWinner = components["schemas"]["MonthWinner"];
+export type Item = components["schemas"]["Item"];
+export type ItemInput = components["schemas"]["ItemInput"];
+export type PricePeriod = components["schemas"]["PricePeriod"];
+export type Portfolio = components["schemas"]["Portfolio"];
+export type Settings = components["schemas"]["Settings"];
+export type Holiday = components["schemas"]["Holiday"];
+export type GeoTree = components["schemas"]["GeoTree"];
+export type RegionClass = components["schemas"]["RegionClass"];
+export type KpiWeightSet = components["schemas"]["KpiWeightSet"];
+export type ComparisonGroup = components["schemas"]["ComparisonGroup"];
+export type Delegation = components["schemas"]["Delegation"];
+/** مفاتيح `GET /lists/{key}` السبعة. */
+export type ListKey = paths["/lists/{key}"]["get"]["parameters"]["path"]["key"];

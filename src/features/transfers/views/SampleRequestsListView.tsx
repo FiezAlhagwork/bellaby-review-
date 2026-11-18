@@ -46,6 +46,15 @@ type SampleRequestsListViewProps = {
   today: IsoDate;
   /** يفتح تفاصيل الطلب (W10). بدونه الصفوف للقراءة فقط. */
   onOpenRequest?: (request: SampleRequest) => void;
+  /**
+   * «طلباتي» (M18): الطالب (مدير المكتب العلمي) يرى طلباته هو: لا عمود «الطالب»، وتظهر ملاحظة الرفض، وتتبدّل عناوين الصفحة.
+   * الترشيح على `requested_by` من الحاوية (لا معامل له في العقد بعد: docs/backend-requests.md §56).
+   */
+  ownRequests?: boolean;
+  /** «طلب عينات» في الرأس (`sample_requests.create`). غيابه = لا زر. */
+  onNewRequest?: () => void;
+  /** «إلغاء الطلب» في قائمة صف الطلب الجديد فقط (`POST /sample-requests/{id}/cancel`). */
+  onCancelRequest?: (request: SampleRequest) => void;
   onRetry?: () => void;
 };
 
@@ -62,7 +71,7 @@ function linesPhrase(count: number): string {
  * طلبات العينات (W09): ما يرفعه مدير المكتب العلمي للمندوبين من عينات ومواد دعائية، ويعالجه اللوجستي بالصرف (W06) أو الرفض (W10).
  * كل طلب في صف (المندوب والطالب والأصناف والسبب والتاريخ والحالة). فلاتر الحالة والمندوب والفترة، وترقيم. الصف يفتح W10.
  */
-export function SampleRequestsListView({ requests, reps, filters, onFiltersChange, onPageChange, onPerPageChange, today, onOpenRequest, onRetry }: SampleRequestsListViewProps) {
+export function SampleRequestsListView({ requests, reps, filters, onFiltersChange, onPageChange, onPerPageChange, today, onOpenRequest, ownRequests = false, onNewRequest, onCancelRequest, onRetry }: SampleRequestsListViewProps) {
   const repOptions: Option[] = reps.flatMap((rep) => (rep.user?.id !== undefined && rep.name ? [{ value: String(rep.user.id), label: rep.name }] : []));
 
   const set = (patch: Partial<SampleRequestFilters>) => onFiltersChange({ ...filters, ...patch });
@@ -79,7 +88,7 @@ export function SampleRequestsListView({ requests, reps, filters, onFiltersChang
 
   const columns: DataTableColumn<SampleRequest>[] = [
     { key: "rep", header: "المندوب", cell: (row) => <TextCell value={row.rep?.name} />, width: "w-40", priority: "high", role: "primary" },
-    { key: "requested_by", header: "الطالب", cell: (row) => <TextCell value={row.requested_by?.name} />, width: "w-36" },
+    ...(ownRequests ? [] : [{ key: "requested_by", header: "الطالب", cell: (row: SampleRequest) => <TextCell value={row.requested_by?.name} />, width: "w-36" }]),
     {
       key: "items",
       header: "الأصناف",
@@ -96,6 +105,7 @@ export function SampleRequestsListView({ requests, reps, filters, onFiltersChang
     },
     { key: "reason", header: "السبب", cell: (row) => <TextCell value={row.reason} />, width: "w-56" },
     { key: "created_at", header: "التاريخ", cell: (row) => <DateTimeStackCell value={row.created_at} />, width: "w-28", priority: "high" },
+    ...(ownRequests ? [{ key: "reject_reason", header: "سبب الرفض", cell: (row: SampleRequest) => <TextCell value={row.status === "REJECTED" ? row.reject_reason : null} />, width: "w-56" }] : []),
     { key: "status", header: "الحالة", cell: (row) => (row.status ? <StatusCell entity="sampleRequest" status={row.status} /> : <TextCell value={null} />), width: "w-28", priority: "high", role: "status" },
   ];
 
@@ -112,12 +122,20 @@ export function SampleRequestsListView({ requests, reps, filters, onFiltersChang
         }
       />
     ) : (
-      <EmptyState icon={Tag} title="لا طلبات عينات بعد" description="تصل هنا الطلبات التي يرفعها مدير المكتب العلمي للمندوبين لتصرفها أو ترفضها." />
+      <EmptyState
+        icon={Tag}
+        title={ownRequests ? "لم ترفع طلبات بعد" : "لا طلبات عينات بعد"}
+        description={ownRequests ? "اضغط «طلب عينات» لتطلب عينات أو مواد دعائية لمندوب." : "تصل هنا الطلبات التي يرفعها مدير المكتب العلمي للمندوبين لتصرفها أو ترفضها."}
+      />
     );
 
   return (
     <>
-      <PageHeader title="طلبات العينات" description="طلبات العينات والمواد الدعائية للمندوبين، من الأحدث إلى الأقدم." />
+      <PageHeader
+        title={ownRequests ? "طلباتي" : "طلبات العينات"}
+        description={ownRequests ? "طلبات العينات والمواد التي رفعتها للمندوبين، من الأحدث إلى الأقدم. يُلغى الطلب الجديد قبل أن يُصرف." : "طلبات العينات والمواد الدعائية للمندوبين، من الأحدث إلى الأقدم."}
+        actions={onNewRequest ? [{ id: "new-request", label: "طلب عينات", primary: true, onSelect: onNewRequest }] : undefined}
+      />
 
       <div className="flex flex-col gap-4">
         <FilterBar
@@ -147,6 +165,7 @@ export function SampleRequestsListView({ requests, reps, filters, onFiltersChang
           error={requests.status === "error" ? { code: requests.code, onRetry } : undefined}
           empty={empty}
           onRowOpen={onOpenRequest}
+          rowActions={onCancelRequest ? (row) => (row.status === "NEW" ? [{ id: "cancel", label: "إلغاء الطلب", danger: true, onSelect: () => onCancelRequest(row) }] : []) : undefined}
         />
 
         {requests.status === "ready" ? <Pagination meta={requests.data.meta} onPageChange={onPageChange} onPerPageChange={onPerPageChange} /> : null}

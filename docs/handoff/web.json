@@ -8317,6 +8317,6454 @@
         "المرحلة 7 بنموذج الرفع لا بـcomplete-stage: §38.2.",
         "مفتاح الأسماء العربية للتصنيف: §38.8."
       ]
+    },
+    "M01": {
+      "id": "M01",
+      "name": "لوحة مدير المبيعات",
+      "group": "managers",
+      "design_source": {
+        "view": "src/features/sales/views/SalesManagerDashboardView.tsx",
+        "page": "src/app/managers/m01-sales-dashboard/page.tsx"
+      },
+      "route": "/dashboard/sales",
+      "api": [
+        {
+          "id": "getSalesPlan",
+          "method": "GET",
+          "path": "/plans/SALES/{month}",
+          "request": {
+            "month": "الشهر المعروض"
+          },
+          "success": {
+            "status": 200,
+            "model": "MonthlyPlan"
+          },
+          "errors": [
+            {
+              "status": 404,
+              "codes": [
+                "not_found"
+              ]
+            }
+          ],
+          "note": "404 = لا خطة معتمدة (حالة empty)"
+        },
+        {
+          "id": "listReceivables",
+          "method": "GET",
+          "path": "/receivables",
+          "request": {},
+          "success": {
+            "status": 200,
+            "model": "Receivable[]"
+          }
+        },
+        {
+          "id": "getCoverage",
+          "method": "GET",
+          "path": "/dashboard/coverage",
+          "request": {
+            "month": "الشهر المعروض"
+          },
+          "success": {
+            "status": 200,
+            "model": "CoverageLine[]"
+          }
+        },
+        {
+          "id": "getPendingDecisions",
+          "method": "GET",
+          "path": "/me/pending-decisions",
+          "request": {},
+          "success": {
+            "status": 200
+          }
+        }
+      ],
+      "view_props": {
+        "overview": "Loadable<SalesOverview> تجمعه الحاوية من الطلبات أعلاه (§39.1)",
+        "now": "الآن (ISO UTC) للأقدم بين القرارات المعلّقة",
+        "onOpen": "pending ← G04، receivables ← M07، visits ← M10، customers ← M04"
+      },
+      "permissions": [
+        "dashboard.sales_manager (مؤقت)"
+      ],
+      "components": [
+        "KpiTile",
+        "Chart (bar-target بـtargetKey)",
+        "Banner",
+        "Grid",
+        "Section"
+      ],
+      "states": [
+        {
+          "key": "M01-default",
+          "label": "الافتراضي",
+          "drawn": true,
+          "when": {
+            "api": "getSalesPlan",
+            "data": "شهر مغلق: provisional=false"
+          },
+          "ui": [
+            "خمس بطاقات بأرقام نهائية",
+            "رسما المبيعات لكل منتج ولكل وكيل بشرطة هدف فوق كل عمود"
+          ]
+        },
+        {
+          "key": "M01-provisional",
+          "label": "مبدئي",
+          "drawn": true,
+          "when": {
+            "api": "getSalesPlan",
+            "data": "الشهر الجاري قبل الإغلاق"
+          },
+          "ui": [
+            "Banner «أرقام الشهر مبدئية»",
+            "شارة «مبدئي» على البطاقات"
+          ]
+        },
+        {
+          "key": "M01-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "getSalesPlan",
+            "data": "قيد التحميل"
+          },
+          "ui": [
+            "Skeleton للبطاقات والرسمين"
+          ]
+        },
+        {
+          "key": "M01-empty",
+          "label": "لا بيانات",
+          "drawn": true,
+          "when": {
+            "api": "getSalesPlan",
+            "data": "meta.total === 0"
+          },
+          "ui": [
+            "لا خطة معتمدة: Banner تحذير، وبطاقتا العملاء الجدد وزياراتي «لا بيانات»، والرسمان مخفيان"
+          ]
+        },
+        {
+          "key": "M01-error",
+          "label": "تعذّر التحميل",
+          "drawn": true,
+          "when": {
+            "api": "getSalesPlan",
+            "status": 429,
+            "codes": [
+              "too_many_requests"
+            ]
+          },
+          "ui": [
+            "ErrorState مع «إعادة المحاولة»"
+          ]
+        },
+        {
+          "key": "M01-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "getSalesPlan",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "بطاقة التحصيل",
+          "to": "M07"
+        },
+        {
+          "on": "بطاقة بانتظار قراري",
+          "to": "G04"
+        },
+        {
+          "on": "بطاقة زياراتي",
+          "to": "M10"
+        },
+        {
+          "on": "بطاقة العملاء الجدد",
+          "to": "M04"
+        }
+      ],
+      "after_mutation": {},
+      "notes": [
+        "حقول DashboardSummary: §39.1",
+        "نسبة التحصيل الكلية من الخادم لا من الواجهة (لا حساب على المبالغ)."
+      ]
+    },
+    "M02": {
+      "id": "M02",
+      "name": "الوكلاء",
+      "group": "managers",
+      "design_source": {
+        "view": "src/features/agents/views/AgentsListView.tsx",
+        "page": "src/app/managers/m02-agents/page.tsx"
+      },
+      "route": "/dashboard/sales/agents",
+      "api": [
+        {
+          "id": "listAgents",
+          "method": "GET",
+          "path": "/agents",
+          "request": {
+            "page": "state",
+            "per_page": "state (10)",
+            "q": "filters.q",
+            "governorate_id": "filters.governorateId"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<Agent>"
+          }
+        }
+      ],
+      "view_props": {
+        "agents": "Loadable<{ data: AgentListRow[], meta }> ← listAgents (+ stock_total وsales_value: §40.1)",
+        "governorates": "المحافظات للفلتر",
+        "filters / onFiltersChange": "{ q, governorateId } والتغيير يعيد الصفحة إلى 1",
+        "onOpenAgent": "ينتقل إلى M03"
+      },
+      "permissions": [
+        "agents.manage (مؤقت: عنصر القائمة)"
+      ],
+      "components": [
+        "DataTable",
+        "FilterBar",
+        "Combobox",
+        "Pagination",
+        "Badge"
+      ],
+      "states": [
+        {
+          "key": "M02-default",
+          "label": "الافتراضي",
+          "drawn": true,
+          "when": {
+            "api": "listAgents",
+            "data": "meta.total > 0"
+          },
+          "ui": [
+            "الوكيل وجهة الاتصال، المحافظات، الرصيد، المبيعات، المستحق",
+            "شارة «معطّل» للوكيل المعطّل"
+          ]
+        },
+        {
+          "key": "M02-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "listAgents",
+            "data": "قيد التحميل"
+          },
+          "ui": [
+            "Skeleton للجدول"
+          ]
+        },
+        {
+          "key": "M02-empty",
+          "label": "لا بيانات",
+          "drawn": true,
+          "when": {
+            "api": "listAgents",
+            "data": "meta.total === 0"
+          },
+          "ui": [
+            "EmptyState (لا وكلاء، أو لا نتائج للفلتر مع «مسح الفلاتر»)"
+          ]
+        },
+        {
+          "key": "M02-error",
+          "label": "تعذّر التحميل",
+          "drawn": true,
+          "when": {
+            "api": "listAgents",
+            "status": 429,
+            "codes": [
+              "too_many_requests"
+            ]
+          },
+          "ui": [
+            "ErrorState مع «إعادة المحاولة»"
+          ]
+        },
+        {
+          "key": "M02-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "listAgents",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "الصف",
+          "to": "M03"
+        }
+      ],
+      "after_mutation": {},
+      "notes": [
+        "الرصيد والمبيعات غير موجودين في Agent: §40.1."
+      ]
+    },
+    "M03": {
+      "id": "M03",
+      "name": "صفحة الوكيل",
+      "group": "managers",
+      "design_source": {
+        "view": "src/features/agents/views/AgentDetailsView.tsx",
+        "page": "src/app/managers/m03-agent/page.tsx"
+      },
+      "route": "/dashboard/sales/agents/[id]",
+      "api": [
+        {
+          "id": "getAgent",
+          "method": "GET",
+          "path": "/agents/{id}",
+          "request": {},
+          "success": {
+            "status": 200,
+            "model": "Agent"
+          },
+          "errors": [
+            {
+              "status": 404,
+              "codes": [
+                "not_found"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "listAgentReceipts",
+          "method": "GET",
+          "path": "/transfers",
+          "request": {
+            "to_location_id": "agent.location_id"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<Transfer>"
+          }
+        },
+        {
+          "id": "listAgentBalances",
+          "method": "GET",
+          "path": "/stock/balances",
+          "request": {
+            "location_id": "agent.location_id",
+            "group_by": "batch"
+          },
+          "success": {
+            "status": 200,
+            "model": "BalanceLine[]"
+          }
+        },
+        {
+          "id": "listAgentDeliveries",
+          "method": "GET",
+          "path": "/deliveries",
+          "request": {
+            "agent_id": "agent.id"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<Delivery>"
+          }
+        },
+        {
+          "id": "getAgentReceivables",
+          "method": "GET",
+          "path": "/receivables",
+          "request": {
+            "agent_id": "agent.id"
+          },
+          "success": {
+            "status": 200,
+            "model": "Receivable[]"
+          }
+        },
+        {
+          "id": "listAgentReturns",
+          "method": "GET",
+          "path": "/agent-returns",
+          "request": {
+            "agent_id": "agent.id"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<AgentReturn>"
+          }
+        },
+        {
+          "id": "listAgentCustomerReturns",
+          "method": "GET",
+          "path": "/customer-returns",
+          "request": {
+            "agent_id": "agent.id"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<CustomerReturn>"
+          }
+        },
+        {
+          "id": "createAgentReturn",
+          "method": "POST",
+          "path": "/agent-returns",
+          "request": {
+            "agent_id": "agent.id (لمدير المبيعات)",
+            "reason_id": "form.reasonId",
+            "note": "form.note",
+            "lines": "form.lines → { item_id, batch_id, quantity }"
+          },
+          "success": {
+            "status": 201,
+            "model": "AgentReturn"
+          },
+          "errors": [
+            {
+              "status": 422,
+              "codes": [
+                "validation_failed",
+                "insufficient_stock"
+              ]
+            }
+          ]
+        }
+      ],
+      "view_props": {
+        "agent": "Loadable<Agent> ← getAgent",
+        "tabs": "{ receipts, balances, deliveries, receivables, returns }: Loadable لكل تبويب ← نقاطه (§41.1)",
+        "tab / onTabChange": "التبويب المختار",
+        "canCreateReturn": "agent_returns.create",
+        "onCreateReturn": "ينتقل إلى نموذج الإرجاع (AgentReturnFormView) بالوكيل"
+      },
+      "permissions": [
+        "agents.manage (مؤقت)",
+        "agent_returns.create (مؤكَّد)"
+      ],
+      "components": [
+        "Tabs",
+        "DataTable",
+        "DescriptionList",
+        "KpiTile",
+        "Banner",
+        "StatusBadge",
+        "AgentReturnFormView (LineItemsEditor)"
+      ],
+      "states": [
+        {
+          "key": "M03-default",
+          "label": "الافتراضي",
+          "drawn": true,
+          "when": {
+            "api": "getAgent",
+            "data": "is_active === true"
+          },
+          "ui": [
+            "بيانات الوكيل",
+            "تبويب الاستلامات أولاً"
+          ]
+        },
+        {
+          "key": "M03-balances",
+          "label": "الرصيد بالدفعة",
+          "drawn": true,
+          "when": {
+            "api": "listAgentBalances",
+            "data": "تبويب الرصيد"
+          },
+          "ui": [
+            "الصنف والدفعة (BatchChip) والكمية"
+          ]
+        },
+        {
+          "key": "M03-deliveries",
+          "label": "التسليمات",
+          "drawn": true,
+          "when": {
+            "api": "listAgentDeliveries",
+            "data": "تبويب التسليمات"
+          },
+          "ui": [
+            "الرقم والعميل والتاريخ والقيمة والموعد والحالة"
+          ]
+        },
+        {
+          "key": "M03-receivables",
+          "label": "المستحقات",
+          "drawn": true,
+          "when": {
+            "api": "getAgentReceivables",
+            "data": "تبويب المستحقات"
+          },
+          "ui": [
+            "أربع بطاقات (المستحق والمسدَّد والمتأخر والنسبة)",
+            "التسليمات غير المسدّدة"
+          ]
+        },
+        {
+          "key": "M03-returns",
+          "label": "المرتجعات",
+          "drawn": true,
+          "when": {
+            "api": "listAgentReturns",
+            "data": "تبويب المرتجعات"
+          },
+          "ui": [
+            "إرجاعات للمستودع",
+            "مرتجعات الصيدليات"
+          ]
+        },
+        {
+          "key": "M03-deactivated",
+          "label": "وكيل معطّل",
+          "drawn": true,
+          "when": {
+            "api": "getAgent",
+            "data": "is_active === false && agent_returns.create"
+          },
+          "ui": [
+            "شارة «معطّل» وشريط",
+            "زر «إنشاء إرجاع للمستودع عنه»"
+          ]
+        },
+        {
+          "key": "M03-return-form",
+          "label": "إرجاع عن الوكيل",
+          "drawn": true,
+          "when": {
+            "data": "ضغط «إنشاء إرجاع للمستودع عنه»"
+          },
+          "ui": [
+            "شريط «بالنيابة عن الوكيل»",
+            "السبب وأسطر المنتجات من رصيده",
+            "«إنشاء الإرجاع» معطّل وسببه ظاهر"
+          ]
+        },
+        {
+          "key": "M03-return-filled",
+          "label": "إرجاع: معبّأ",
+          "drawn": true,
+          "when": {
+            "data": "السبب والأسطر مكتملة"
+          },
+          "ui": [
+            "«إنشاء الإرجاع» مفعّل",
+            "شريط الدفعة الموقوفة"
+          ]
+        },
+        {
+          "key": "M03-return-validation",
+          "label": "إرجاع: أخطاء",
+          "drawn": true,
+          "when": {
+            "api": "createAgentReturn",
+            "status": 422,
+            "codes": [
+              "validation_failed",
+              "insufficient_stock"
+            ]
+          },
+          "ui": [
+            "نص الخادم تحت حقوله"
+          ]
+        },
+        {
+          "key": "M03-return-created",
+          "label": "إرجاع: أُنشئ",
+          "drawn": true,
+          "when": {
+            "api": "createAgentReturn",
+            "status": 201
+          },
+          "ui": [
+            "ملخص الطلب «بانتظار القرار» بعلامة «عن الوكيل»",
+            "زر «صفحة الوكيل»"
+          ]
+        },
+        {
+          "key": "M03-not-found",
+          "label": "غير موجود",
+          "drawn": true,
+          "when": {
+            "api": "getAgent",
+            "status": 404,
+            "codes": [
+              "not_found"
+            ]
+          },
+          "ui": [
+            "NotFoundState"
+          ]
+        },
+        {
+          "key": "M03-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "getAgent",
+            "data": "قيد التحميل"
+          },
+          "ui": [
+            "Skeleton للبيانات والتبويبات"
+          ]
+        },
+        {
+          "key": "M03-error",
+          "label": "تعذّر التحميل",
+          "drawn": true,
+          "when": {
+            "api": "getAgent",
+            "status": 429,
+            "codes": [
+              "too_many_requests"
+            ]
+          },
+          "ui": [
+            "ErrorState مع «إعادة المحاولة»"
+          ]
+        },
+        {
+          "key": "M03-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "getAgent",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "«إنشاء إرجاع للمستودع عنه»",
+          "to": "نموذج الإرجاع (A15 المشترك)"
+        },
+        {
+          "on": "«صفحة الوكيل»",
+          "to": "M03"
+        }
+      ],
+      "after_mutation": {
+        "createAgentReturn": "إبطال تبويب المرتجعات وقائمة قرارات المرتجع (M08)"
+      },
+      "notes": [
+        "التبويبات من نقاطها: §41.1.",
+        "النموذج المشترك مع A15: §41.5.",
+        "حالة الإرجاع بعد الإنشاء: §41.4."
+      ]
+    },
+    "M04": {
+      "id": "M04",
+      "name": "العملاء",
+      "group": "managers",
+      "design_source": {
+        "view": "src/features/customers/views/CustomersListView.tsx",
+        "page": "src/app/managers/m04-customers/page.tsx"
+      },
+      "route": "/dashboard/sales/customers",
+      "api": [
+        {
+          "id": "listCustomers",
+          "method": "GET",
+          "path": "/customers",
+          "request": {
+            "page": "state",
+            "per_page": "state (10)",
+            "q": "filters.q",
+            "agent_id": "filters.agentId",
+            "governorate_id": "filters.governorateId"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<Customer>"
+          }
+        }
+      ],
+      "view_props": {
+        "customers": "Loadable<{ data: Customer[], meta }> ← listCustomers",
+        "agents": "الوكلاء للفلتر",
+        "governorates": "المحافظات للفلتر",
+        "filters / onFiltersChange": "{ q, agentId, governorateId } والتغيير يعيد الصفحة إلى 1",
+        "onOpenCustomer": "ينتقل إلى M05"
+      },
+      "permissions": [
+        "customers.view (مؤقت)"
+      ],
+      "components": [
+        "DataTable",
+        "FilterBar",
+        "Combobox",
+        "Pagination",
+        "Badge"
+      ],
+      "states": [
+        {
+          "key": "M04-default",
+          "label": "الافتراضي",
+          "drawn": true,
+          "when": {
+            "api": "listCustomers",
+            "data": "meta.total > 0"
+          },
+          "ui": [
+            "العميل وعنوانه، الوكيل، المحافظة",
+            "شارة «مربوط»/«غير مربوط» من visit_point_id"
+          ]
+        },
+        {
+          "key": "M04-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "listCustomers",
+            "data": "قيد التحميل"
+          },
+          "ui": [
+            "Skeleton للجدول"
+          ]
+        },
+        {
+          "key": "M04-empty",
+          "label": "لا بيانات",
+          "drawn": true,
+          "when": {
+            "api": "listCustomers",
+            "data": "meta.total === 0"
+          },
+          "ui": [
+            "EmptyState (لا عملاء، أو لا نتائج للفلتر مع «مسح الفلاتر»)"
+          ]
+        },
+        {
+          "key": "M04-error",
+          "label": "تعذّر التحميل",
+          "drawn": true,
+          "when": {
+            "api": "listCustomers",
+            "status": 429,
+            "codes": [
+              "too_many_requests"
+            ]
+          },
+          "ui": [
+            "ErrorState مع «إعادة المحاولة»"
+          ]
+        },
+        {
+          "key": "M04-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "listCustomers",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "الصف",
+          "to": "M05"
+        }
+      ],
+      "after_mutation": {},
+      "notes": [
+        "للقراءة: الوكيل هو من يضيف عملاءه (POST /customers)."
+      ]
+    },
+    "M07": {
+      "id": "M07",
+      "name": "المستحقات",
+      "group": "managers",
+      "design_source": {
+        "view": "src/features/receivables/views/ReceivablesView.tsx",
+        "page": "src/app/managers/m07-receivables/page.tsx"
+      },
+      "route": "/dashboard/sales/receivables",
+      "api": [
+        {
+          "id": "listReceivables",
+          "method": "GET",
+          "path": "/receivables",
+          "request": {
+            "agent_id": "filters.agentId"
+          },
+          "success": {
+            "status": 200,
+            "model": "Receivable[]"
+          }
+        },
+        {
+          "id": "listUnpaidDeliveries",
+          "method": "GET",
+          "path": "/deliveries",
+          "request": {
+            "status": "UNPAID",
+            "agent_id": "filters.agentId",
+            "payment_overdue": "filters.overdueOnly",
+            "page": "state",
+            "per_page": "state (10)"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<Delivery>"
+          },
+          "note": "المتأخر أولاً: §43.1"
+        },
+        {
+          "id": "referDispute",
+          "method": "POST",
+          "path": "/deliveries/{id}/refer-dispute",
+          "request": {
+            "note": "referNote (اختياري)"
+          },
+          "success": {
+            "status": 200,
+            "model": "{ dispute_id }"
+          },
+          "errors": [
+            {
+              "status": 409,
+              "codes": [
+                "invalid_status"
+              ]
+            }
+          ]
+        }
+      ],
+      "view_props": {
+        "summary": "Loadable<Receivable[]> ← listReceivables",
+        "deliveries": "Loadable<{ data: Delivery[], meta }> ← listUnpaidDeliveries",
+        "agents": "الوكلاء للفلتر",
+        "filters / onFiltersChange": "{ agentId, overdueOnly } والتغيير يعيد الصفحة إلى 1",
+        "today": "اليوم لأيام التأخر",
+        "canRefer": "disputes.refer",
+        "referring / referNote": "التسليم المفتوح في نافذة الإحالة وملاحظتها",
+        "onReferConfirm": "referDispute",
+        "referError": "رمز خطأ (invalid_status)"
+      },
+      "permissions": [
+        "receivables.view (مؤقت)",
+        "disputes.refer (مؤكَّد)"
+      ],
+      "components": [
+        "KpiTile",
+        "DataTable",
+        "FilterBar",
+        "Combobox",
+        "Checkbox",
+        "Dialog",
+        "Textarea",
+        "Pagination",
+        "Badge"
+      ],
+      "states": [
+        {
+          "key": "M07-default",
+          "label": "الافتراضي",
+          "drawn": true,
+          "when": {
+            "api": "listUnpaidDeliveries",
+            "data": "status=UNPAID (لا دفعات جزئية)"
+          },
+          "ui": [
+            "التحصيل لكل وكيل",
+            "التسليمات غير المسدّدة (المتأخر أولاً بأيام التأخر)",
+            "«إحالة للقانوني» في المتأخر غير المحال"
+          ]
+        },
+        {
+          "key": "M07-refer",
+          "label": "نافذة الإحالة",
+          "drawn": true,
+          "when": {
+            "data": "ضغط «إحالة للقانوني»"
+          },
+          "ui": [
+            "Dialog: يُفتح ملف نزاع بالمرحلة الأولى مربوطاً بالتسليم",
+            "ملاحظة اختيارية"
+          ]
+        },
+        {
+          "key": "M07-referred",
+          "label": "أُحيل",
+          "drawn": true,
+          "when": {
+            "api": "referDispute",
+            "status": 200
+          },
+          "ui": [
+            "«أُحيل · نزاع #…» بلا زر"
+          ]
+        },
+        {
+          "key": "M07-refer-conflict",
+          "label": "أُحيل مسبقاً",
+          "drawn": true,
+          "when": {
+            "api": "referDispute",
+            "status": 409,
+            "codes": [
+              "invalid_status"
+            ]
+          },
+          "ui": [
+            "Banner في النافذة: أُحيل مسبقاً أو لم يعد غير مسدّد"
+          ]
+        },
+        {
+          "key": "M07-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "listUnpaidDeliveries",
+            "data": "قيد التحميل"
+          },
+          "ui": [
+            "Skeleton للبطاقات والجدول"
+          ]
+        },
+        {
+          "key": "M07-empty",
+          "label": "لا بيانات",
+          "drawn": true,
+          "when": {
+            "api": "listUnpaidDeliveries",
+            "data": "meta.total === 0"
+          },
+          "ui": [
+            "EmptyState (لا مستحقات، أو لا نتائج للفلتر مع «مسح الفلاتر»)"
+          ]
+        },
+        {
+          "key": "M07-error",
+          "label": "تعذّر التحميل",
+          "drawn": true,
+          "when": {
+            "api": "listUnpaidDeliveries",
+            "status": 429,
+            "codes": [
+              "too_many_requests"
+            ]
+          },
+          "ui": [
+            "ErrorState مع «إعادة المحاولة»"
+          ]
+        },
+        {
+          "key": "M07-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "listUnpaidDeliveries",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "بطاقة وكيل",
+          "to": "تفلتر الجدول بوكيلها"
+        }
+      ],
+      "after_mutation": {
+        "referDispute": "إبطال القائمة وعرض dispute_id في الصف"
+      },
+      "notes": [
+        "الجدول بصف لكل تسليم لا لكل وكيل: §43.1.",
+        "تعريف المتعثر: §43.2."
+      ]
+    },
+    "M11": {
+      "id": "M11",
+      "name": "رسائل الموقع",
+      "group": "managers",
+      "design_source": {
+        "view": "src/features/site-messages/views/SiteMessagesView.tsx",
+        "page": "src/app/managers/m11-site-messages/page.tsx"
+      },
+      "route": "/dashboard/sales/site-messages",
+      "api": [
+        {
+          "id": "listSiteMessages",
+          "method": "GET",
+          "path": "/site/messages",
+          "request": {
+            "page": "state",
+            "per_page": "state (10)",
+            "type": "filters.type",
+            "status": "filters.status"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<SiteMessage>"
+          }
+        },
+        {
+          "id": "handleSiteMessage",
+          "method": "POST",
+          "path": "/site/messages/{id}/handle",
+          "request": {
+            "note": "note (إلزامي)"
+          },
+          "success": {
+            "status": 200,
+            "model": "SiteMessage"
+          },
+          "errors": [
+            {
+              "status": 409,
+              "codes": [
+                "invalid_status"
+              ]
+            },
+            {
+              "status": 422,
+              "codes": [
+                "validation_failed"
+              ]
+            }
+          ]
+        }
+      ],
+      "view_props": {
+        "messages": "Loadable<{ data: SiteMessage[], meta }> ← listSiteMessages",
+        "filters / onFiltersChange": "{ type, status } والتغيير يعيد الصفحة إلى 1",
+        "canHandle": "site_messages.handle",
+        "selected / onOpen / onClose": "الرسالة المفتوحة في الدرج",
+        "handling / note": "الرسالة المفتوحة في نافذة المعالجة وملاحظتها",
+        "onHandleConfirm": "handleSiteMessage",
+        "handleError": "رمز خطأ (invalid_status)"
+      },
+      "permissions": [
+        "site_messages.view (مؤكَّد)",
+        "site_messages.handle (مؤكَّد)"
+      ],
+      "components": [
+        "DataTable",
+        "FilterBar",
+        "Combobox",
+        "Drawer",
+        "ReasonDialog",
+        "StatusBadge",
+        "Pagination"
+      ],
+      "states": [
+        {
+          "key": "M11-default",
+          "label": "الافتراضي",
+          "drawn": true,
+          "when": {
+            "api": "listSiteMessages",
+            "data": "meta.total > 0"
+          },
+          "ui": [
+            "الاسم والهاتف والنوع والرسالة والتاريخ والحالة",
+            "«تعليم: عولجت» في الجديدة"
+          ]
+        },
+        {
+          "key": "M11-details",
+          "label": "رسالة مفتوحة",
+          "drawn": true,
+          "when": {
+            "data": "ضغط صف"
+          },
+          "ui": [
+            "Drawer بنص الرسالة",
+            "«تعليم: عولجت» في تذييله"
+          ]
+        },
+        {
+          "key": "M11-handle",
+          "label": "نافذة المعالجة",
+          "drawn": true,
+          "when": {
+            "data": "ضغط «تعليم: عولجت»"
+          },
+          "ui": [
+            "ReasonDialog: الملاحظة إلزامية والزر معطّل حتى تُكتب"
+          ]
+        },
+        {
+          "key": "M11-handled",
+          "label": "عولجت",
+          "drawn": true,
+          "when": {
+            "api": "handleSiteMessage",
+            "status": 200
+          },
+          "ui": [
+            "شارة «عولجت»",
+            "من عالجها ومتى وملاحظته في الدرج"
+          ]
+        },
+        {
+          "key": "M11-already-handled",
+          "label": "عولجت مسبقاً",
+          "drawn": true,
+          "when": {
+            "api": "handleSiteMessage",
+            "status": 409,
+            "codes": [
+              "invalid_status"
+            ]
+          },
+          "ui": [
+            "Banner تحذير أعلى الصفحة"
+          ]
+        },
+        {
+          "key": "M11-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "listSiteMessages",
+            "data": "قيد التحميل"
+          },
+          "ui": [
+            "Skeleton للجدول"
+          ]
+        },
+        {
+          "key": "M11-empty",
+          "label": "لا بيانات",
+          "drawn": true,
+          "when": {
+            "api": "listSiteMessages",
+            "data": "meta.total === 0"
+          },
+          "ui": [
+            "EmptyState (لا رسائل، أو لا نتائج للفلتر مع «مسح الفلاتر»)"
+          ]
+        },
+        {
+          "key": "M11-error",
+          "label": "تعذّر التحميل",
+          "drawn": true,
+          "when": {
+            "api": "listSiteMessages",
+            "status": 429,
+            "codes": [
+              "too_many_requests"
+            ]
+          },
+          "ui": [
+            "ErrorState مع «إعادة المحاولة»"
+          ]
+        },
+        {
+          "key": "M11-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "listSiteMessages",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [],
+      "after_mutation": {
+        "handleSiteMessage": "إبطال القائمة وS12 (شكاوى المراقبة)"
+      },
+      "notes": [
+        "الجديدة أولاً: ترتيب الحاوية (§44.4).",
+        "أسماء الأنواع: §44.2."
+      ]
+    },
+    "M05": {
+      "id": "M05",
+      "name": "صفحة العميل",
+      "group": "managers",
+      "design_source": {
+        "view": "src/features/customers/views/CustomerDetailsView.tsx",
+        "page": "src/app/managers/m05-customer/page.tsx"
+      },
+      "route": "/dashboard/sales/customers/[id]",
+      "api": [
+        {
+          "id": "getCustomer",
+          "method": "GET",
+          "path": "/customers/{id}",
+          "request": {},
+          "success": {
+            "status": 200,
+            "model": "Customer"
+          },
+          "errors": [
+            {
+              "status": 404,
+              "codes": [
+                "not_found"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "getVisitPoint",
+          "method": "GET",
+          "path": "/visit-points/{id}",
+          "request": {
+            "id": "customer.visit_point_id"
+          },
+          "success": {
+            "status": 200,
+            "model": "VisitPoint"
+          }
+        },
+        {
+          "id": "listCustomerDeliveries",
+          "method": "GET",
+          "path": "/deliveries",
+          "request": {
+            "customer_id": "customer.id"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<Delivery>"
+          }
+        },
+        {
+          "id": "listCustomerReturns",
+          "method": "GET",
+          "path": "/customer-returns",
+          "request": {
+            "customer_id": "customer.id (المعامل غير موجود: §45.1)"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<CustomerReturn>"
+          }
+        },
+        {
+          "id": "listPointVisits",
+          "method": "GET",
+          "path": "/visits",
+          "request": {
+            "visit_point_id": "customer.visit_point_id"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<Visit>"
+          }
+        },
+        {
+          "id": "listMyVisitsToCustomer",
+          "method": "GET",
+          "path": "/manager-visits",
+          "request": {
+            "customer_id": "customer.id (المعامل غير موجود: §45.1)"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<ManagerVisit>"
+          }
+        }
+      ],
+      "view_props": {
+        "customer": "Loadable<Customer> ← getCustomer",
+        "point": "VisitPoint | null ← getVisitPoint",
+        "tabs": "{ deliveries, returns, repVisits, myVisits }: Loadable لكل قسم ← نقاطه",
+        "tab / onTabChange": "القسم المختار",
+        "showVisits": "مدير المبيعات (قسما الزيارات)",
+        "today": "اليوم لأيام التأخر",
+        "onOpenDelivery": "ينتقل إلى M06 (A10)"
+      },
+      "permissions": [
+        "customers.view (مؤقت)"
+      ],
+      "components": [
+        "Tabs",
+        "DataTable",
+        "DescriptionList",
+        "KpiTile",
+        "Card",
+        "Badge"
+      ],
+      "states": [
+        {
+          "key": "M05-default",
+          "label": "الافتراضي",
+          "drawn": true,
+          "when": {
+            "api": "getCustomer",
+            "data": "visit_point_id != null"
+          },
+          "ui": [
+            "بيانات العميل",
+            "بطاقة الجهة المربوطة",
+            "قسم التسليمات أولاً"
+          ]
+        },
+        {
+          "key": "M05-payment",
+          "label": "السداد",
+          "drawn": true,
+          "when": {
+            "api": "listCustomerDeliveries",
+            "data": "قسم السداد"
+          },
+          "ui": [
+            "أربع بطاقات: المستحق والمتأخر والمسدَّد وفي موعده"
+          ]
+        },
+        {
+          "key": "M05-returns",
+          "label": "المرتجعات",
+          "drawn": true,
+          "when": {
+            "api": "listCustomerReturns",
+            "data": "قسم المرتجعات"
+          },
+          "ui": [
+            "مرتجعات الصيدلية بحالاتها"
+          ]
+        },
+        {
+          "key": "M05-rep-visits",
+          "label": "زيارات المندوبين",
+          "drawn": true,
+          "when": {
+            "api": "listPointVisits",
+            "data": "قسم زيارات المندوبين"
+          },
+          "ui": [
+            "المندوب والهدف والنتيجة والوقت والحالة"
+          ]
+        },
+        {
+          "key": "M05-my-visits",
+          "label": "زياراتي",
+          "drawn": true,
+          "when": {
+            "api": "listMyVisitsToCustomer",
+            "data": "قسم زياراتي"
+          },
+          "ui": [
+            "الهدف والنتيجة والملاحظات والوقت"
+          ]
+        },
+        {
+          "key": "M05-unlinked",
+          "label": "غير مربوط",
+          "drawn": true,
+          "when": {
+            "api": "getCustomer",
+            "data": "visit_point_id == null"
+          },
+          "ui": [
+            "شارة «غير مربوط» وبطاقة «غير مربوط بجهة زيارة»",
+            "قسم زيارات المندوبين: لا جهة مربوطة"
+          ]
+        },
+        {
+          "key": "M05-not-found",
+          "label": "غير موجود",
+          "drawn": true,
+          "when": {
+            "api": "getCustomer",
+            "status": 404,
+            "codes": [
+              "not_found"
+            ]
+          },
+          "ui": [
+            "NotFoundState"
+          ]
+        },
+        {
+          "key": "M05-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "getCustomer",
+            "data": "قيد التحميل"
+          },
+          "ui": [
+            "Skeleton للبيانات والأقسام"
+          ]
+        },
+        {
+          "key": "M05-error",
+          "label": "تعذّر التحميل",
+          "drawn": true,
+          "when": {
+            "api": "getCustomer",
+            "status": 429,
+            "codes": [
+              "too_many_requests"
+            ]
+          },
+          "ui": [
+            "ErrorState مع «إعادة المحاولة»"
+          ]
+        },
+        {
+          "key": "M05-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "getCustomer",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "صف تسليم",
+          "to": "M06 (A10)"
+        }
+      ],
+      "after_mutation": {},
+      "notes": [
+        "الأقسام من نقاطها: §45.1.",
+        "العميل غير المربوط بلا زيارات مندوبين."
+      ]
+    },
+    "M06": {
+      "id": "M06",
+      "name": "التسليمات",
+      "group": "managers",
+      "design_source": {
+        "view": "src/features/deliveries/views/DeliveriesListView.tsx و DeliveryDetailsView.tsx",
+        "page": "src/app/managers/m06-deliveries/page.tsx"
+      },
+      "route": "/dashboard/sales/deliveries",
+      "api": [
+        {
+          "id": "listDeliveries",
+          "method": "GET",
+          "path": "/deliveries",
+          "request": {
+            "page": "state",
+            "per_page": "state (10)",
+            "status": "filters.status",
+            "agent_id": "filters.agentId",
+            "payment_overdue": "filters.overdueOnly",
+            "from": "filters.range.from",
+            "to": "filters.range.to"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<Delivery>"
+          }
+        },
+        {
+          "id": "getDelivery",
+          "method": "GET",
+          "path": "/deliveries/{id}",
+          "request": {},
+          "success": {
+            "status": 200,
+            "model": "Delivery"
+          },
+          "errors": [
+            {
+              "status": 404,
+              "codes": [
+                "not_found"
+              ]
+            }
+          ]
+        }
+      ],
+      "view_props": {
+        "deliveries": "Loadable<{ data: Delivery[], meta }> ← listDeliveries",
+        "agents": "الوكلاء للفلتر (للوكيل نفسه بدونها)",
+        "filters / onFiltersChange": "{ status, agentId, overdueOnly, range } والتغيير يعيد الصفحة إلى 1",
+        "delivery": "Loadable<Delivery> ← getDelivery",
+        "today": "اليوم لأيام التأخر",
+        "onOpenDelivery": "ينتقل إلى التفاصيل"
+      },
+      "permissions": [
+        "deliveries.approve (مؤقت: عنصر القائمة، §46.1)"
+      ],
+      "components": [
+        "DataTable",
+        "FilterBar",
+        "DateRangePicker",
+        "Combobox",
+        "Checkbox",
+        "Pagination",
+        "ActivityLog",
+        "DecisionRecord",
+        "StatusBadge",
+        "Banner",
+        "Card"
+      ],
+      "states": [
+        {
+          "key": "M06-read-only",
+          "label": "للقراءة",
+          "drawn": true,
+          "when": {
+            "api": "listDeliveries",
+            "data": "meta.total > 0"
+          },
+          "ui": [
+            "الرقم والتاريخ والعميل والوكيل والقيمة وموعد السداد والحالة",
+            "بلا زر قرار"
+          ]
+        },
+        {
+          "key": "M06-filter-unpaid",
+          "label": "غير المسدد",
+          "drawn": true,
+          "when": {
+            "api": "listDeliveries",
+            "data": "status=UNPAID"
+          },
+          "ui": [
+            "شريحة «الحالة: غير مسدد»"
+          ]
+        },
+        {
+          "key": "M06-details",
+          "label": "تفاصيل: متأخر",
+          "drawn": true,
+          "when": {
+            "api": "getDelivery",
+            "data": "is_payment_overdue"
+          },
+          "ui": [
+            "Banner «تجاوز موعد السداد»",
+            "الأسطر والسجل"
+          ]
+        },
+        {
+          "key": "M06-approval-pending-view",
+          "label": "بانتظار الاعتماد",
+          "drawn": true,
+          "when": {
+            "api": "getDelivery",
+            "data": "status === APPROVAL_PENDING"
+          },
+          "ui": [
+            "Banner «طلب إلغاء/شطب بانتظار القرار»",
+            "بلا زر قرار"
+          ]
+        },
+        {
+          "key": "M06-paid",
+          "label": "تفاصيل: مسدد",
+          "drawn": true,
+          "when": {
+            "api": "getDelivery",
+            "data": "status === PAID"
+          },
+          "ui": [
+            "وقت التحصيل وشارة «في موعده» أو «بعد الموعد»"
+          ]
+        },
+        {
+          "key": "M06-written-off",
+          "label": "مشطوب",
+          "drawn": true,
+          "when": {
+            "api": "getDelivery",
+            "data": "status === WRITTEN_OFF"
+          },
+          "ui": [
+            "DecisionRecord بسبب الشطب"
+          ]
+        },
+        {
+          "key": "M06-cancelled",
+          "label": "ملغى",
+          "drawn": true,
+          "when": {
+            "api": "getDelivery",
+            "data": "status === CANCELLED"
+          },
+          "ui": [
+            "DecisionRecord بسبب الإلغاء"
+          ]
+        },
+        {
+          "key": "M06-referred",
+          "label": "محال للقانوني",
+          "drawn": true,
+          "when": {
+            "api": "getDelivery",
+            "data": "dispute_id != null"
+          },
+          "ui": [
+            "Banner «أُحيل إلى القانوني» برقم النزاع"
+          ]
+        },
+        {
+          "key": "M06-not-found",
+          "label": "غير موجود",
+          "drawn": true,
+          "when": {
+            "api": "getDelivery",
+            "status": 404,
+            "codes": [
+              "not_found"
+            ]
+          },
+          "ui": [
+            "NotFoundState"
+          ]
+        },
+        {
+          "key": "M06-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "listDeliveries",
+            "data": "قيد التحميل"
+          },
+          "ui": [
+            "Skeleton للجدول"
+          ]
+        },
+        {
+          "key": "M06-empty",
+          "label": "لا بيانات",
+          "drawn": true,
+          "when": {
+            "api": "listDeliveries",
+            "data": "meta.total === 0"
+          },
+          "ui": [
+            "EmptyState (لا تسليمات، أو لا نتائج للفلتر مع «مسح الفلاتر»)"
+          ]
+        },
+        {
+          "key": "M06-error",
+          "label": "تعذّر التحميل",
+          "drawn": true,
+          "when": {
+            "api": "listDeliveries",
+            "status": 429,
+            "codes": [
+              "too_many_requests"
+            ]
+          },
+          "ui": [
+            "ErrorState مع «إعادة المحاولة»"
+          ]
+        },
+        {
+          "key": "M06-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "listDeliveries",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "الصف",
+          "to": "تفاصيل التسليم"
+        }
+      ],
+      "after_mutation": {},
+      "notes": [
+        "قراءة فقط: أفعال الوكيل تُضاف في A10 (canCollect وcanRequestApproval).",
+        "السجل من الحقول: §46.2."
+      ]
+    },
+    "M08": {
+      "id": "M08",
+      "name": "قرارات المرتجع والتالف",
+      "group": "managers",
+      "design_source": {
+        "view": "src/features/returns/views/ReturnDecisionsView.tsx و ReturnDecisionDrawer.tsx",
+        "page": "src/app/managers/m08-return-decisions/page.tsx"
+      },
+      "route": "/dashboard/sales/return-decisions",
+      "api": [
+        {
+          "id": "listCustomerReturns",
+          "method": "GET",
+          "path": "/customer-returns",
+          "request": {
+            "status": "PENDING عند «المعلّق فقط»",
+            "page": "state",
+            "per_page": "state (10)"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<CustomerReturn>"
+          }
+        },
+        {
+          "id": "listDamageReports",
+          "method": "GET",
+          "path": "/damage-reports",
+          "request": {
+            "status": "PENDING عند «المعلّق فقط»",
+            "location_type": "AGENT أو WAREHOUSE (المعامل غير موجود: §47.1)"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<DamageReport>"
+          }
+        },
+        {
+          "id": "listAgentReturns",
+          "method": "GET",
+          "path": "/agent-returns",
+          "request": {
+            "status": "PENDING عند «المعلّق فقط»"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<AgentReturn>"
+          }
+        },
+        {
+          "id": "decideCustomerReturn",
+          "method": "POST",
+          "path": "/customer-returns/{id}/decision",
+          "request": {
+            "decision": "RESTOCKED | DAMAGED | REJECTED",
+            "responsibility": "form.responsibility عند DAMAGED",
+            "reason": "rejectReason عند REJECTED"
+          },
+          "success": {
+            "status": 200,
+            "model": "CustomerReturn"
+          },
+          "errors": [
+            {
+              "status": 409,
+              "codes": [
+                "already_decided",
+                "invalid_status"
+              ]
+            },
+            {
+              "status": 422,
+              "codes": [
+                "validation_failed"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "decideDamageReport",
+          "method": "POST",
+          "path": "/damage-reports/{id}/decision",
+          "request": {
+            "decision": "DAMAGED | REJECTED",
+            "responsibility": "form.responsibility عند DAMAGED",
+            "reason": "rejectReason عند REJECTED"
+          },
+          "success": {
+            "status": 200,
+            "model": "DamageReport"
+          },
+          "errors": [
+            {
+              "status": 409,
+              "codes": [
+                "already_decided",
+                "invalid_status"
+              ]
+            },
+            {
+              "status": 422,
+              "codes": [
+                "validation_failed"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "decideAgentReturn",
+          "method": "POST",
+          "path": "/agent-returns/{id}/decision",
+          "request": {
+            "decision": "APPROVED | REJECTED",
+            "to_location_id": "form.toLocationId",
+            "reason": "rejectReason عند REJECTED"
+          },
+          "success": {
+            "status": 200,
+            "model": "AgentReturn"
+          },
+          "errors": [
+            {
+              "status": 409,
+              "codes": [
+                "already_decided",
+                "invalid_status"
+              ]
+            },
+            {
+              "status": 422,
+              "codes": [
+                "validation_failed"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "listWarehouses",
+          "method": "GET",
+          "path": "/locations",
+          "request": {
+            "type": "WAREHOUSE"
+          },
+          "success": {
+            "status": 200,
+            "model": "Location[]"
+          }
+        }
+      ],
+      "view_props": {
+        "kind / onKindChange": "النوع المختار (يعيد الصفحة إلى 1)",
+        "page": "Loadable<ReturnsPage> لنوع kind من نقطته",
+        "pendingCounts": "meta.total لـ status=PENDING لكل نوع",
+        "pendingOnly": "المعلّق فقط",
+        "selection / onOpen / onClose": "الطلب المفتوح في الدرج",
+        "canDecide": "returns.decide",
+        "form / onFormChange": "{ decision, responsibility, toLocationId }",
+        "rejecting / rejectReason": "نافذة الرفض وسببها",
+        "onApprove / onRejectConfirm": "decide… بحسب النوع",
+        "decisionError": "رمز خطأ (invalid_status…)",
+        "conflict": "ConflictDecided (409 already_decided)",
+        "warehouses": "مستودعات الاستلام"
+      },
+      "permissions": [
+        "returns.decide (مؤكَّد)"
+      ],
+      "components": [
+        "Tabs",
+        "DataTable",
+        "Drawer",
+        "DecisionPanel",
+        "DecisionRecord",
+        "RadioCard",
+        "Radio",
+        "ReasonDialog",
+        "StockLine",
+        "AttachmentList",
+        "Banner",
+        "Pagination"
+      ],
+      "states": [
+        {
+          "key": "M08-list",
+          "label": "القائمة",
+          "drawn": true,
+          "when": {
+            "api": "listCustomerReturns",
+            "data": "pendingOnly"
+          },
+          "ui": [
+            "أربعة تبويبات بعدّاد المعلّق",
+            "المعلّق أولاً"
+          ]
+        },
+        {
+          "key": "M08-customer-return",
+          "label": "مرتجع صيدلية",
+          "drawn": true,
+          "when": {
+            "data": "ضغط صف مرتجع معلّق"
+          },
+          "ui": [
+            "الصنف والدفعة والكمية والسبب",
+            "RadioCard: أُعيد للمخزون · تالف بمسؤوليته",
+            "«اعتماد القرار» معطّل وسببه ظاهر"
+          ]
+        },
+        {
+          "key": "M08-customer-return-damaged",
+          "label": "مرتجع: تالف",
+          "drawn": true,
+          "when": {
+            "data": "decision === DAMAGED"
+          },
+          "ui": [
+            "المسؤولية (4 خيارات) إلزامية لتفعيل الاعتماد"
+          ]
+        },
+        {
+          "key": "M08-agent-damage",
+          "label": "تالف وكيل",
+          "drawn": true,
+          "when": {
+            "data": "تقرير موقعه وكيل"
+          },
+          "ui": [
+            "«قبول التالف» بمسؤولية (3 خيارات)",
+            "رفض بسبب"
+          ]
+        },
+        {
+          "key": "M08-warehouse-damage",
+          "label": "تالف مستودع",
+          "drawn": true,
+          "when": {
+            "data": "تقرير موقعه مستودع"
+          },
+          "ui": [
+            "الأسطر والمرفقات",
+            "المسؤولية المختارة تُفعّل القبول"
+          ]
+        },
+        {
+          "key": "M08-agent-return",
+          "label": "إرجاع وكيل",
+          "drawn": true,
+          "when": {
+            "data": "طلب إرجاع PENDING"
+          },
+          "ui": [
+            "اختيار المستودع المستلِم (اختياري)",
+            "«اعتماد الإرجاع» يجعله بالطريق"
+          ]
+        },
+        {
+          "key": "M08-reject-dialog",
+          "label": "نافذة الرفض",
+          "drawn": true,
+          "when": {
+            "data": "ضغط «رفض»"
+          },
+          "ui": [
+            "ReasonDialog: السبب إلزامي والزر معطّل حتى يُكتب"
+          ]
+        },
+        {
+          "key": "M08-already-decided",
+          "label": "قرّر غيرك",
+          "drawn": true,
+          "when": {
+            "api": "decideCustomerReturn",
+            "status": 409,
+            "codes": [
+              "already_decided"
+            ]
+          },
+          "ui": [
+            "Banner «قرّر غيرك قبلك»",
+            "DecisionRecord بمن قرّر ومتى",
+            "اختفاء لوحة القرار"
+          ]
+        },
+        {
+          "key": "M08-decided",
+          "label": "قرار صادر",
+          "drawn": true,
+          "when": {
+            "data": "status != PENDING"
+          },
+          "ui": [
+            "DecisionRecord: القرار ومن ومتى والمسؤولية أو السبب",
+            "«بالتفويض» إن وُجد on_behalf_of"
+          ]
+        },
+        {
+          "key": "M08-no-permission",
+          "label": "بلا صلاحية القرار",
+          "drawn": true,
+          "when": {
+            "data": "!returns.decide"
+          },
+          "ui": [
+            "DecisionPanel awaiting-other: القرار لمدير المبيعات أو المدير التنفيذي"
+          ]
+        },
+        {
+          "key": "M08-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "listCustomerReturns",
+            "data": "قيد التحميل"
+          },
+          "ui": [
+            "Skeleton للجدول"
+          ]
+        },
+        {
+          "key": "M08-empty",
+          "label": "لا بيانات",
+          "drawn": true,
+          "when": {
+            "api": "listCustomerReturns",
+            "data": "meta.total === 0"
+          },
+          "ui": [
+            "EmptyState (لا طلبات معلّقة أو لا طلبات)"
+          ]
+        },
+        {
+          "key": "M08-error",
+          "label": "تعذّر التحميل",
+          "drawn": true,
+          "when": {
+            "api": "listCustomerReturns",
+            "status": 429,
+            "codes": [
+              "too_many_requests"
+            ]
+          },
+          "ui": [
+            "ErrorState مع «إعادة المحاولة»"
+          ]
+        },
+        {
+          "key": "M08-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "listCustomerReturns",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [],
+      "after_mutation": {
+        "decideCustomerReturn": "إبطال القائمة وعدّادات التبويبات، وتحديث الطلب في الدرج",
+        "decideDamageReport": "إبطال القائمة وعدّادات التبويبات",
+        "decideAgentReturn": "إبطال القائمة وعدّادات التبويبات وإرجاعات المستودع (W13)"
+      },
+      "notes": [
+        "القرار 12: الأسبق يسري. التفويض يشمل القرار.",
+        "الطلب درج لا صفحة: §47.6.",
+        "تالف وكيل/مستودع من نقطة واحدة: §47.1."
+      ]
+    },
+    "M09": {
+      "id": "M09",
+      "name": "زيارة جديدة",
+      "group": "managers",
+      "design_source": {
+        "view": "src/features/manager-visits/views/NewManagerVisitView.tsx",
+        "page": "src/app/managers/m09-new-visit/page.tsx"
+      },
+      "route": "/dashboard/sales/my-visits/new",
+      "api": [
+        {
+          "id": "searchCustomers",
+          "method": "GET",
+          "path": "/customers",
+          "request": {
+            "q": "نص بحث الجهة"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<Customer>"
+          }
+        },
+        {
+          "id": "searchVisitPoints",
+          "method": "GET",
+          "path": "/visit-points",
+          "request": {
+            "q": "نص بحث الجهة (الصلاحية: §48.1)"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<VisitPoint>"
+          }
+        },
+        {
+          "id": "createManagerVisit",
+          "method": "POST",
+          "path": "/manager-visits",
+          "request": {
+            "customer_id | visit_point_id": "من الجهة المختارة",
+            "purpose_id": "form.purposeId",
+            "outcome_id": "form.outcomeId (اختياري)",
+            "notes": "form.notes",
+            "location": "{ lat, lng, accuracy_m } من navigator.geolocation"
+          },
+          "success": {
+            "status": 201,
+            "model": "ManagerVisit"
+          },
+          "errors": [
+            {
+              "status": 422,
+              "codes": [
+                "validation_failed"
+              ]
+            },
+            {
+              "status": 403,
+              "codes": [
+                "forbidden"
+              ]
+            }
+          ]
+        }
+      ],
+      "view_props": {
+        "targets / onTargetQueryChange": "الجهات المتاحة (عملاء + جهات زيارة)",
+        "purposes / outcomes": "قائمتا الهدف والنتيجة من GET /lists (§48.2)",
+        "form / onFormChange": "{ targetKey, purposeId, outcomeId, notes }",
+        "location": "{ status: idle | locating | denied | ready, point }: تلتقطها الحاوية من navigator.geolocation",
+        "onRequestLocation": "يطلب إذن الموقع",
+        "errors": "errors من validation_failed",
+        "saved": "ManagerVisit بعد 201",
+        "onSubmit": "createManagerVisit"
+      },
+      "permissions": [
+        "manager_visits.create (مؤقت)"
+      ],
+      "components": [
+        "Card",
+        "Combobox",
+        "Select",
+        "Textarea",
+        "Spinner",
+        "Banner",
+        "Badge",
+        "Button"
+      ],
+      "states": [
+        {
+          "key": "M09-default",
+          "label": "الافتراضي",
+          "drawn": true,
+          "when": {
+            "data": "نموذج فارغ"
+          },
+          "ui": [
+            "الجهة والهدف والنتيجة والملاحظات",
+            "بطاقة الموقع بزر «تحديد موقعي»",
+            "«حفظ الزيارة» معطّل وسببه ظاهر"
+          ]
+        },
+        {
+          "key": "M09-locating",
+          "label": "يطلب الموقع",
+          "drawn": true,
+          "when": {
+            "data": "location.status === locating"
+          },
+          "ui": [
+            "Spinner «جارٍ تحديد موقعك»"
+          ]
+        },
+        {
+          "key": "M09-location-denied",
+          "label": "الموقع مرفوض",
+          "drawn": true,
+          "when": {
+            "data": "location.status === denied"
+          },
+          "ui": [
+            "Banner «فعّل الموقع»",
+            "«إعادة المحاولة»",
+            "الحفظ معطّل"
+          ]
+        },
+        {
+          "key": "M09-ready",
+          "label": "جاهز للحفظ",
+          "drawn": true,
+          "when": {
+            "data": "location.status === ready && الجهة والهدف"
+          },
+          "ui": [
+            "شارة «تم تحديد موقعك» ودقته",
+            "«حفظ الزيارة» مفعّل"
+          ]
+        },
+        {
+          "key": "M09-validation",
+          "label": "أخطاء الخادم",
+          "drawn": true,
+          "when": {
+            "api": "createManagerVisit",
+            "status": 422,
+            "codes": [
+              "validation_failed"
+            ]
+          },
+          "ui": [
+            "نص الخادم تحت حقوله"
+          ]
+        },
+        {
+          "key": "M09-saved",
+          "label": "حُفظت",
+          "drawn": true,
+          "when": {
+            "api": "createManagerVisit",
+            "status": 201
+          },
+          "ui": [
+            "Banner «سُجّلت الزيارة»",
+            "ملخص الزيارة",
+            "«زيارة أخرى» و«زياراتي»"
+          ]
+        },
+        {
+          "key": "M09-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "createManagerVisit",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "«زياراتي»",
+          "to": "M10"
+        },
+        {
+          "on": "«زيارة أخرى»",
+          "to": "M09"
+        }
+      ],
+      "after_mutation": {
+        "createManagerVisit": "إبطال قائمة M10 وهدف الشهر وM01"
+      },
+      "notes": [
+        "لا حفظ بلا موقع: §48.4.",
+        "الزيارة لا تضيف عميلاً (القرار 12).",
+        "موبايل أولاً."
+      ]
+    },
+    "M10": {
+      "id": "M10",
+      "name": "زياراتي",
+      "group": "managers",
+      "design_source": {
+        "view": "src/features/manager-visits/views/ManagerVisitsView.tsx",
+        "page": "src/app/managers/m10-my-visits/page.tsx"
+      },
+      "route": "/dashboard/sales/my-visits",
+      "api": [
+        {
+          "id": "listManagerVisits",
+          "method": "GET",
+          "path": "/manager-visits",
+          "request": {
+            "page": "state",
+            "per_page": "state (10)",
+            "from": "filters.range.from",
+            "to": "filters.range.to"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<ManagerVisit>"
+          }
+        },
+        {
+          "id": "getSalesPlan",
+          "method": "GET",
+          "path": "/plans/SALES/{month}",
+          "request": {
+            "month": "الشهر الجاري"
+          },
+          "success": {
+            "status": 200,
+            "model": "MonthlyPlan"
+          },
+          "note": "هدف MANAGER_VISITS و actual"
+        }
+      ],
+      "view_props": {
+        "visits": "Loadable<{ data: ManagerVisit[], meta }> ← listManagerVisits",
+        "goal": "Loadable<{ month, target, actual } | null> ← getSalesPlan",
+        "filters / onFiltersChange / defaultFilters": "الفترة (الشهر الجاري افتراضياً)",
+        "canCreate": "manager_visits.create",
+        "onNewVisit": "ينتقل إلى M09"
+      },
+      "permissions": [
+        "manager_visits.create (مؤقت)"
+      ],
+      "components": [
+        "KpiTile",
+        "DataTable",
+        "FilterBar",
+        "DateRangePicker",
+        "Pagination",
+        "Badge"
+      ],
+      "states": [
+        {
+          "key": "M10-default",
+          "label": "الافتراضي",
+          "drawn": true,
+          "when": {
+            "api": "listManagerVisits",
+            "data": "meta.total > 0"
+          },
+          "ui": [
+            "بطاقة الهدف «13 من 20» بشريط تقدم",
+            "الجهة والنوع والهدف والنتيجة والملاحظات والوقت",
+            "«زيارة جديدة»"
+          ]
+        },
+        {
+          "key": "M10-no-goal",
+          "label": "بلا هدف",
+          "drawn": true,
+          "when": {
+            "api": "getSalesPlan",
+            "data": "لا هدف MANAGER_VISITS"
+          },
+          "ui": [
+            "بطاقة الهدف «لا بيانات لهذا الشهر»"
+          ]
+        },
+        {
+          "key": "M10-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "listManagerVisits",
+            "data": "قيد التحميل"
+          },
+          "ui": [
+            "Skeleton للبطاقة والجدول"
+          ]
+        },
+        {
+          "key": "M10-empty",
+          "label": "لا بيانات",
+          "drawn": true,
+          "when": {
+            "api": "listManagerVisits",
+            "data": "meta.total === 0"
+          },
+          "ui": [
+            "EmptyState (لا زيارات، أو لا زيارات في الفترة مع «مسح الفلاتر»)"
+          ]
+        },
+        {
+          "key": "M10-error",
+          "label": "تعذّر التحميل",
+          "drawn": true,
+          "when": {
+            "api": "listManagerVisits",
+            "status": 429,
+            "codes": [
+              "too_many_requests"
+            ]
+          },
+          "ui": [
+            "ErrorState مع «إعادة المحاولة»"
+          ]
+        },
+        {
+          "key": "M10-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "listManagerVisits",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "«زيارة جديدة»",
+          "to": "M09"
+        }
+      ],
+      "after_mutation": {},
+      "notes": [
+        "الهدف من خطة المبيعات: §49.1.",
+        "موبايل أولاً."
+      ]
+    },
+    "M12": {
+      "id": "M12",
+      "name": "لوحة المكتب العلمي",
+      "group": "managers",
+      "design_source": {
+        "view": "src/features/scientific-office/views/ScientificDashboardView.tsx",
+        "page": "src/app/managers/m12-scientific-dashboard/page.tsx"
+      },
+      "route": "/dashboard/scientific",
+      "api": [
+        {
+          "id": "getPlan",
+          "method": "GET",
+          "path": "/plans/SCIENTIFIC_OFFICE/{month}",
+          "request": {
+            "month": "الشهر الجاري"
+          },
+          "success": {
+            "status": 200,
+            "model": "MonthlyPlan"
+          },
+          "note": "VISITS وCATEGORY_VISITS وITEM_DISCUSSIONS: §50.1"
+        },
+        {
+          "id": "getCoverage",
+          "method": "GET",
+          "path": "/dashboard/coverage",
+          "request": {
+            "month": "الشهر الجاري"
+          },
+          "success": {
+            "status": 200,
+            "model": "CoverageLine[]"
+          }
+        },
+        {
+          "id": "listTodayVisits",
+          "method": "GET",
+          "path": "/visits",
+          "request": {
+            "from": "اليوم",
+            "to": "اليوم"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<Visit>"
+          },
+          "note": "§50.3"
+        }
+      ],
+      "view_props": {
+        "overview": "Loadable<ScientificOverview> ← getPlan + getCoverage + listTodayVisits (hasPlan=false عند 404 من الخطة)"
+      },
+      "permissions": [
+        "dashboard.scientific_manager (مؤقت)"
+      ],
+      "components": [
+        "KpiTile",
+        "Chart",
+        "MapPlaceholder",
+        "Banner"
+      ],
+      "states": [
+        {
+          "key": "M12-default",
+          "label": "الافتراضي",
+          "drawn": true,
+          "when": {
+            "api": "getPlan",
+            "data": "خطة معتمدة"
+          },
+          "ui": [
+            "3 KpiTile بتقدّم",
+            "Chart التغطية",
+            "MapPlaceholder"
+          ]
+        },
+        {
+          "key": "M12-no-plan",
+          "label": "بلا خطة",
+          "drawn": true,
+          "when": {
+            "api": "getPlan",
+            "status": 404
+          },
+          "ui": [
+            "Banner warning",
+            "KpiTile empty"
+          ]
+        },
+        {
+          "key": "M12-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "getPlan",
+            "status": "pending"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "M12-error",
+          "label": "خطأ",
+          "drawn": true,
+          "when": {
+            "api": "getPlan",
+            "status": "5xx/429"
+          },
+          "ui": [
+            "ErrorState + إعادة المحاولة"
+          ]
+        },
+        {
+          "key": "M12-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "getPlan",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [],
+      "after_mutation": {},
+      "notes": [
+        "summary بلا حقول: §50."
+      ]
+    },
+    "M13": {
+      "id": "M13",
+      "name": "المندوبون",
+      "group": "managers",
+      "design_source": {
+        "view": "src/features/reps/views/RepsListView.tsx",
+        "page": "src/app/managers/m13-reps/page.tsx"
+      },
+      "route": "/dashboard/scientific/reps",
+      "api": [
+        {
+          "id": "listReps",
+          "method": "GET",
+          "path": "/users",
+          "request": {
+            "type/role": "REP (§51.1)",
+            "page": "state",
+            "governorate_id / manager_id": "filters"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<User>"
+          }
+        },
+        {
+          "id": "listTodaySessions",
+          "method": "GET",
+          "path": "/attendance-sessions",
+          "request": {
+            "from": "اليوم",
+            "to": "اليوم"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<AttendanceSession>"
+          },
+          "note": "§51.2"
+        },
+        {
+          "id": "listTodayVisits",
+          "method": "GET",
+          "path": "/visits",
+          "request": {
+            "from": "اليوم",
+            "to": "اليوم"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<Visit>"
+          },
+          "note": "العدد لكل مندوب: §51.2"
+        }
+      ],
+      "view_props": {
+        "reps": "Loadable<{ data: RepRow[], meta }>: RepRow = { rep, session, visitsToday }",
+        "filters": "المنطقة والسوبرفايزر",
+        "onOpenRep": "→ S07"
+      },
+      "permissions": [
+        "reps.view (مؤقت)",
+        "users.view (§51.4)"
+      ],
+      "components": [
+        "DataTable",
+        "FilterBar",
+        "Badge",
+        "Pagination"
+      ],
+      "states": [
+        {
+          "key": "M13-default",
+          "label": "الافتراضي",
+          "drawn": true,
+          "when": {
+            "api": "listReps",
+            "data": "meta.total > 0"
+          },
+          "ui": [
+            "دوام اليوم: لم يبدأ/يعمل الآن/انتهى",
+            "زياراته اليوم",
+            "آخر مزامنة"
+          ]
+        },
+        {
+          "key": "M13-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "listReps",
+            "status": "pending"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "M13-empty",
+          "label": "لا توجد بيانات",
+          "drawn": true,
+          "when": {
+            "api": "listReps",
+            "data": "meta.total = 0"
+          },
+          "ui": [
+            "EmptyState"
+          ]
+        },
+        {
+          "key": "M13-error",
+          "label": "خطأ",
+          "drawn": true,
+          "when": {
+            "api": "listReps",
+            "status": "5xx/429"
+          },
+          "ui": [
+            "ErrorState + إعادة المحاولة"
+          ]
+        },
+        {
+          "key": "M13-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "listReps",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "الصف",
+          "to": "S07"
+        }
+      ],
+      "after_mutation": {},
+      "notes": [
+        "دوام اليوم وزياراته غير موجودين في User: §51.2."
+      ]
+    },
+    "M14": {
+      "id": "M14",
+      "name": "جهات الزيارة",
+      "group": "managers",
+      "design_source": {
+        "view": "src/features/visit-points/views/VisitPointsListView.tsx",
+        "page": "src/app/managers/m14-visit-points/page.tsx"
+      },
+      "route": "/dashboard/scientific/visit-points",
+      "api": [
+        {
+          "id": "listVisitPoints",
+          "method": "GET",
+          "path": "/visit-points",
+          "request": {
+            "page": "state",
+            "type_id": "filters.typeId",
+            "specialty_id": "filters.specialtyId",
+            "governorate_id": "filters.governorateId",
+            "status": "filters.status"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<VisitPoint>"
+          }
+        }
+      ],
+      "view_props": {
+        "points": "Loadable<{ data: VisitPoint[], meta }>",
+        "mode": "list | map",
+        "types / specialties": "ListEntry[] (§52.5)",
+        "onOpenPoint": "→ M15"
+      },
+      "permissions": [
+        "visit_points.manage (مؤقت)"
+      ],
+      "components": [
+        "SegmentedControl",
+        "DataTable",
+        "MapPlaceholder",
+        "FilterBar",
+        "Pagination",
+        "Card"
+      ],
+      "states": [
+        {
+          "key": "M14-list",
+          "label": "قائمة",
+          "drawn": true,
+          "when": {
+            "api": "listVisitPoints",
+            "data": "meta.total > 0"
+          },
+          "ui": [
+            "DataTable"
+          ]
+        },
+        {
+          "key": "M14-map",
+          "label": "خريطة",
+          "drawn": true,
+          "when": {
+            "ui": "mode = map"
+          },
+          "ui": [
+            "MapPlaceholder + بطاقة الجهة المحدّدة"
+          ]
+        },
+        {
+          "key": "M14-disabled-filter",
+          "label": "فلتر المعطّلة",
+          "drawn": true,
+          "when": {
+            "api": "listVisitPoints",
+            "request": "status=DISABLED"
+          },
+          "ui": [
+            "Badge مرفوضة/مدمجة"
+          ]
+        },
+        {
+          "key": "M14-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "listVisitPoints",
+            "status": "pending"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "M14-empty",
+          "label": "لا توجد بيانات",
+          "drawn": true,
+          "when": {
+            "api": "listVisitPoints",
+            "data": "meta.total = 0"
+          },
+          "ui": [
+            "EmptyState"
+          ]
+        },
+        {
+          "key": "M14-error",
+          "label": "خطأ",
+          "drawn": true,
+          "when": {
+            "api": "listVisitPoints",
+            "status": "5xx/429"
+          },
+          "ui": [
+            "ErrorState + إعادة المحاولة"
+          ]
+        },
+        {
+          "key": "M14-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "listVisitPoints",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "الصف أو «فتح الجهة»",
+          "to": "M15"
+        }
+      ],
+      "after_mutation": {},
+      "notes": [
+        "الخريطة تعرض الصفحة الحالية: §52.6."
+      ]
+    },
+    "M15": {
+      "id": "M15",
+      "name": "صفحة الجهة",
+      "group": "managers",
+      "design_source": {
+        "view": "src/features/visit-points/views/VisitPointDetailsView.tsx",
+        "page": "src/app/managers/m15-visit-point/page.tsx"
+      },
+      "route": "/dashboard/scientific/visit-points/{id}",
+      "api": [
+        {
+          "id": "getVisitPoint",
+          "method": "GET",
+          "path": "/visit-points/{id}",
+          "request": {
+            "id": "route"
+          },
+          "success": {
+            "status": 200,
+            "model": "VisitPoint"
+          }
+        },
+        {
+          "id": "listPointVisits",
+          "method": "GET",
+          "path": "/visits",
+          "request": {
+            "visit_point_id": "route"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<Visit>"
+          }
+        },
+        {
+          "id": "getCustomer",
+          "method": "GET",
+          "path": "/customers/{id}",
+          "request": {
+            "id": "customer_id"
+          },
+          "success": {
+            "status": 200,
+            "model": "Customer"
+          },
+          "note": "اسم العميل: §52.1"
+        },
+        {
+          "id": "updateVisitPoint",
+          "method": "PATCH",
+          "path": "/visit-points/{id}",
+          "request": {
+            "name": "form.name",
+            "type_id": "form.typeId",
+            "specialty_id": "form.specialtyId",
+            "phone": "+963 + form.phone",
+            "address": "form.address"
+          },
+          "success": {
+            "status": 200,
+            "model": "VisitPoint"
+          },
+          "errors": {
+            "422": "validation_failed تحت الحقول"
+          }
+        }
+      ],
+      "view_props": {
+        "point": "Loadable<VisitPoint>",
+        "visits": "Loadable<Visit[]>",
+        "linkedCustomer": "{ id, name } | null",
+        "canEdit": "visit_points.manage",
+        "form / onFormChange / onSave": "درج التعديل"
+      },
+      "permissions": [
+        "visit_points.manage (مؤقت)"
+      ],
+      "components": [
+        "PageHeader",
+        "DescriptionList",
+        "MapPlaceholder",
+        "Card",
+        "DataTable",
+        "Drawer",
+        "Banner"
+      ],
+      "states": [
+        {
+          "key": "M15-default",
+          "label": "الافتراضي",
+          "drawn": true,
+          "when": {
+            "api": "getVisitPoint",
+            "data": "status = ACTIVE"
+          },
+          "ui": [
+            "زر «تعديل البيانات»"
+          ]
+        },
+        {
+          "key": "M15-edit",
+          "label": "نافذة التعديل",
+          "drawn": true,
+          "when": {
+            "ui": "onEdit"
+          },
+          "ui": [
+            "Drawer: الاسم والنوع والاختصاص والهاتف والعنوان"
+          ]
+        },
+        {
+          "key": "M15-disabled",
+          "label": "معطّلة (مرفوضة)",
+          "drawn": true,
+          "when": {
+            "data": "status = DISABLED و review_state = REJECTED"
+          },
+          "ui": [
+            "Banner warning",
+            "لا زر تعديل"
+          ]
+        },
+        {
+          "key": "M15-disabled-merged",
+          "label": "معطّلة (مدمجة)",
+          "drawn": true,
+          "when": {
+            "data": "merged_into_id"
+          },
+          "ui": [
+            "Banner برقم الجهة الباقية"
+          ]
+        },
+        {
+          "key": "M15-not-found",
+          "label": "غير موجودة",
+          "drawn": true,
+          "when": {
+            "api": "getVisitPoint",
+            "status": 404
+          },
+          "ui": [
+            "NotFoundState"
+          ]
+        },
+        {
+          "key": "M15-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "getVisitPoint",
+            "status": "pending"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "M15-error",
+          "label": "خطأ",
+          "drawn": true,
+          "when": {
+            "api": "getVisitPoint",
+            "status": "5xx/429"
+          },
+          "ui": [
+            "ErrorState + إعادة المحاولة"
+          ]
+        },
+        {
+          "key": "M15-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "getVisitPoint",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "«فتح العميل»",
+          "to": "M05"
+        }
+      ],
+      "after_mutation": {
+        "updateVisitPoint": "تحديث الجهة في الصفحة وإغلاق الدرج"
+      },
+      "notes": [
+        "الموقع لا يُعدَّل.",
+        "منع PATCH للمعطّلة: §52.4."
+      ]
+    },
+    "M16": {
+      "id": "M16",
+      "name": "تقرير معلومات السوق",
+      "group": "managers",
+      "design_source": {
+        "view": "src/features/market-intel/views/MarketIntelView.tsx",
+        "page": "src/app/managers/m16-market-intel/page.tsx"
+      },
+      "route": "/dashboard/scientific/market-intel",
+      "api": [
+        {
+          "id": "listMarketIntel",
+          "method": "GET",
+          "path": "/market-intel",
+          "request": {
+            "type": "filters.type (التبويب)",
+            "governorate_id": "filters.governorateId",
+            "from / to": "filters.range",
+            "page": "state"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<MarketIntel>"
+          }
+        }
+      ],
+      "view_props": {
+        "reports": "Loadable<{ data: MarketIntel[], meta }>",
+        "filters": "النوع والمنطقة والفترة"
+      },
+      "permissions": [
+        "market_intel.view (مؤقت)"
+      ],
+      "components": [
+        "Tabs",
+        "DataTable",
+        "FilterBar",
+        "DateRangePicker",
+        "Pagination"
+      ],
+      "states": [
+        {
+          "key": "M16-competitor-price",
+          "label": "سعر منافس",
+          "drawn": true,
+          "when": {
+            "request": "type=COMPETITOR_PRICE"
+          },
+          "ui": [
+            "أعمدة competitor_brand وproduct_name وprice_syp وplace"
+          ]
+        },
+        {
+          "key": "M16-requested-product",
+          "label": "منتج مطلوب",
+          "drawn": true,
+          "when": {
+            "request": "type=REQUESTED_PRODUCT"
+          },
+          "ui": [
+            "أعمدة product_name وrequested_by وfrequency"
+          ]
+        },
+        {
+          "key": "M16-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "listMarketIntel",
+            "status": "pending"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "M16-empty",
+          "label": "لا توجد بيانات",
+          "drawn": true,
+          "when": {
+            "api": "listMarketIntel",
+            "data": "meta.total = 0"
+          },
+          "ui": [
+            "EmptyState"
+          ]
+        },
+        {
+          "key": "M16-error",
+          "label": "خطأ",
+          "drawn": true,
+          "when": {
+            "api": "listMarketIntel",
+            "status": "5xx/429"
+          },
+          "ui": [
+            "ErrorState + إعادة المحاولة"
+          ]
+        },
+        {
+          "key": "M16-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "listMarketIntel",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [],
+      "after_mutation": {},
+      "notes": [
+        "حقول الأنواع مقترحة في العقد: §53."
+      ]
+    },
+    "M17": {
+      "id": "M17",
+      "name": "أرصدة عينات المندوبين",
+      "group": "managers",
+      "design_source": {
+        "view": "src/features/stock/views/RepSampleBalancesView.tsx",
+        "page": "src/app/managers/m17-rep-sample-balances/page.tsx"
+      },
+      "route": "/dashboard/scientific/sample-balances",
+      "api": [
+        {
+          "id": "listRepBalances",
+          "method": "GET",
+          "path": "/stock/balances",
+          "request": {
+            "location_type": "REP",
+            "location_id": "filters.locationId",
+            "item_id": "filters.itemId",
+            "group_by": "batch"
+          },
+          "success": {
+            "status": 200,
+            "model": "BalanceLine[]"
+          }
+        }
+      ],
+      "view_props": {
+        "balances": "Loadable<BalanceLine[]>",
+        "distributed": "Loadable<Record<location-item, number>> (§54.1)",
+        "lowBelow": "حدّ المنخفض (§54.2)"
+      },
+      "permissions": [
+        "sample_stock.view (مؤقت)"
+      ],
+      "components": [
+        "DataTable",
+        "FilterBar",
+        "Badge",
+        "Banner",
+        "BatchChip"
+      ],
+      "states": [
+        {
+          "key": "M17-default",
+          "label": "الافتراضي",
+          "drawn": true,
+          "when": {
+            "api": "listRepBalances",
+            "data": "length > 0"
+          },
+          "ui": [
+            "DataTable"
+          ]
+        },
+        {
+          "key": "M17-low",
+          "label": "رصيد منخفض",
+          "drawn": true,
+          "when": {
+            "data": "quantity < lowBelow أو < 0"
+          },
+          "ui": [
+            "Badge منخفض/سالب",
+            "Banner warning"
+          ]
+        },
+        {
+          "key": "M17-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "listRepBalances",
+            "status": "pending"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "M17-empty",
+          "label": "لا توجد بيانات",
+          "drawn": true,
+          "when": {
+            "api": "listRepBalances",
+            "data": "meta.total = 0"
+          },
+          "ui": [
+            "EmptyState"
+          ]
+        },
+        {
+          "key": "M17-error",
+          "label": "خطأ",
+          "drawn": true,
+          "when": {
+            "api": "listRepBalances",
+            "status": "5xx/429"
+          },
+          "ui": [
+            "ErrorState + إعادة المحاولة"
+          ]
+        },
+        {
+          "key": "M17-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "listRepBalances",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [],
+      "after_mutation": {},
+      "notes": [
+        "حدّ المنخفض غير محدّد: §54.2."
+      ]
+    },
+    "M18": {
+      "id": "M18",
+      "name": "طلبات العينات",
+      "group": "managers",
+      "design_source": {
+        "view": "src/features/transfers/views/SampleRequestsListView.tsx",
+        "page": "src/app/managers/m18-sample-requests/page.tsx"
+      },
+      "route": "/dashboard/scientific/sample-requests",
+      "api": [
+        {
+          "id": "listSampleRequests",
+          "method": "GET",
+          "path": "/sample-requests",
+          "request": {
+            "status": "filters.status",
+            "rep_id": "filters.repUserId",
+            "page": "state",
+            "requested_by": "§55.1"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<SampleRequest>"
+          }
+        },
+        {
+          "id": "createSampleRequest",
+          "method": "POST",
+          "path": "/sample-requests",
+          "request": {
+            "rep_id": "form.repUserId",
+            "reason": "form.reason",
+            "lines": "form.lines → [{ item_id, quantity }]"
+          },
+          "success": {
+            "status": 201,
+            "model": "SampleRequest"
+          },
+          "errors": {
+            "422": "validation_failed تحت الحقول"
+          }
+        },
+        {
+          "id": "cancelSampleRequest",
+          "method": "POST",
+          "path": "/sample-requests/{id}/cancel",
+          "request": {},
+          "success": {
+            "status": 200,
+            "model": "SampleRequest"
+          },
+          "errors": {
+            "409": "invalid_status"
+          }
+        }
+      ],
+      "view_props": {
+        "ownRequests": "true",
+        "onNewRequest": "sample_requests.create",
+        "onCancelRequest": "للطلب NEW فقط",
+        "SampleRequestFormView": "options { reps, items (SAMPLE/PROMO) }، form، errors، onSubmit"
+      },
+      "permissions": [
+        "sample_requests.create (مؤقت)"
+      ],
+      "components": [
+        "DataTable",
+        "FilterBar",
+        "Dialog",
+        "Combobox",
+        "NumberInput",
+        "ConfirmDialog",
+        "Pagination"
+      ],
+      "states": [
+        {
+          "key": "M18-default",
+          "label": "طلباتي",
+          "drawn": true,
+          "when": {
+            "api": "listSampleRequests",
+            "data": "meta.total > 0"
+          },
+          "ui": [
+            "جديد ومصروف ومرفوض بسبب وملغى"
+          ]
+        },
+        {
+          "key": "M18-new-form",
+          "label": "نافذة الطلب",
+          "drawn": true,
+          "when": {
+            "ui": "onNewRequest"
+          },
+          "ui": [
+            "Dialog: المندوب والسبب والأصناف",
+            "الإرسال معطّل وسببه ظاهر"
+          ]
+        },
+        {
+          "key": "M18-cancel",
+          "label": "إلغاء قبل الصرف",
+          "drawn": true,
+          "when": {
+            "ui": "onCancelRequest"
+          },
+          "ui": [
+            "ConfirmDialog danger"
+          ]
+        },
+        {
+          "key": "M18-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "listSampleRequests",
+            "status": "pending"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "M18-empty",
+          "label": "لا توجد بيانات",
+          "drawn": true,
+          "when": {
+            "api": "listSampleRequests",
+            "data": "meta.total = 0"
+          },
+          "ui": [
+            "EmptyState"
+          ]
+        },
+        {
+          "key": "M18-error",
+          "label": "خطأ",
+          "drawn": true,
+          "when": {
+            "api": "listSampleRequests",
+            "status": "5xx/429"
+          },
+          "ui": [
+            "ErrorState + إعادة المحاولة"
+          ]
+        },
+        {
+          "key": "M18-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "listSampleRequests",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [],
+      "after_mutation": {
+        "createSampleRequest": "إضافة الطلب أعلى القائمة",
+        "cancelSampleRequest": "الطلب يصير CANCELLED"
+      },
+      "notes": [
+        "القرار 12.",
+        "«طلباتي» تُرشَّح في الحاوية: §55.1."
+      ]
+    },
+    "E01": {
+      "id": "E01",
+      "name": "لوحة المدير التنفيذي",
+      "group": "executive",
+      "design_source": {
+        "view": "src/features/executive/views/ExecutiveDashboardView.tsx",
+        "page": "src/app/executive/e01-dashboard/page.tsx"
+      },
+      "route": "/dashboard/executive",
+      "api": [
+        {
+          "id": "getExecutiveDashboard",
+          "method": "GET",
+          "path": "/dashboard/executive",
+          "request": {
+            "month": "الشهر المعروض"
+          },
+          "success": {
+            "status": 200,
+            "model": "ExecutiveDashboard"
+          }
+        },
+        {
+          "id": "listPendingDecisions",
+          "method": "GET",
+          "path": "/me/pending-decisions",
+          "request": {
+            "per_page": "1"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<PendingDecision>"
+          },
+          "note": "meta.total والأقدم"
+        },
+        {
+          "id": "listScores",
+          "method": "GET",
+          "path": "/scores",
+          "request": {
+            "month": "الشهر المعروض"
+          },
+          "success": {
+            "status": 200,
+            "model": "MonthlyScore[]"
+          },
+          "note": "النقاط لكل مجموعة: §56.1"
+        }
+      ],
+      "view_props": {
+        "overview": "Loadable<{ dashboard, pending, scoreGroups, provisional }>",
+        "now": "الآن UTC",
+        "onOpenPending": "→ G04"
+      },
+      "permissions": [
+        "dashboard.executive (مؤقت)"
+      ],
+      "components": [
+        "KpiTile",
+        "DataTable",
+        "Card",
+        "Badge",
+        "Banner"
+      ],
+      "states": [
+        {
+          "key": "E01-default",
+          "label": "الافتراضي",
+          "drawn": true,
+          "when": {
+            "api": "getExecutiveDashboard",
+            "data": "شهر مغلق"
+          },
+          "ui": [
+            "4 KpiTile",
+            "جداول المهام والتارغيت والمصاريف",
+            "النقاط لكل مجموعة"
+          ]
+        },
+        {
+          "key": "E01-provisional",
+          "label": "مبدئي",
+          "drawn": true,
+          "when": {
+            "data": "MonthlyScore.status = PROVISIONAL"
+          },
+          "ui": [
+            "Banner info",
+            "KpiTile provisional"
+          ]
+        },
+        {
+          "key": "E01-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "getExecutiveDashboard",
+            "status": "pending"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "E01-error",
+          "label": "خطأ",
+          "drawn": true,
+          "when": {
+            "api": "getExecutiveDashboard",
+            "status": "5xx/429"
+          },
+          "ui": [
+            "ErrorState + إعادة المحاولة"
+          ]
+        },
+        {
+          "key": "E01-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "getExecutiveDashboard",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "«بانتظار قراري»",
+          "to": "G04"
+        }
+      ],
+      "after_mutation": {},
+      "notes": [
+        "للعرض لا للتقييم (القرار 15).",
+        "المبالغ جداول لا رسوم: §56.3."
+      ]
+    },
+    "E02": {
+      "id": "E02",
+      "name": "سجل التدقيق",
+      "group": "executive",
+      "design_source": {
+        "view": "src/features/audit/views/AuditLogView.tsx",
+        "page": "src/app/executive/e02-audit/page.tsx"
+      },
+      "route": "/dashboard/audit",
+      "api": [
+        {
+          "id": "listAuditLogs",
+          "method": "GET",
+          "path": "/audit-logs",
+          "request": {
+            "user_id": "filters.userId",
+            "entity_type": "filters.entityType",
+            "action": "filters.action",
+            "from / to": "filters.range",
+            "page": "state"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<AuditLog>"
+          }
+        },
+        {
+          "id": "listAccessLogs",
+          "method": "GET",
+          "path": "/access-logs",
+          "request": {
+            "entity_type": "accessFilters.entityType",
+            "page": "state"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<AccessLog>"
+          }
+        }
+      ],
+      "view_props": {
+        "tab": "audit | access",
+        "canViewAccess": "access_logs.view",
+        "selected / onSelect": "الدرج"
+      },
+      "permissions": [
+        "audit.view (مؤقت)",
+        "access_logs.view"
+      ],
+      "components": [
+        "Tabs",
+        "DataTable",
+        "FilterBar",
+        "DateRangePicker",
+        "Drawer",
+        "DescriptionList",
+        "Badge",
+        "Pagination"
+      ],
+      "states": [
+        {
+          "key": "E02-audit",
+          "label": "سجل التدقيق",
+          "drawn": true,
+          "when": {
+            "api": "listAuditLogs",
+            "data": "meta.total > 0"
+          },
+          "ui": [
+            "Badge «عن …» للتفويض"
+          ]
+        },
+        {
+          "key": "E02-access",
+          "label": "سجل الاطلاع",
+          "drawn": true,
+          "when": {
+            "api": "listAccessLogs"
+          },
+          "ui": [
+            "DataTable"
+          ]
+        },
+        {
+          "key": "E02-details",
+          "label": "تفاصيل سجل",
+          "drawn": true,
+          "when": {
+            "ui": "onSelect"
+          },
+          "ui": [
+            "Drawer: المنفّذ والتفويض وIP والتغييرات"
+          ]
+        },
+        {
+          "key": "E02-monitoring",
+          "label": "رؤية المراقبة",
+          "drawn": true,
+          "when": {
+            "permissions": "audit.view بلا access_logs.view"
+          },
+          "ui": [
+            "بلا Tabs"
+          ]
+        },
+        {
+          "key": "E02-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "listAuditLogs",
+            "status": "pending"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "E02-empty",
+          "label": "لا توجد بيانات",
+          "drawn": true,
+          "when": {
+            "api": "listAuditLogs",
+            "data": "meta.total = 0"
+          },
+          "ui": [
+            "EmptyState"
+          ]
+        },
+        {
+          "key": "E02-error",
+          "label": "خطأ",
+          "drawn": true,
+          "when": {
+            "api": "listAuditLogs",
+            "status": "5xx/429"
+          },
+          "ui": [
+            "ErrorState + إعادة المحاولة"
+          ]
+        },
+        {
+          "key": "E02-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "listAuditLogs",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [],
+      "after_mutation": {},
+      "notes": [
+        "قيم action وentity_type حرّة: §57.1."
+      ]
+    },
+    "E03": {
+      "id": "E03",
+      "name": "الميزانية والمصاريف",
+      "group": "executive",
+      "design_source": {
+        "view": "src/features/budgets/views/BudgetView.tsx",
+        "page": "src/app/executive/e03-budget/page.tsx"
+      },
+      "route": "/dashboard/budget",
+      "api": [
+        {
+          "id": "getBudget",
+          "method": "GET",
+          "path": "/budgets/{month}",
+          "request": {
+            "month": "month"
+          },
+          "success": {
+            "status": 200,
+            "model": "Budget"
+          }
+        },
+        {
+          "id": "putBudget",
+          "method": "PUT",
+          "path": "/budgets/{month}",
+          "request": {
+            "lines": "draft → [{ category_id, budget }]"
+          },
+          "success": {
+            "status": 200,
+            "model": "Budget"
+          },
+          "errors": {
+            "409": "month_closed",
+            "422": "validation_failed (lines.N.budget)"
+          }
+        }
+      ],
+      "view_props": {
+        "budget": "Loadable<Budget>",
+        "month / closedMonths": "MonthPicker",
+        "canEdit": "budgets.manage",
+        "draft": "Record<category_id, string> | null",
+        "saveError": "month_closed"
+      },
+      "permissions": [
+        "budgets.manage"
+      ],
+      "components": [
+        "MonthPicker",
+        "KpiTile",
+        "DataTable",
+        "MoneyInput",
+        "Banner",
+        "Badge"
+      ],
+      "states": [
+        {
+          "key": "E03-default",
+          "label": "الافتراضي",
+          "drawn": true,
+          "when": {
+            "api": "getBudget",
+            "data": "locked = false"
+          },
+          "ui": [
+            "KpiTile ×3",
+            "DataTable"
+          ]
+        },
+        {
+          "key": "E03-edit",
+          "label": "تعديل الميزانية",
+          "drawn": true,
+          "when": {
+            "ui": "onEdit"
+          },
+          "ui": [
+            "MoneyInput لكل بند",
+            "حفظ معطّل حتى تصح القيم"
+          ]
+        },
+        {
+          "key": "E03-missing-actual",
+          "label": "فعلي ناقص",
+          "drawn": true,
+          "when": {
+            "data": "kind = ENTERED و actual = null"
+          },
+          "ui": [
+            "Badge warning",
+            "Banner"
+          ]
+        },
+        {
+          "key": "E03-closed",
+          "label": "الشهر مغلق",
+          "drawn": true,
+          "when": {
+            "data": "locked = true"
+          },
+          "ui": [
+            "Banner info",
+            "لا تعديل"
+          ]
+        },
+        {
+          "key": "E03-month-closed",
+          "label": "رفض الحفظ",
+          "drawn": true,
+          "when": {
+            "api": "putBudget",
+            "status": 409,
+            "codes": [
+              "month_closed"
+            ]
+          },
+          "ui": [
+            "Banner danger"
+          ]
+        },
+        {
+          "key": "E03-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "getBudget",
+            "status": "pending"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "E03-error",
+          "label": "خطأ",
+          "drawn": true,
+          "when": {
+            "api": "getBudget",
+            "status": "5xx/429"
+          },
+          "ui": [
+            "ErrorState + إعادة المحاولة"
+          ]
+        },
+        {
+          "key": "E03-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "getBudget",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "«بنود المصاريف»",
+          "to": "E04"
+        }
+      ],
+      "after_mutation": {
+        "putBudget": "تحديث الجدول والخروج من التعديل"
+      },
+      "notes": [
+        "لا يشمله التفويض (القرار 15).",
+        "§58."
+      ]
+    },
+    "E04": {
+      "id": "E04",
+      "name": "بنود المصاريف",
+      "group": "executive",
+      "design_source": {
+        "view": "src/features/budgets/views/ExpenseCategoriesView.tsx",
+        "page": "src/app/executive/e04-expense-categories/page.tsx"
+      },
+      "route": "/dashboard/budget/categories",
+      "api": [
+        {
+          "id": "listCategories",
+          "method": "GET",
+          "path": "/expense-categories",
+          "request": {},
+          "success": {
+            "status": 200,
+            "model": "ExpenseCategory[]"
+          }
+        },
+        {
+          "id": "createCategory",
+          "method": "POST",
+          "path": "/expense-categories",
+          "request": {
+            "name": "name"
+          },
+          "success": {
+            "status": 201,
+            "model": "ExpenseCategory"
+          },
+          "errors": {
+            "422": "errors.name"
+          }
+        },
+        {
+          "id": "updateCategory",
+          "method": "PATCH",
+          "path": "/expense-categories/{id}",
+          "request": {
+            "name / is_active": "form"
+          },
+          "success": {
+            "status": 200,
+            "model": "ExpenseCategory"
+          },
+          "errors": {
+            "409": "بند نظامي"
+          }
+        }
+      ],
+      "view_props": {
+        "categories": "Loadable<ExpenseCategory[]>",
+        "canManage": "budgets.manage",
+        "form": "create | rename",
+        "onToggleActive": "PATCH is_active"
+      },
+      "permissions": [
+        "budgets.manage"
+      ],
+      "components": [
+        "DataTable",
+        "Menu",
+        "Dialog",
+        "Badge"
+      ],
+      "states": [
+        {
+          "key": "E04-default",
+          "label": "الافتراضي",
+          "drawn": true,
+          "when": {
+            "api": "listCategories"
+          },
+          "ui": [
+            "DataTable + قائمة الصف"
+          ]
+        },
+        {
+          "key": "E04-form",
+          "label": "نافذة البند",
+          "drawn": true,
+          "when": {
+            "ui": "onOpenForm"
+          },
+          "ui": [
+            "Dialog: الاسم"
+          ]
+        },
+        {
+          "key": "E04-system",
+          "label": "البندان الأساسيان",
+          "drawn": true,
+          "when": {
+            "data": "is_system = true"
+          },
+          "ui": [
+            "خيارات معطّلة بسببها"
+          ]
+        },
+        {
+          "key": "E04-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "listCategories",
+            "status": "pending"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "E04-empty",
+          "label": "لا توجد بيانات",
+          "drawn": true,
+          "when": {
+            "api": "listCategories",
+            "data": "فارغ"
+          },
+          "ui": [
+            "EmptyState"
+          ]
+        },
+        {
+          "key": "E04-error",
+          "label": "خطأ",
+          "drawn": true,
+          "when": {
+            "api": "listCategories",
+            "status": "5xx/429"
+          },
+          "ui": [
+            "ErrorState + إعادة المحاولة"
+          ]
+        },
+        {
+          "key": "E04-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "listCategories",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "«العودة للميزانية»",
+          "to": "E03"
+        }
+      ],
+      "after_mutation": {
+        "createCategory": "إضافة البند للقائمة",
+        "updateCategory": "تحديث الصف"
+      },
+      "notes": [
+        "§58.2–§58.4."
+      ]
+    },
+    "E05": {
+      "id": "E05",
+      "name": "الخصومات",
+      "group": "executive",
+      "design_source": {
+        "view": "src/features/deductions/views/DeductionsView.tsx",
+        "page": "src/app/executive/e05-deductions/page.tsx"
+      },
+      "route": "/dashboard/deductions",
+      "api": [
+        {
+          "id": "listDeductions",
+          "method": "GET",
+          "path": "/deductions",
+          "request": {
+            "user_id": "filters.userId",
+            "month": "filters.month",
+            "page": "state"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<Deduction>"
+          }
+        },
+        {
+          "id": "createDeduction",
+          "method": "POST",
+          "path": "/deductions",
+          "request": {
+            "user_id": "form.userId",
+            "amount": "form.amount",
+            "source": "form.source",
+            "month": "form.month",
+            "reason": "form.reason"
+          },
+          "success": {
+            "status": 201,
+            "model": "Deduction"
+          },
+          "errors": {
+            "409": "month_closed",
+            "422": "validation_failed"
+          }
+        },
+        {
+          "id": "reverseDeduction",
+          "method": "POST",
+          "path": "/deductions/{id}/reverse",
+          "request": {
+            "reason": "reverseReason"
+          },
+          "success": {
+            "status": 200,
+            "model": "Deduction"
+          },
+          "errors": {
+            "409": "معكوس أو الشهر مغلق (§59.3)"
+          }
+        }
+      ],
+      "view_props": {
+        "deductions": "Loadable<{ data, meta }>",
+        "canCreate": "deductions.create",
+        "form": "DeductionForm | null",
+        "reversing": "Deduction | null"
+      },
+      "permissions": [
+        "deductions.view",
+        "deductions.create"
+      ],
+      "components": [
+        "DataTable",
+        "FilterBar",
+        "MonthPicker",
+        "Dialog",
+        "MoneyInput",
+        "Select",
+        "ReasonDialog",
+        "Badge",
+        "Pagination"
+      ],
+      "states": [
+        {
+          "key": "E05-default",
+          "label": "الافتراضي",
+          "drawn": true,
+          "when": {
+            "api": "listDeductions",
+            "data": "meta.total > 0"
+          },
+          "ui": [
+            "DataTable + «قيد معاكس»"
+          ]
+        },
+        {
+          "key": "E05-new-form",
+          "label": "خصم جديد",
+          "drawn": true,
+          "when": {
+            "ui": "«خصم جديد»"
+          },
+          "ui": [
+            "Dialog"
+          ]
+        },
+        {
+          "key": "E05-reverse",
+          "label": "قيد معاكس",
+          "drawn": true,
+          "when": {
+            "ui": "قائمة الصف"
+          },
+          "ui": [
+            "ReasonDialog"
+          ]
+        },
+        {
+          "key": "E05-month-closed",
+          "label": "الشهر مغلق",
+          "drawn": true,
+          "when": {
+            "api": "createDeduction",
+            "status": 409,
+            "codes": [
+              "month_closed"
+            ]
+          },
+          "ui": [
+            "Banner danger في النافذة"
+          ]
+        },
+        {
+          "key": "E05-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "listDeductions",
+            "status": "pending"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "E05-empty",
+          "label": "لا توجد بيانات",
+          "drawn": true,
+          "when": {
+            "api": "listDeductions",
+            "data": "فارغ"
+          },
+          "ui": [
+            "EmptyState"
+          ]
+        },
+        {
+          "key": "E05-error",
+          "label": "خطأ",
+          "drawn": true,
+          "when": {
+            "api": "listDeductions",
+            "status": "5xx/429"
+          },
+          "ui": [
+            "ErrorState + إعادة المحاولة"
+          ]
+        },
+        {
+          "key": "E05-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "listDeductions",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [],
+      "after_mutation": {
+        "createDeduction": "إضافة الخصم أعلى القائمة",
+        "reverseDeduction": "إضافة القيد وتعليم الأصلي «معكوس»"
+      },
+      "notes": [
+        "لا يُنقص النقاط ويمنع الترشيح لموظف الشهر (القرار 13).",
+        "§59."
+      ]
+    },
+    "E06": {
+      "id": "E06",
+      "name": "إغلاق الشهر",
+      "group": "executive",
+      "design_source": {
+        "view": "src/features/scoring/views/MonthClosingView.tsx",
+        "page": "src/app/executive/e06-month-close/page.tsx"
+      },
+      "route": "/dashboard/month-close",
+      "api": [
+        {
+          "id": "getClosing",
+          "method": "GET",
+          "path": "/month-closings/{month}",
+          "request": {
+            "month": "month"
+          },
+          "success": {
+            "status": 200,
+            "model": "MonthClosing"
+          }
+        }
+      ],
+      "view_props": {
+        "closing": "Loadable<MonthClosing>",
+        "today": "اليوم بدمشق"
+      },
+      "permissions": [
+        "month_closings.manage (مؤقت)"
+      ],
+      "components": [
+        "MonthPicker",
+        "Card",
+        "Banner",
+        "StatusBadge"
+      ],
+      "states": [
+        {
+          "key": "E06-open",
+          "label": "مفتوح",
+          "drawn": true,
+          "when": {
+            "data": "status = OPEN"
+          },
+          "ui": [
+            "قائمة الشروط بأزرار"
+          ]
+        },
+        {
+          "key": "E06-waiting",
+          "label": "بانتظار الإغلاق",
+          "drawn": true,
+          "when": {
+            "data": "status = WAITING"
+          },
+          "ui": [
+            "Banner warning"
+          ]
+        },
+        {
+          "key": "E06-closed",
+          "label": "مغلق",
+          "drawn": true,
+          "when": {
+            "data": "status = CLOSED"
+          },
+          "ui": [
+            "Banner success + «النقاط النهائية»"
+          ]
+        },
+        {
+          "key": "E06-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "getClosing",
+            "status": "pending"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "E06-error",
+          "label": "خطأ",
+          "drawn": true,
+          "when": {
+            "api": "getClosing",
+            "status": "5xx/429"
+          },
+          "ui": [
+            "ErrorState + إعادة المحاولة"
+          ]
+        },
+        {
+          "key": "E06-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "getClosing",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "«التقييم اليدوي»",
+          "to": "E07"
+        },
+        {
+          "on": "«الميزانية»",
+          "to": "E03"
+        },
+        {
+          "on": "«النقاط النهائية»",
+          "to": "E08"
+        }
+      ],
+      "after_mutation": {},
+      "notes": [
+        "الإغلاق آلي (القرار 13).",
+        "§60."
+      ]
+    },
+    "E07": {
+      "id": "E07",
+      "name": "التقييم اليدوي",
+      "group": "executive",
+      "design_source": {
+        "view": "src/features/scoring/views/ManualRatingsView.tsx",
+        "page": "src/app/executive/e07-manual-rating/page.tsx"
+      },
+      "route": "/dashboard/manual-rating",
+      "api": [
+        {
+          "id": "listScores",
+          "method": "GET",
+          "path": "/scores",
+          "request": {
+            "month": "month"
+          },
+          "success": {
+            "status": 200,
+            "model": "MonthlyScore[]"
+          }
+        },
+        {
+          "id": "putRating",
+          "method": "PUT",
+          "path": "/manual-ratings",
+          "request": {
+            "user_id": "row.user.id",
+            "month": "month",
+            "score": "RatingScale"
+          },
+          "success": {
+            "status": 200,
+            "model": "MonthlyScore"
+          },
+          "errors": {
+            "409": "month_closed",
+            "422": "validation_failed"
+          }
+        }
+      ],
+      "view_props": {
+        "scores": "Loadable<MonthlyScore[]>",
+        "canRate": "ratings.manual",
+        "locked": "الشهر مغلق",
+        "onRate": "PUT لكل اختيار"
+      },
+      "permissions": [
+        "ratings.manual"
+      ],
+      "components": [
+        "MonthPicker",
+        "DataTable",
+        "Select",
+        "Badge",
+        "Banner"
+      ],
+      "states": [
+        {
+          "key": "E07-default",
+          "label": "الافتراضي",
+          "drawn": true,
+          "when": {
+            "data": "كلهم مُقيَّمون"
+          },
+          "ui": [
+            "Select لكل صف"
+          ]
+        },
+        {
+          "key": "E07-incomplete",
+          "label": "ناقصة",
+          "drawn": true,
+          "when": {
+            "data": "manual_rating = null"
+          },
+          "ui": [
+            "Badge ناقص",
+            "Banner"
+          ]
+        },
+        {
+          "key": "E07-locked",
+          "label": "مقفل",
+          "drawn": true,
+          "when": {
+            "data": "الشهر مغلق"
+          },
+          "ui": [
+            "نص للقراءة",
+            "Banner info"
+          ]
+        },
+        {
+          "key": "E07-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "listScores",
+            "status": "pending"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "E07-empty",
+          "label": "لا توجد بيانات",
+          "drawn": true,
+          "when": {
+            "api": "listScores",
+            "data": "فارغ"
+          },
+          "ui": [
+            "EmptyState"
+          ]
+        },
+        {
+          "key": "E07-error",
+          "label": "خطأ",
+          "drawn": true,
+          "when": {
+            "api": "listScores",
+            "status": "5xx/429"
+          },
+          "ui": [
+            "ErrorState + إعادة المحاولة"
+          ]
+        },
+        {
+          "key": "E07-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "listScores",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [],
+      "after_mutation": {
+        "putRating": "تحديث الصف"
+      },
+      "notes": [
+        "§61."
+      ]
+    },
+    "E08": {
+      "id": "E08",
+      "name": "النقاط الشهرية",
+      "group": "executive",
+      "design_source": {
+        "view": "src/features/scoring/views/ScoresView.tsx",
+        "page": "src/app/executive/e08-points/page.tsx"
+      },
+      "route": "/dashboard/points",
+      "api": [
+        {
+          "id": "listScores",
+          "method": "GET",
+          "path": "/scores",
+          "request": {
+            "month": "month"
+          },
+          "success": {
+            "status": 200,
+            "model": "MonthlyScore[]"
+          }
+        }
+      ],
+      "view_props": {
+        "scores": "Loadable<MonthlyScore[]> (تُجمَّع بـcomparison_group)"
+      },
+      "permissions": [
+        "points.view (مؤقت)"
+      ],
+      "components": [
+        "MonthPicker",
+        "Section",
+        "DataTable",
+        "Badge",
+        "Banner"
+      ],
+      "states": [
+        {
+          "key": "E08-provisional",
+          "label": "مبدئية",
+          "drawn": true,
+          "when": {
+            "data": "status = PROVISIONAL"
+          },
+          "ui": [
+            "Banner info"
+          ]
+        },
+        {
+          "key": "E08-final",
+          "label": "نهائية",
+          "drawn": true,
+          "when": {
+            "data": "status = FINAL"
+          },
+          "ui": [
+            "Banner success"
+          ]
+        },
+        {
+          "key": "E08-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "listScores",
+            "status": "pending"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "E08-empty",
+          "label": "لا توجد بيانات",
+          "drawn": true,
+          "when": {
+            "api": "listScores",
+            "data": "فارغ"
+          },
+          "ui": [
+            "EmptyState"
+          ]
+        },
+        {
+          "key": "E08-error",
+          "label": "خطأ",
+          "drawn": true,
+          "when": {
+            "api": "listScores",
+            "status": "5xx/429"
+          },
+          "ui": [
+            "ErrorState + إعادة المحاولة"
+          ]
+        },
+        {
+          "key": "E08-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "listScores",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [],
+      "after_mutation": {},
+      "notes": [
+        "§62."
+      ]
+    },
+    "E09": {
+      "id": "E09",
+      "name": "موظف الشهر",
+      "group": "executive",
+      "design_source": {
+        "view": "src/features/scoring/views/MonthWinnersView.tsx",
+        "page": "src/app/executive/e09-month-winner/page.tsx"
+      },
+      "route": "/dashboard/month-winner",
+      "api": [
+        {
+          "id": "listWinners",
+          "method": "GET",
+          "path": "/month-winners/{month}",
+          "request": {
+            "month": "month"
+          },
+          "success": {
+            "status": 200,
+            "model": "MonthWinner[]"
+          },
+          "errors": {
+            "409": "month_not_closed"
+          }
+        },
+        {
+          "id": "approveWinner",
+          "method": "POST",
+          "path": "/month-winners/{month}/approve",
+          "request": {
+            "kind": "winner.kind",
+            "group_id": "winner.group.id",
+            "subject_id": "المختار",
+            "reason": "إلزامي لغير المرشّح"
+          },
+          "success": {
+            "status": 200,
+            "model": "MonthWinner"
+          },
+          "errors": {
+            "409": "غير مغلق أو معتمد",
+            "422": "validation_failed"
+          }
+        }
+      ],
+      "view_props": {
+        "winners": "Loadable<MonthWinner[]>",
+        "canApprove": "month_winners.approve",
+        "choosing": "ChooseOther | null"
+      },
+      "permissions": [
+        "month_winners.approve"
+      ],
+      "components": [
+        "MonthPicker",
+        "Card",
+        "Badge",
+        "Dialog",
+        "Select",
+        "DescriptionList"
+      ],
+      "states": [
+        {
+          "key": "E09-default",
+          "label": "الافتراضي",
+          "drawn": true,
+          "when": {
+            "data": "مرشّح واحد لكل مجموعة"
+          },
+          "ui": [
+            "«اعتماد» و«اختيار غيره»"
+          ]
+        },
+        {
+          "key": "E09-tie",
+          "label": "متعادلون",
+          "drawn": true,
+          "when": {
+            "data": "nominees.length > 1 / tied"
+          },
+          "ui": [
+            "Badge متعادلون",
+            "اعتماد لكل متعادل"
+          ]
+        },
+        {
+          "key": "E09-skipped",
+          "label": "تُخطّي لخصم",
+          "drawn": true,
+          "when": {
+            "data": "excluded_for_deduction"
+          },
+          "ui": [
+            "صندوق «تُخطّي لخصم عليه»"
+          ]
+        },
+        {
+          "key": "E09-choose-other",
+          "label": "اختيار غيره",
+          "drawn": true,
+          "when": {
+            "ui": "«اختيار غيره»"
+          },
+          "ui": [
+            "Dialog: الاختيار والسبب"
+          ]
+        },
+        {
+          "key": "E09-approved",
+          "label": "معتمد",
+          "drawn": true,
+          "when": {
+            "data": "approved"
+          },
+          "ui": [
+            "DescriptionList"
+          ]
+        },
+        {
+          "key": "E09-month-not-closed",
+          "label": "الشهر غير مغلق",
+          "drawn": true,
+          "when": {
+            "api": "listWinners",
+            "status": 409,
+            "codes": [
+              "month_not_closed"
+            ]
+          },
+          "ui": [
+            "EmptyState"
+          ]
+        },
+        {
+          "key": "E09-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "listWinners",
+            "status": "pending"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "E09-error",
+          "label": "خطأ",
+          "drawn": true,
+          "when": {
+            "api": "listWinners",
+            "status": "5xx/429"
+          },
+          "ui": [
+            "ErrorState + إعادة المحاولة"
+          ]
+        },
+        {
+          "key": "E09-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "listWinners",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [],
+      "after_mutation": {
+        "approveWinner": "استبدال البطاقة بسجل الاعتماد"
+      },
+      "notes": [
+        "لا يشمله التفويض.",
+        "§63."
+      ]
+    },
+    "E10": {
+      "id": "E10",
+      "name": "الأصناف",
+      "group": "executive",
+      "design_source": {
+        "view": "src/features/items/views/ItemsListView.tsx",
+        "page": "src/app/executive/e10-items/page.tsx"
+      },
+      "route": "/dashboard/items",
+      "api": [
+        {
+          "id": "listItems",
+          "method": "GET",
+          "path": "/items",
+          "request": {
+            "q": "filters.q",
+            "type": "filters.type",
+            "is_active": "filters.status",
+            "page": "state"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<Item>"
+          }
+        }
+      ],
+      "view_props": {
+        "items": "Loadable<{ data: Item[], meta }>",
+        "canCreate": "items.manage"
+      },
+      "permissions": [
+        "items.manage"
+      ],
+      "components": [
+        "FilterBar",
+        "DataTable",
+        "Badge",
+        "Pagination"
+      ],
+      "states": [
+        {
+          "key": "E10-default",
+          "label": "الافتراضي",
+          "drawn": true,
+          "when": {
+            "api": "listItems",
+            "data": "meta.total > 0"
+          },
+          "ui": [
+            "DataTable"
+          ]
+        },
+        {
+          "key": "E10-disabled-filter",
+          "label": "فلتر المعطّل",
+          "drawn": true,
+          "when": {
+            "request": "is_active=false"
+          },
+          "ui": [
+            "DataTable"
+          ]
+        },
+        {
+          "key": "E10-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "listItems",
+            "status": "pending"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "E10-empty",
+          "label": "لا توجد بيانات",
+          "drawn": true,
+          "when": {
+            "api": "listItems",
+            "data": "meta.total = 0"
+          },
+          "ui": [
+            "EmptyState"
+          ]
+        },
+        {
+          "key": "E10-error",
+          "label": "خطأ",
+          "drawn": true,
+          "when": {
+            "api": "listItems",
+            "status": "5xx/429"
+          },
+          "ui": [
+            "ErrorState + إعادة المحاولة"
+          ]
+        },
+        {
+          "key": "E10-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "listItems",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "«صنف جديد»",
+          "to": "E11"
+        },
+        {
+          "on": "الصف",
+          "to": "E12"
+        }
+      ],
+      "after_mutation": {},
+      "notes": [
+        "§64."
+      ]
+    },
+    "E11": {
+      "id": "E11",
+      "name": "صنف جديد",
+      "group": "executive",
+      "design_source": {
+        "view": "src/features/items/views/ItemFormView.tsx",
+        "page": "src/app/executive/e11-new-item/page.tsx"
+      },
+      "route": "/dashboard/items/new",
+      "api": [
+        {
+          "id": "upload",
+          "method": "POST",
+          "path": "/uploads",
+          "request": {
+            "file": "الصورة"
+          },
+          "success": {
+            "status": 201,
+            "model": "Upload"
+          }
+        },
+        {
+          "id": "createItem",
+          "method": "POST",
+          "path": "/items",
+          "request": {
+            "name / sku / type / portfolio / min_stock / show_on_site": "form",
+            "site": "{ slug, description, ingredients, age_range, image_upload_id } للمنتج"
+          },
+          "success": {
+            "status": 201,
+            "model": "Item"
+          },
+          "errors": {
+            "422": "validation_failed تحت الحقول"
+          }
+        }
+      ],
+      "view_props": {
+        "form": "ItemForm",
+        "errors": "validation_failed",
+        "onImageSelect / onImageRemove": "POST /uploads"
+      },
+      "permissions": [
+        "items.manage"
+      ],
+      "components": [
+        "Card",
+        "Input",
+        "RadioCard",
+        "Select",
+        "NumberInput",
+        "Switch",
+        "FileUpload",
+        "Textarea",
+        "Section"
+      ],
+      "states": [
+        {
+          "key": "E11-empty",
+          "label": "فارغ",
+          "drawn": true,
+          "when": {
+            "ui": "النموذج الجديد"
+          },
+          "ui": [
+            "حفظ معطّل وسببه ظاهر"
+          ]
+        },
+        {
+          "key": "E11-product-site",
+          "label": "منتج في الموقع",
+          "drawn": true,
+          "when": {
+            "data": "type = PRODUCT و show_on_site"
+          },
+          "ui": [
+            "قسم بيانات الموقع"
+          ]
+        },
+        {
+          "key": "E11-validation",
+          "label": "خطأ من الخادم",
+          "drawn": true,
+          "when": {
+            "api": "createItem",
+            "status": 422,
+            "codes": [
+              "validation_failed"
+            ]
+          },
+          "ui": [
+            "نص الخادم تحت الحقل"
+          ]
+        },
+        {
+          "key": "E11-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "status": 403
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "«حفظ الصنف»",
+          "to": "E12"
+        },
+        {
+          "on": "«إلغاء»",
+          "to": "E10"
+        }
+      ],
+      "after_mutation": {
+        "createItem": "الانتقال إلى صفحة الصنف"
+      },
+      "notes": [
+        "§65."
+      ]
+    },
+    "E12": {
+      "id": "E12",
+      "name": "صفحة الصنف",
+      "group": "executive",
+      "design_source": {
+        "view": "src/features/items/views/ItemDetailsView.tsx",
+        "page": "src/app/executive/e12-item/page.tsx"
+      },
+      "route": "/dashboard/items/{id}",
+      "api": [
+        {
+          "id": "getItem",
+          "method": "GET",
+          "path": "/items/{id}",
+          "request": {
+            "id": "route"
+          },
+          "success": {
+            "status": 200,
+            "model": "Item"
+          }
+        },
+        {
+          "id": "listPeriods",
+          "method": "GET",
+          "path": "/items/{id}/prices | /items/{id}/unit-costs",
+          "request": {
+            "id": "route"
+          },
+          "success": {
+            "status": 200,
+            "model": "PricePeriod[]"
+          }
+        },
+        {
+          "id": "createPeriod",
+          "method": "POST",
+          "path": "/items/{id}/prices | /items/{id}/unit-costs",
+          "request": {
+            "amount": "priceForm.amount",
+            "starts_on": "priceForm.startsOn"
+          },
+          "success": {
+            "status": 201,
+            "model": "PricePeriod"
+          },
+          "errors": {
+            "422": "validation_failed / price_in_past"
+          }
+        },
+        {
+          "id": "toggleItem",
+          "method": "PATCH",
+          "path": "/items/{id}",
+          "request": {
+            "is_active": "!item.is_active"
+          },
+          "success": {
+            "status": 200,
+            "model": "Item"
+          }
+        }
+      ],
+      "view_props": {
+        "item": "Loadable<Item>",
+        "periods": "Loadable<PricePeriod[]>",
+        "canPrice": "prices.manage",
+        "canManage": "items.manage",
+        "priceForm": "PriceForm | null",
+        "priceError": "price_in_past"
+      },
+      "permissions": [
+        "items.manage",
+        "prices.manage"
+      ],
+      "components": [
+        "PageHeader",
+        "DescriptionList",
+        "DataTable",
+        "Dialog",
+        "MoneyInput",
+        "DatePicker",
+        "ConfirmDialog",
+        "Banner",
+        "Badge"
+      ],
+      "states": [
+        {
+          "key": "E12-product",
+          "label": "منتج",
+          "drawn": true,
+          "when": {
+            "data": "type = PRODUCT"
+          },
+          "ui": [
+            "بيانات الموقع",
+            "سجل الأسعار"
+          ]
+        },
+        {
+          "key": "E12-sample",
+          "label": "عينة",
+          "drawn": true,
+          "when": {
+            "data": "type = SAMPLE"
+          },
+          "ui": [
+            "سجل تكلفة الوحدة"
+          ]
+        },
+        {
+          "key": "E12-new-price",
+          "label": "سعر جديد",
+          "drawn": true,
+          "when": {
+            "ui": "«سعر جديد»"
+          },
+          "ui": [
+            "Dialog"
+          ]
+        },
+        {
+          "key": "E12-past-date",
+          "label": "تاريخ مضى",
+          "drawn": true,
+          "when": {
+            "api": "createPeriod",
+            "codes": [
+              "price_in_past"
+            ]
+          },
+          "ui": [
+            "Banner danger"
+          ]
+        },
+        {
+          "key": "E12-disable",
+          "label": "تعطيل الصنف",
+          "drawn": true,
+          "when": {
+            "ui": "«تعطيل الصنف»"
+          },
+          "ui": [
+            "ConfirmDialog danger"
+          ]
+        },
+        {
+          "key": "E12-disabled",
+          "label": "صنف معطّل",
+          "drawn": true,
+          "when": {
+            "data": "is_active = false"
+          },
+          "ui": [
+            "Banner warning",
+            "«تفعيل الصنف»"
+          ]
+        },
+        {
+          "key": "E12-not-found",
+          "label": "غير موجود",
+          "drawn": true,
+          "when": {
+            "api": "getItem",
+            "status": 404
+          },
+          "ui": [
+            "NotFoundState"
+          ]
+        },
+        {
+          "key": "E12-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "getItem",
+            "status": "pending"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "E12-error",
+          "label": "خطأ",
+          "drawn": true,
+          "when": {
+            "api": "getItem",
+            "status": "5xx/429"
+          },
+          "ui": [
+            "ErrorState + إعادة المحاولة"
+          ]
+        },
+        {
+          "key": "E12-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "getItem",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [],
+      "after_mutation": {
+        "createPeriod": "إضافة الفترة أعلى السجل",
+        "toggleItem": "تحديث الحالة"
+      },
+      "notes": [
+        "القرار 13: الفترات لا تتداخل، وتُغلق السابقة قبل الجديدة بيوم.",
+        "§66."
+      ]
+    },
+    "E13": {
+      "id": "E13",
+      "name": "الإعدادات العامة",
+      "group": "executive",
+      "design_source": {
+        "view": "src/features/settings/views/SettingsView.tsx",
+        "page": "src/app/executive/e13-settings/page.tsx"
+      },
+      "route": "/dashboard/settings",
+      "api": [
+        {
+          "id": "getSettings",
+          "method": "GET",
+          "path": "/settings",
+          "request": {},
+          "success": {
+            "status": 200,
+            "model": "Settings"
+          }
+        },
+        {
+          "id": "updateSettings",
+          "method": "PATCH",
+          "path": "/settings",
+          "request": {
+            "*": "draft (report_deadline_work_days.* تُجمع في كائن)"
+          },
+          "success": {
+            "status": 200,
+            "model": "Settings"
+          },
+          "errors": {
+            "422": "validation_failed تحت الحقول"
+          }
+        }
+      ],
+      "view_props": {
+        "settings": "Loadable<Settings>",
+        "canManage": "settings.manage",
+        "draft": "SettingsDraft | null",
+        "errors": "validation_failed",
+        "verificationSaved": "تغيّرت قيمة من verificationKeys"
+      },
+      "permissions": [
+        "settings.manage"
+      ],
+      "components": [
+        "PageHeader",
+        "Tabs",
+        "Card",
+        "DescriptionList",
+        "NumberInput",
+        "Banner",
+        "Badge"
+      ],
+      "states": [
+        {
+          "key": "E13-default",
+          "label": "الافتراضي",
+          "drawn": true,
+          "when": {
+            "api": "getSettings"
+          },
+          "ui": [
+            "ثلاث مجموعات مع «متى يسري»"
+          ]
+        },
+        {
+          "key": "E13-edit",
+          "label": "تعديل",
+          "drawn": true,
+          "when": {
+            "ui": "«تعديل الإعدادات»"
+          },
+          "ui": [
+            "NumberInput بوحدته",
+            "حفظ معطّل حتى يكتمل"
+          ]
+        },
+        {
+          "key": "E13-verification-note",
+          "label": "ملاحظة التحقق",
+          "drawn": true,
+          "when": {
+            "api": "updateSettings",
+            "data": "تغيّرت قيمة تحقق"
+          },
+          "ui": [
+            "Banner info «تسري على السجلات الجديدة وحدها»"
+          ]
+        },
+        {
+          "key": "E13-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "getSettings",
+            "status": "pending"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "E13-error",
+          "label": "خطأ",
+          "drawn": true,
+          "when": {
+            "api": "getSettings",
+            "status": "5xx/429"
+          },
+          "ui": [
+            "ErrorState + إعادة المحاولة"
+          ]
+        },
+        {
+          "key": "E13-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "getSettings",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "تبويبات SettingsTabs",
+          "to": "E13 · E14 · E15 · E16 · E17"
+        }
+      ],
+      "after_mutation": {
+        "updateSettings": "الخروج من التعديل، وشريط التحقق إن لزم"
+      },
+      "notes": [
+        "المنطقة الزمنية readOnly للعرض فقط.",
+        "§67."
+      ]
+    },
+    "E14": {
+      "id": "E14",
+      "name": "القوائم",
+      "group": "executive",
+      "design_source": {
+        "view": "src/features/settings/views/ListsView.tsx",
+        "page": "src/app/executive/e14-lists/page.tsx"
+      },
+      "route": "/dashboard/settings/lists",
+      "api": [
+        {
+          "id": "listEntries",
+          "method": "GET",
+          "path": "/lists/{key}",
+          "request": {
+            "key": "listKey",
+            "include_inactive": true
+          },
+          "success": {
+            "status": 200,
+            "model": "ListEntry[]"
+          }
+        },
+        {
+          "id": "createEntry",
+          "method": "POST",
+          "path": "/lists/{key}",
+          "request": {
+            "name": "form.name",
+            "order": "form.order"
+          },
+          "success": {
+            "status": 201,
+            "model": "ListEntry"
+          },
+          "errors": {
+            "422": "validation_failed"
+          }
+        },
+        {
+          "id": "updateEntry",
+          "method": "PATCH",
+          "path": "/lists/{key}/{id}",
+          "request": {
+            "name / order / is_active": "form أو التبديل"
+          },
+          "success": {
+            "status": 200,
+            "model": "ListEntry"
+          },
+          "errors": {
+            "409": "system_entry_locked",
+            "422": "validation_failed"
+          }
+        }
+      ],
+      "view_props": {
+        "listKey": "ListKey",
+        "entries": "Loadable<ListEntry[]>",
+        "canManage": "lists.manage",
+        "form": "ListEntryForm | null",
+        "actionError": "system_entry_locked"
+      },
+      "permissions": [
+        "lists.manage"
+      ],
+      "components": [
+        "Tabs",
+        "Select",
+        "DataTable",
+        "Menu",
+        "Dialog",
+        "Input",
+        "NumberInput",
+        "Banner",
+        "Badge"
+      ],
+      "states": [
+        {
+          "key": "E14-default",
+          "label": "الافتراضي",
+          "drawn": true,
+          "when": {
+            "api": "listEntries"
+          },
+          "ui": [
+            "DataTable"
+          ]
+        },
+        {
+          "key": "E14-form",
+          "label": "نافذة القيمة",
+          "drawn": true,
+          "when": {
+            "ui": "«إضافة قيمة» أو «تعديل»"
+          },
+          "ui": [
+            "Dialog"
+          ]
+        },
+        {
+          "key": "E14-system-entry",
+          "label": "قيمة نظامية",
+          "drawn": true,
+          "when": {
+            "data": "is_system = true",
+            "codes": [
+              "system_entry_locked"
+            ]
+          },
+          "ui": [
+            "Badge «نظامية»",
+            "تعطيل معطّل مع السبب",
+            "Banner danger عند 409"
+          ]
+        },
+        {
+          "key": "E14-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "listEntries",
+            "status": "pending"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "E14-empty",
+          "label": "لا توجد بيانات",
+          "drawn": true,
+          "when": {
+            "api": "listEntries",
+            "data": "data = []"
+          },
+          "ui": [
+            "EmptyState"
+          ]
+        },
+        {
+          "key": "E14-error",
+          "label": "خطأ",
+          "drawn": true,
+          "when": {
+            "api": "listEntries",
+            "status": "5xx/429"
+          },
+          "ui": [
+            "ErrorState + إعادة المحاولة"
+          ]
+        },
+        {
+          "key": "E14-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "listEntries",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "تبويبات SettingsTabs",
+          "to": "E13 · E14 · E15 · E16 · E17"
+        }
+      ],
+      "after_mutation": {
+        "createEntry": "إضافة القيمة بترتيبها",
+        "updateEntry": "تحديث الصف"
+      },
+      "notes": [
+        "§68."
+      ]
+    },
+    "E15": {
+      "id": "E15",
+      "name": "العطل الرسمية",
+      "group": "executive",
+      "design_source": {
+        "view": "src/features/settings/views/HolidaysView.tsx",
+        "page": "src/app/executive/e15-holidays/page.tsx"
+      },
+      "route": "/dashboard/settings/holidays",
+      "api": [
+        {
+          "id": "listHolidays",
+          "method": "GET",
+          "path": "/holidays",
+          "request": {
+            "year": "year"
+          },
+          "success": {
+            "status": 200,
+            "model": "Holiday[]"
+          }
+        },
+        {
+          "id": "createHoliday",
+          "method": "POST",
+          "path": "/holidays",
+          "request": {
+            "date": "form.date",
+            "name": "form.name"
+          },
+          "success": {
+            "status": 201,
+            "model": "Holiday"
+          },
+          "errors": {
+            "422": "validation_failed (تاريخ مضى)"
+          }
+        },
+        {
+          "id": "deleteHoliday",
+          "method": "DELETE",
+          "path": "/holidays/{id}",
+          "request": {
+            "id": "deleting.id"
+          },
+          "success": {
+            "status": 204,
+            "model": "—"
+          },
+          "errors": {
+            "409": "يوم مضى (بلا اسم رمز)"
+          }
+        }
+      ],
+      "view_props": {
+        "year": "string",
+        "holidays": "Loadable<Holiday[]>",
+        "canManage": "holidays.manage",
+        "today": "IsoDate",
+        "form": "HolidayForm | null",
+        "deleting": "Holiday | null"
+      },
+      "permissions": [
+        "holidays.manage"
+      ],
+      "components": [
+        "Tabs",
+        "Select",
+        "DataTable",
+        "Menu",
+        "Dialog",
+        "DatePicker",
+        "Input",
+        "ConfirmDialog",
+        "Badge"
+      ],
+      "states": [
+        {
+          "key": "E15-default",
+          "label": "الافتراضي",
+          "drawn": true,
+          "when": {
+            "api": "listHolidays"
+          },
+          "ui": [
+            "DataTable بحالة مضت/اليوم/قادمة"
+          ]
+        },
+        {
+          "key": "E15-form",
+          "label": "إضافة عطلة",
+          "drawn": true,
+          "when": {
+            "ui": "«إضافة عطلة»"
+          },
+          "ui": [
+            "Dialog",
+            "DatePicker min = اليوم"
+          ]
+        },
+        {
+          "key": "E15-past",
+          "label": "عطلة مضت",
+          "drawn": true,
+          "when": {
+            "data": "date <= today"
+          },
+          "ui": [
+            "حذف معطّل مع السبب"
+          ]
+        },
+        {
+          "key": "E15-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "listHolidays",
+            "status": "pending"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "E15-empty",
+          "label": "لا توجد بيانات",
+          "drawn": true,
+          "when": {
+            "api": "listHolidays",
+            "data": "data = []"
+          },
+          "ui": [
+            "EmptyState"
+          ]
+        },
+        {
+          "key": "E15-error",
+          "label": "خطأ",
+          "drawn": true,
+          "when": {
+            "api": "listHolidays",
+            "status": "5xx/429"
+          },
+          "ui": [
+            "ErrorState + إعادة المحاولة"
+          ]
+        },
+        {
+          "key": "E15-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "listHolidays",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "تبويبات SettingsTabs",
+          "to": "E13 · E14 · E15 · E16 · E17"
+        }
+      ],
+      "after_mutation": {
+        "createHoliday": "إضافة الصف بترتيب التاريخ",
+        "deleteHoliday": "حذف الصف"
+      },
+      "notes": [
+        "الجمعة عطلة ثابتة ولا تُضاف.",
+        "§69."
+      ]
+    },
+    "E16": {
+      "id": "E16",
+      "name": "الأوزان ومجموعات المقارنة",
+      "group": "executive",
+      "design_source": {
+        "view": "src/features/settings/views/KpiWeightsView.tsx",
+        "page": "src/app/executive/e16-weights/page.tsx"
+      },
+      "route": "/dashboard/settings/weights",
+      "api": [
+        {
+          "id": "getWeights",
+          "method": "GET",
+          "path": "/kpi-weights",
+          "request": {
+            "role_key": "roleKey"
+          },
+          "success": {
+            "status": 200,
+            "model": "KpiWeightSet[]"
+          }
+        },
+        {
+          "id": "putWeights",
+          "method": "PUT",
+          "path": "/kpi-weights",
+          "request": {
+            "role_key": "roleKey",
+            "effective_month": "nextMonth",
+            "weights": "draft"
+          },
+          "success": {
+            "status": 200,
+            "model": "KpiWeightSet"
+          },
+          "errors": {
+            "422": "weights_must_total_100 / validation_failed"
+          }
+        },
+        {
+          "id": "getGroups",
+          "method": "GET",
+          "path": "/comparison-groups",
+          "request": {},
+          "success": {
+            "status": 200,
+            "model": "ComparisonGroup[]"
+          }
+        },
+        {
+          "id": "putGroups",
+          "method": "PUT",
+          "path": "/comparison-groups",
+          "request": {
+            "effective_month": "nextMonth",
+            "groups": "المجموعات بعد تعديل agent_coefficient"
+          },
+          "success": {
+            "status": 200,
+            "model": "ComparisonGroup[]"
+          },
+          "errors": {
+            "422": "validation_failed"
+          }
+        }
+      ],
+      "view_props": {
+        "roles": "{ key, name }[]",
+        "weights": "Loadable<KpiWeightSet>",
+        "nextMonth": "IsoMonth",
+        "scheduledMonth": "IsoMonth | undefined",
+        "canManage": "kpi.manage",
+        "draft": "WeightDraft[] | null",
+        "weightsError": "weights_must_total_100",
+        "groups": "Loadable<ComparisonGroup[]>",
+        "coefficientForm": "CoefficientForm | null"
+      },
+      "permissions": [
+        "kpi.manage"
+      ],
+      "components": [
+        "Tabs",
+        "Select",
+        "Card",
+        "DescriptionList",
+        "NumberInput",
+        "Badge",
+        "Banner",
+        "DataTable",
+        "Dialog",
+        "Input"
+      ],
+      "states": [
+        {
+          "key": "E16-default",
+          "label": "الافتراضي",
+          "drawn": true,
+          "when": {
+            "api": "getWeights"
+          },
+          "ui": [
+            "الأوزان السارية",
+            "جدول المجموعات"
+          ]
+        },
+        {
+          "key": "E16-edit",
+          "label": "تعديل",
+          "drawn": true,
+          "when": {
+            "ui": "«تعديل الأوزان»"
+          },
+          "ui": [
+            "NumberInput لكل مؤشر",
+            "سطر المجموع"
+          ]
+        },
+        {
+          "key": "E16-sum-error",
+          "label": "المجموع ليس 100%",
+          "drawn": true,
+          "when": {
+            "data": "مجموع المسودة ≠ 100",
+            "codes": [
+              "weights_must_total_100"
+            ]
+          },
+          "ui": [
+            "Badge danger",
+            "الحفظ معطّل مع السبب"
+          ]
+        },
+        {
+          "key": "E16-next-month-note",
+          "label": "تسري من الشهر التالي",
+          "drawn": true,
+          "when": {
+            "api": "putWeights"
+          },
+          "ui": [
+            "Banner info «تسري من …»"
+          ]
+        },
+        {
+          "key": "E16-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "getWeights",
+            "status": "pending"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "E16-error",
+          "label": "خطأ",
+          "drawn": true,
+          "when": {
+            "api": "getWeights",
+            "status": "5xx/429"
+          },
+          "ui": [
+            "ErrorState + إعادة المحاولة"
+          ]
+        },
+        {
+          "key": "E16-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "getWeights",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "تبويبات SettingsTabs",
+          "to": "E13 · E14 · E15 · E16 · E17"
+        }
+      ],
+      "after_mutation": {
+        "putWeights": "الخروج من التعديل وشريط «تسري من الشهر التالي»",
+        "putGroups": "تحديث الجدول"
+      },
+      "notes": [
+        "جمع الأوزان أعداد صحيحة (نسب)، لا مبالغ.",
+        "§70."
+      ]
+    },
+    "E17": {
+      "id": "E17",
+      "name": "الهيكل الجغرافي",
+      "group": "executive",
+      "design_source": {
+        "view": "src/features/settings/views/GeoView.tsx",
+        "page": "src/app/executive/e17-geo/page.tsx"
+      },
+      "route": "/dashboard/settings/geo",
+      "api": [
+        {
+          "id": "getGeo",
+          "method": "GET",
+          "path": "/geo",
+          "request": {},
+          "success": {
+            "status": 200,
+            "model": "GeoTree"
+          }
+        },
+        {
+          "id": "createRegion",
+          "method": "POST",
+          "path": "/geo/regions",
+          "request": {
+            "country_id": "form.countryId",
+            "name": "form.name",
+            "class": "form.regionClass"
+          },
+          "success": {
+            "status": 201,
+            "model": "GeoTree"
+          },
+          "errors": {
+            "422": "validation_failed"
+          }
+        },
+        {
+          "id": "updateRegion",
+          "method": "PATCH",
+          "path": "/geo/regions/{id}",
+          "request": {
+            "name": "form.name",
+            "class": "form.regionClass"
+          },
+          "success": {
+            "status": 200,
+            "model": "GeoTree"
+          },
+          "errors": {
+            "422": "validation_failed"
+          }
+        },
+        {
+          "id": "createGovernorate",
+          "method": "POST",
+          "path": "/geo/governorates",
+          "request": {
+            "region_id": "form.regionId",
+            "name": "form.name"
+          },
+          "success": {
+            "status": 201,
+            "model": "GeoTree"
+          },
+          "errors": {
+            "422": "validation_failed"
+          }
+        },
+        {
+          "id": "updateGovernorate",
+          "method": "PATCH",
+          "path": "/geo/governorates/{id}",
+          "request": {
+            "region_id": "form.regionId (نقل)",
+            "name": "form.name"
+          },
+          "success": {
+            "status": 200,
+            "model": "GeoTree"
+          },
+          "errors": {
+            "422": "validation_failed"
+          }
+        }
+      ],
+      "view_props": {
+        "geo": "Loadable<GeoTree>",
+        "canManage": "geo.manage",
+        "form": "GeoForm | null",
+        "formErrors": "validation_failed"
+      },
+      "permissions": [
+        "geo.manage"
+      ],
+      "components": [
+        "Tabs",
+        "Section",
+        "Grid",
+        "Card",
+        "Badge",
+        "Button",
+        "Dialog",
+        "Input",
+        "RadioGroup",
+        "Select"
+      ],
+      "states": [
+        {
+          "key": "E17-default",
+          "label": "الافتراضي",
+          "drawn": true,
+          "when": {
+            "api": "getGeo"
+          },
+          "ui": [
+            "Card لكل منطقة بتصنيفها ومحافظاتها"
+          ]
+        },
+        {
+          "key": "E17-form",
+          "label": "نافذة المنطقة",
+          "drawn": true,
+          "when": {
+            "ui": "«إضافة منطقة» أو «تعديل»"
+          },
+          "ui": [
+            "Dialog: الاسم والتصنيف"
+          ]
+        },
+        {
+          "key": "E17-move",
+          "label": "نقل محافظة",
+          "drawn": true,
+          "when": {
+            "ui": "تغيير المنطقة في نافذة المحافظة"
+          },
+          "ui": [
+            "زر «نقل المحافظة»"
+          ]
+        },
+        {
+          "key": "E17-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "getGeo",
+            "status": "pending"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "E17-error",
+          "label": "خطأ",
+          "drawn": true,
+          "when": {
+            "api": "getGeo",
+            "status": "5xx/429"
+          },
+          "ui": [
+            "ErrorState + إعادة المحاولة"
+          ]
+        },
+        {
+          "key": "E17-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "getGeo",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "تبويبات SettingsTabs",
+          "to": "E13 · E14 · E15 · E16 · E17"
+        }
+      ],
+      "after_mutation": {
+        "*": "استبدال الشجرة بالمُرجعة"
+      },
+      "notes": [
+        "كل تعديل يُرجع الشجرة كاملة فتُستبدل.",
+        "§71."
+      ]
+    },
+    "E18": {
+      "id": "E18",
+      "name": "التفويض",
+      "group": "executive",
+      "design_source": {
+        "view": "src/features/delegations/views/DelegationView.tsx",
+        "page": "src/app/executive/e18-delegation/page.tsx"
+      },
+      "route": "/dashboard/delegation",
+      "api": [
+        {
+          "id": "listDelegations",
+          "method": "GET",
+          "path": "/delegations",
+          "request": {
+            "page": "state"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<Delegation>"
+          }
+        },
+        {
+          "id": "createDelegation",
+          "method": "POST",
+          "path": "/delegations",
+          "request": {
+            "delegate_id": "form.delegateId",
+            "from": "form.range.from",
+            "to": "form.range.to"
+          },
+          "success": {
+            "status": 201,
+            "model": "Delegation"
+          },
+          "errors": {
+            "409": "delegation_overlap",
+            "422": "validation_failed"
+          }
+        },
+        {
+          "id": "endDelegation",
+          "method": "POST",
+          "path": "/delegations/{id}/end",
+          "request": {
+            "id": "current.id"
+          },
+          "success": {
+            "status": 200,
+            "model": "Delegation"
+          },
+          "errors": {
+            "404": "not_found"
+          }
+        }
+      ],
+      "view_props": {
+        "delegations": "Loadable<{ data: Delegation[], meta }>",
+        "canManage": "delegations.manage",
+        "candidates": "UserRef[] (§72)",
+        "today": "IsoDate",
+        "form": "DelegationForm | null",
+        "formError": "delegation_overlap",
+        "confirmingEnd": "boolean"
+      },
+      "permissions": [
+        "delegations.manage"
+      ],
+      "components": [
+        "PageHeader",
+        "Grid",
+        "Card",
+        "DescriptionList",
+        "EmptyState",
+        "DataTable",
+        "Pagination",
+        "Dialog",
+        "Combobox",
+        "DateRangePicker",
+        "Banner",
+        "ConfirmDialog"
+      ],
+      "states": [
+        {
+          "key": "E18-none",
+          "label": "لا تفويض",
+          "drawn": true,
+          "when": {
+            "data": "لا is_current"
+          },
+          "ui": [
+            "EmptyState «لا تفويض حالي»"
+          ]
+        },
+        {
+          "key": "E18-active",
+          "label": "تفويض ساري",
+          "drawn": true,
+          "when": {
+            "data": "is_current = true"
+          },
+          "ui": [
+            "بطاقة التفويض مع «إنهاء التفويض»",
+            "شريط «فوّضت …» في الإطار"
+          ]
+        },
+        {
+          "key": "E18-form",
+          "label": "تفويض جديد",
+          "drawn": true,
+          "when": {
+            "ui": "«تفويض جديد»"
+          },
+          "ui": [
+            "Dialog: الشخص والفترة"
+          ]
+        },
+        {
+          "key": "E18-overlap",
+          "label": "تفويض متداخل",
+          "drawn": true,
+          "when": {
+            "api": "createDelegation",
+            "status": 409,
+            "codes": [
+              "delegation_overlap"
+            ]
+          },
+          "ui": [
+            "Banner danger في النافذة"
+          ]
+        },
+        {
+          "key": "E18-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "listDelegations",
+            "status": "pending"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "E18-error",
+          "label": "خطأ",
+          "drawn": true,
+          "when": {
+            "api": "listDelegations",
+            "status": "5xx/429"
+          },
+          "ui": [
+            "ErrorState + إعادة المحاولة"
+          ]
+        },
+        {
+          "key": "E18-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "listDelegations",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [],
+      "after_mutation": {
+        "createDelegation": "إضافته أعلى السجل، وتحديث /me (شريط التفويض)",
+        "endDelegation": "تحديث السجل وإزالة الشريط"
+      },
+      "notes": [
+        "القرار 13: شخص واحد، والاعتمادات التشغيلية وحدها.",
+        "§72."
+      ]
     }
   }
 }

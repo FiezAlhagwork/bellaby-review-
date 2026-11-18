@@ -237,29 +237,29 @@
 
 | # | الشاشة | الحالات (المفاتيح) | العقد | ملاحظات | الحالة |
 |---|---|---|---|---|---|
-| M01 | لوحة مدير المبيعات | `default` · `provisional` | `GET /dashboard/summary`، و`GET /plans/{department}/{month}` |  | ⬜ |
-| M02 | الوكلاء | `default` | `GET /agents` |  | ⬜ |
-| M03 | صفحة الوكيل | `default` · `deactivated` | `GET /agents/{id}`، و`POST /agent-returns` (`created_on_behalf_of_agent`) |  | ⬜ |
-| M04 | العملاء | `default` | `GET /customers` |  | ⬜ |
-| M05 | صفحة العميل | `default` |  | (شاشة A07) | ⬜ |
-| M06 | التسليمات | `read-only` · `approval-pending-view` |  | (شاشة A09 وA10) | ⬜ |
-| M07 | المستحقات | `default` · `refer` · `referred` | `GET /receivables`، و`POST /deliveries/{id}/refer-dispute` |  | ⬜ |
-| M08 | قرارات المرتجع والتالف | `customer-return` · `agent-damage` · `warehouse-damage` · `agent-return` · `already-decided` | `GET /customer-returns`، و`GET /damage-reports`، و`GET /agent-returns`، و`…/{id}/decision` لكل منها |  | ⬜ |
-| M09 | زيارة جديدة · موبايل | `default` · `locating` · `location-denied` · `saved` | `POST /manager-visits` (`customer_id` أو `visit_point_id`، والإحداثيات إلزامية) |  | ⬜ |
-| M10 | زياراتي · موبايل | `default` | `GET /manager-visits` |  | ⬜ |
-| M11 | رسائل الموقع | `default` · `handle` · `handled` | `GET /site/messages`، و`POST /site/messages/{id}/handle` |  | ⬜ |
+| M01 | لوحة مدير المبيعات | `default` · `provisional` · `loading` · `empty` · `error` · `forbidden` | `GET /dashboard/summary`، و`GET /plans/{department}/{month}` | `/managers/m01-sales-dashboard`، والـ view `features/sales/views/SalesManagerDashboardView.tsx`. خمس بطاقات والمبيعات لكل منتج ولكل وكيل مقابل أهدافها. وُسِّع `Chart` بهدف لكل عمود (`targetKey`). `empty` = لا خطة معتمدة. أسئلة في §39 | 👀 |
+| M02 | الوكلاء | `default` · `loading` · `empty` · `error` · `forbidden` | `GET /agents` | `/managers/m02-agents`، والـ view `features/agents/views/AgentsListView.tsx`. الرصيد والمبيعات حقلان مضافان في الواجهة (§40.1). بحث وفلتر محافظة وترقيم | 👀 |
+| M03 | صفحة الوكيل | `default` · `balances` · `deliveries` · `receivables` · `returns` · `deactivated` · `return-form` · `return-filled` · `return-validation` · `return-created` · `not-found` · `loading` · `error` · `forbidden` | `GET /agents/{id}`، و`POST /agent-returns` (`created_on_behalf_of_agent`) | `/managers/m03-agent`، والـ view `features/agents/views/AgentDetailsView.tsx`، ونموذج الإرجاع المشترك مع A15 في `features/returns/views/AgentReturnFormView.tsx` (صفحة لا نافذة: §41.5). التبويبات من نقاطها (§41.1). أسئلة في §41 | 👀 |
+| M04 | العملاء | `default` · `loading` · `empty` · `error` · `forbidden` | `GET /customers` | `/managers/m04-customers`، والـ view `features/customers/views/CustomersListView.tsx`. بحث وفلاتر الوكيل والمحافظة وترقيم. الصف يفتح M05 (الدفعة التالية). §42 | 👀 |
+| M05 | صفحة العميل | `default` · `payment` · `returns` · `rep-visits` · `my-visits` · `unlinked` · `not-found` · `loading` · `error` · `forbidden` | `GET /customers/{id}`، و`GET /deliveries?customer_id=` | `/managers/m05-customer`، والـ view `features/customers/views/CustomerDetailsView.tsx` (مشترك مع A07 بعلم `showVisits`). بيانات العميل وجهة الزيارة المربوطة، وأقسام التسليمات والسداد والمرتجعات وزيارات المندوبين وزياراتي. أسئلة في §45 | 👀 |
+| M06 | التسليمات | `read-only` · `filter-unpaid` · `details` · `approval-pending-view` · `paid` · `written-off` · `cancelled` · `referred` · `not-found` · `loading` · `empty` · `error` · `forbidden` | `GET /deliveries`، و`GET /deliveries/{id}` | `/managers/m06-deliveries`، والـ views `features/deliveries/views/DeliveriesListView.tsx` وDeliveryDetailsView.tsx (مشتركان مع A09 وA10). للقراءة: لا زر قرار، وتُضاف أفعال الوكيل في A10. أسئلة في §46 | 👀 |
+| M07 | المستحقات | `default` · `refer` · `referred` · `refer-conflict` · `loading` · `empty` · `error` · `forbidden` | `GET /receivables`، و`POST /deliveries/{id}/refer-dispute` | `/managers/m07-receivables`، والـ view `features/receivables/views/ReceivablesView.tsx`. التحصيل لكل وكيل فوق جدول التسليمات غير المسدّدة (المتأخر أولاً) و«إحالة للقانوني» بنافذة. أسئلة في §43 | 👀 |
+| M08 | قرارات المرتجع والتالف | `list` · `customer-return` · `customer-return-damaged` · `agent-damage` · `warehouse-damage` · `agent-return` · `reject-dialog` · `already-decided` · `decided` · `no-permission` · `loading` · `empty` · `error` · `forbidden` | `GET /customer-returns`، و`GET /damage-reports`، و`GET /agent-returns`، و`…/{id}/decision` لكل منها | `/managers/m08-return-decisions`، والـ views `features/returns/views/ReturnDecisionsView.tsx` وReturnDecisionDrawer.tsx. أربعة تبويبات بعدّاد المعلّق ودرج قرار لكل نوع (الطلب لا صفحة: §47.6). تفاعلية: القرار يحوّل الطلب لمقرَّر، و409 «قرّر غيرك». أُصدرت أعمدة كل نوع لـA13 وA16. أسئلة في §47 | 👀 |
+| M09 | زيارة جديدة · موبايل | `default` · `locating` · `location-denied` · `ready` · `validation` · `saved` · `forbidden` | `POST /manager-visits` (`customer_id` أو `visit_point_id`، والإحداثيات إلزامية) | `/managers/m09-new-visit`، والـ view `features/manager-visits/views/NewManagerVisitView.tsx`. حالة الموقع prop (`idle · locating · denied · ready`) تلتقطها الحاوية. لا حفظ بلا موقع. أسئلة في §48 | 👀 |
+| M10 | زياراتي · موبايل | `default` · `no-goal` · `loading` · `empty` · `error` · `forbidden` | `GET /manager-visits` | `/managers/m10-my-visits`، والـ view `features/manager-visits/views/ManagerVisitsView.tsx`. عدد الزيارات مقابل هدف الشهر، وقائمة بفلتر الفترة وترقيم. أسئلة في §49 | 👀 |
+| M11 | رسائل الموقع | `default` · `details` · `handle` · `handled` · `already-handled` · `loading` · `empty` · `error` · `forbidden` | `GET /site/messages`، و`POST /site/messages/{id}/handle` | `/managers/m11-site-messages`، والـ view `features/site-messages/views/SiteMessagesView.tsx`. كل الأنواع بفلتر النوع والحالة، ودرج، ونافذة معالجة بملاحظة إلزامية. أسئلة في §44 | 👀 |
 
 ### 02 · مدير المكتب العلمي — M12 إلى M18
 
 | # | الشاشة | الحالات (المفاتيح) | العقد | ملاحظات | الحالة |
 |---|---|---|---|---|---|
-| M12 | لوحة المكتب العلمي | `default` | `GET /dashboard/summary`، و`GET /dashboard/coverage` |  | ⬜ |
-| M13 | المندوبون | `default` | `GET /users?role=rep` |  | ⬜ |
-| M14 | جهات الزيارة | `list` · `map` · `disabled-filter` | `GET /visit-points` |  | ⬜ |
-| M15 | صفحة الجهة | `default` · `disabled` | `GET /visit-points/{id}`، و`PATCH` (البيانات لا الموقع) |  | ⬜ |
-| M16 | تقرير معلومات السوق | `competitor-price` · `requested-product` | `GET /market-intel` |  | ⬜ |
-| M17 | أرصدة عينات المندوبين | `default` · `low` | `GET /stock/balances?location_type=REP` |  | ⬜ |
-| M18 | طلبات العينات | `default` · `new-form` · `cancel` | `GET /sample-requests`، و`POST /sample-requests`، و`/cancel` |  | ⬜ |
+| M12 | لوحة المكتب العلمي | `default` · `no-plan` · `loading` · `error` · `forbidden` | `GET /dashboard/summary`، و`GET /dashboard/coverage` | `/managers/m12-scientific-dashboard`، والـ view `features/scientific-office/views/ScientificDashboardView.tsx`. ثلاث بطاقات مقابل الخطة، والتغطية لكل محافظة، وزيارات اليوم على الخريطة. أسئلة في §50 | 👀 |
+| M13 | المندوبون | `default` · `loading` · `empty` · `error` · `forbidden` | `GET /users?role=rep` | `/managers/m13-reps`، والـ view `features/reps/views/RepsListView.tsx`. فلتر المنطقة والسوبرفايزر، والصف → S07. أسئلة في §51 | 👀 |
+| M14 | جهات الزيارة | `list` · `map` · `disabled-filter` · `loading` · `empty` · `error` · `forbidden` | `GET /visit-points` | `/managers/m14-visit-points`، والـ view `features/visit-points/views/VisitPointsListView.tsx`. قائمة/خريطة بالفلاتر الأربعة. أسئلة في §52 | 👀 |
+| M15 | صفحة الجهة | `default` · `edit` · `disabled` · `disabled-merged` · `not-found` · `loading` · `error` · `forbidden` | `GET /visit-points/{id}`، و`PATCH` (البيانات لا الموقع) | `/managers/m15-visit-point`، والـ view `features/visit-points/views/VisitPointDetailsView.tsx`. التعديل في درج (لا الموقع)، والمعطّلة للقراءة. أسئلة في §52 | 👀 |
+| M16 | تقرير معلومات السوق | `competitor-price` · `requested-product` · `loading` · `empty` · `error` · `forbidden` | `GET /market-intel` | `/managers/m16-market-intel`، والـ view `features/market-intel/views/MarketIntelView.tsx`. تبويب لكل نوع بأعمدة حقوله (`intel-types.ts`). أسئلة في §53 | 👀 |
+| M17 | أرصدة عينات المندوبين | `default` · `low` · `loading` · `empty` · `error` · `forbidden` | `GET /stock/balances?location_type=REP` | `/managers/m17-rep-sample-balances`، والـ view `features/stock/views/RepSampleBalancesView.tsx`. «وزّع هذا الشهر» وشارات المنخفض والسالب. أسئلة في §54 | 👀 |
+| M18 | طلبات العينات | `default` · `new-form` · `cancel` · `loading` · `empty` · `error` · `forbidden` | `GET /sample-requests`، و`POST /sample-requests`، و`/cancel` | `/managers/m18-sample-requests`، والـ views `SampleRequestsListView` (W09 بـ`ownRequests`) و`SampleRequestFormView` في `features/transfers/views/`. أسئلة في §55 | 👀 |
 
 ## المدير التنفيذي — E
 
@@ -267,39 +267,39 @@
 
 | # | الشاشة | الحالات (المفاتيح) | العقد | ملاحظات | الحالة |
 |---|---|---|---|---|---|
-| E01 | لوحة المدير التنفيذي | `default` · `provisional` | `GET /dashboard/executive`، و`GET /me/pending-decisions` |  | ⬜ |
-| E02 | سجل التدقيق | `audit` · `access` | `GET /audit-logs`، و`GET /access-logs` |  | ⬜ |
+| E01 | لوحة المدير التنفيذي | `default` · `provisional` · `loading` · `error` · `forbidden` | `GET /dashboard/executive`، و`GET /me/pending-decisions` | `/executive/e01-dashboard`، والـ view `features/executive/views/ExecutiveDashboardView.tsx`. التارغيت والمصاريف جداول لا رسوم (المبالغ نصية). أسئلة في §56 | 👀 |
+| E02 | سجل التدقيق | `audit` · `access` · `details` · `monitoring` · `loading` · `empty` · `error` · `forbidden` | `GET /audit-logs`، و`GET /access-logs` | `/executive/e02-audit`، والـ view `features/audit/views/AuditLogView.tsx`، والأسماء في `components/data/audit-labels.ts`. أسئلة في §57 | 👀 |
 
 ### 02 · المال والتقييم — E03 إلى E09
 
 | # | الشاشة | الحالات (المفاتيح) | العقد | ملاحظات | الحالة |
 |---|---|---|---|---|---|
-| E03 | الميزانية والمصاريف | `default` · `edit` · `missing-actual` · `closed` | `GET /budgets/{month}`، و`PUT /budgets/{month}` |  | ⬜ |
-| E04 | بنود المصاريف | `default` · `form` · `system` | `GET /expense-categories`، و`POST`، و`PATCH /expense-categories/{id}` |  | ⬜ |
-| E05 | الخصومات | `default` · `new-form` · `reverse` · `month-closed` | `GET /deductions`، و`POST /deductions`، و`/reverse` |  | ⬜ |
-| E06 | إغلاق الشهر | `open` · `waiting` · `closed` | `GET /month-closings/{month}` |  | ⬜ |
-| E07 | التقييم اليدوي | `default` · `incomplete` · `locked` | `PUT /manual-ratings` |  | ⬜ |
-| E08 | النقاط الشهرية | `provisional` · `final` | `GET /scores` |  | ⬜ |
-| E09 | موظف الشهر | `default` · `tie` · `skipped` · `choose-other` · `approved` | `GET /month-winners/{month}`، و`/approve` |  | ⬜ |
+| E03 | الميزانية والمصاريف | `default` · `edit` · `missing-actual` · `closed` · `month-closed` · `loading` · `error` · `forbidden` | `GET /budgets/{month}`، و`PUT /budgets/{month}` | `/executive/e03-budget`، والـ view `features/budgets/views/BudgetView.tsx`. التعديل في الجدول نفسه. أسئلة في §58 | 👀 |
+| E04 | بنود المصاريف | `default` · `form` · `system` · `loading` · `empty` · `error` · `forbidden` | `GET /expense-categories`، و`POST`، و`PATCH /expense-categories/{id}` | `/executive/e04-expense-categories`، والـ view `features/budgets/views/ExpenseCategoriesView.tsx`. تُفتح من E03. أسئلة في §58 | 👀 |
+| E05 | الخصومات | `default` · `new-form` · `reverse` · `month-closed` · `loading` · `empty` · `error` · `forbidden` | `GET /deductions`، و`POST /deductions`، و`/reverse` | `/executive/e05-deductions`، والـ view `features/deductions/views/DeductionsView.tsx`. أسئلة في §59 | 👀 |
+| E06 | إغلاق الشهر | `open` · `waiting` · `closed` · `loading` · `error` · `forbidden` | `GET /month-closings/{month}` | `/executive/e06-month-close`، والـ view `features/scoring/views/MonthClosingView.tsx`. لا زر إغلاق (آلي). أسئلة في §60 | 👀 |
+| E07 | التقييم اليدوي | `default` · `incomplete` · `locked` · `loading` · `empty` · `error` · `forbidden` | `PUT /manual-ratings` | `/executive/e07-manual-rating`، والـ view `features/scoring/views/ManualRatingsView.tsx`. يُحفظ عند الاختيار. أسئلة في §61 | 👀 |
+| E08 | النقاط الشهرية | `provisional` · `final` · `loading` · `empty` · `error` · `forbidden` | `GET /scores` | `/executive/e08-points`، والـ view `features/scoring/views/ScoresView.tsx`. أسئلة في §62 | 👀 |
+| E09 | موظف الشهر | `default` · `tie` · `skipped` · `choose-other` · `approved` · `month-not-closed` · `loading` · `error` · `forbidden` | `GET /month-winners/{month}`، و`/approve` | `/executive/e09-month-winner`، والـ view `features/scoring/views/MonthWinnersView.tsx`. أُضيف `month_not_closed` إلى `error-messages.ts`. أسئلة في §63 | 👀 |
 
 ### 03 · الأصناف والأسعار — E10 إلى E12
 
 | # | الشاشة | الحالات (المفاتيح) | العقد | ملاحظات | الحالة |
 |---|---|---|---|---|---|
-| E10 | الأصناف | `default` · `disabled-filter` | `GET /items` |  | ⬜ |
-| E11 | صنف جديد | `empty` · `validation` | `POST /items` |  | ⬜ |
-| E12 | صفحة الصنف | `product` · `sample` · `new-price` · `past-date` · `disable` | `GET /items/{id}`، و`PATCH`، و`/prices`، و`/unit-costs` |  | ⬜ |
+| E10 | الأصناف | `default` · `disabled-filter` · `loading` · `empty` · `error` · `forbidden` | `GET /items` | `/executive/e10-items`، والـ view `features/items/views/ItemsListView.tsx`. أسئلة في §64 | 👀 |
+| E11 | صنف جديد | `empty` · `product-site` · `validation` · `forbidden` | `POST /items` | `/executive/e11-new-item`، والـ view `features/items/views/ItemFormView.tsx` (صفحة لا نافذة). أسئلة في §65 | 👀 |
+| E12 | صفحة الصنف | `product` · `sample` · `new-price` · `past-date` · `disable` · `disabled` · `not-found` · `loading` · `error` · `forbidden` | `GET /items/{id}`، و`PATCH`، و`/prices`، و`/unit-costs` | `/executive/e12-item`، والـ view `features/items/views/ItemDetailsView.tsx`. أسئلة في §66 | 👀 |
 
 ### 04 · الإعدادات والتفويض — E13 إلى E18
 
 | # | الشاشة | الحالات (المفاتيح) | العقد | ملاحظات | الحالة |
 |---|---|---|---|---|---|
-| E13 | الإعدادات العامة | `default` · `edit` · `verification-note` | `GET /settings`، و`PATCH /settings` |  | ⬜ |
-| E14 | القوائم | `default` · `system-entry` | `GET /lists/{key}`، و`POST`، و`PATCH /lists/{key}/{id}` |  | ⬜ |
-| E15 | العطل الرسمية | `default` · `form` · `past` | `GET /holidays`، و`POST`، و`DELETE /holidays/{id}` |  | ⬜ |
-| E16 | الأوزان ومجموعات المقارنة | `default` · `edit` · `sum-error` · `next-month-note` | `GET /kpi-weights`، و`PUT`، و`GET /comparison-groups`، و`PUT` |  | ⬜ |
-| E17 | الهيكل الجغرافي | `default` · `form` | `GET /geo`، و`POST /geo/regions`، و`PATCH`، و`POST /geo/governorates`، و`PATCH` |  | ⬜ |
-| E18 | التفويض | `none` · `active` · `form` · `overlap` | `GET /delegations`، و`POST /delegations`، و`/end` |  | ⬜ |
+| E13 | الإعدادات العامة | `default` · `edit` · `verification-note` · `loading` · `error` · `forbidden` | `GET /settings`، و`PATCH /settings` | `/executive/e13-settings`، والـ view `features/settings/views/SettingsView.tsx`. أسئلة في §67 | 👀 |
+| E14 | القوائم | `default` · `form` · `system-entry` · `loading` · `empty` · `error` · `forbidden` | `GET /lists/{key}`، و`POST`، و`PATCH /lists/{key}/{id}` | `/executive/e14-lists`، والـ view `features/settings/views/ListsView.tsx`. أسئلة في §68 | 👀 |
+| E15 | العطل الرسمية | `default` · `form` · `past` · `loading` · `empty` · `error` · `forbidden` | `GET /holidays`، و`POST`، و`DELETE /holidays/{id}` | `/executive/e15-holidays`، والـ view `features/settings/views/HolidaysView.tsx`. أسئلة في §69 | 👀 |
+| E16 | الأوزان ومجموعات المقارنة | `default` · `edit` · `sum-error` · `next-month-note` · `loading` · `error` · `forbidden` | `GET /kpi-weights`، و`PUT`، و`GET /comparison-groups`، و`PUT` | `/executive/e16-weights`، والـ view `features/settings/views/KpiWeightsView.tsx`. أسئلة في §70 | 👀 |
+| E17 | الهيكل الجغرافي | `default` · `form` · `move` · `loading` · `error` · `forbidden` | `GET /geo`، و`POST /geo/regions`، و`PATCH`، و`POST /geo/governorates`، و`PATCH` | `/executive/e17-geo`، والـ view `features/settings/views/GeoView.tsx`. أسئلة في §71 | 👀 |
+| E18 | التفويض | `none` · `active` · `form` · `overlap` · `loading` · `error` · `forbidden` | `GET /delegations`، و`POST /delegations`، و`/end` | `/executive/e18-delegation`، والـ view `features/delegations/views/DelegationView.tsx`. أسئلة في §72 | 👀 |
 
 ## IT والمحاسبة والقانوني — I
 
@@ -471,3 +471,21 @@
 | 16 تشرين الثاني 2026 | S13 · ملفات التحقيق | `S13-default` · `S13-executive` · `S13-awaiting` · `S13-loading` · `S13-empty` · `S13-error` · `S13-forbidden` | اثنا عشر ملفاً سرياً بعنوانها وموظفها ومرحلتها وتاريخ فتحها، وشريط السرية، وفلتر الحالة وترقيم. المراقبة بـ«فتح ملف» والمدير التنفيذي للقراءة. أُضيف عنصر «التحقيقات» لدور المدير التنفيذي في القائمة. |
 | 16 تشرين الثاني 2026 | S14 · فتح ملف تحقيق | `S14-direct` · `S14-from-flag` · `S14-validation` · `S14-submitting` · `S14-forbidden` | الموظف والعنوان والوصف، ومن علامة تُقفل الموظف وتظهر العلامة المصدر. «فتح الملف» معطّل وسببه ظاهر. |
 | 16 تشرين الثاني 2026 | S15 · ملف التحقيق | `S15-stage-1` · `S15-stage-4` · `S15-stage-7` · `S15-awaiting-decision` · `S15-executive-decision` · `S15-decision-confirm` · `S15-decided` · `S15-closed-no-violation` · `S15-close-dialog` · `S15-submit-confirm` · `S15-invalid-status` · `S15-delegate-forbidden` · `S15-not-found` · `S15-loading` · `S15-error` · `S15-forbidden` | ملف سري بثماني مراحل: نموذج المرحلة (ملخص ومستندات)، وإغلاق «لا مخالفة» (سبب إلزامي)، والمرحلة 7 بتصنيف من الخمسة وإجراء مقترح و«رفع للقرار» بتأكيد، وبطاقة قرار المدير التنفيذي (نص إلزامي وخصم اختياري بتأكيد)، وسجل القرار. أُضيف `classification.ts` و`investigation-stages.ts`. بذلك ينتهي القسم 03 وتنتهي مجموعة S كلها (S01 إلى S15). أسئلة في §36 إلى §38. |
+| 16 تشرين الثاني 2026 | M01 · لوحة مدير المبيعات | `M01-default` · `M01-provisional` · `M01-loading` · `M01-empty` · `M01-error` · `M01-forbidden` | خمس بطاقات (التحصيل، العملاء الجدد، إعادة الطلب، زياراتي، بانتظار قراري) والمبيعات لكل منتج ولكل وكيل مقابل أهدافها. الافتراضي شهر مغلق، و`provisional` الشهر الجاري، و`empty` بلا خطة. وُسِّع `Chart` بـ`targetKey`. أُضيف مستخدم `sales_manager` إلى مستخدمي الإطار. |
+| 16 تشرين الثاني 2026 | M02 · الوكلاء | `M02-default` · `M02-loading` · `M02-empty` · `M02-error` · `M02-forbidden` | ستة وكلاء (بينهم معطّل) بمحافظاتهم ورصيدهم ومبيعاتهم ومستحقهم. بحث وفلتر محافظة وترقيم. |
+| 16 تشرين الثاني 2026 | M03 · صفحة الوكيل | `M03-default` · `M03-balances` · `M03-deliveries` · `M03-receivables` · `M03-returns` · `M03-deactivated` · `M03-return-form` · `M03-return-filled` · `M03-return-validation` · `M03-return-created` · `M03-not-found` · `M03-loading` · `M03-error` · `M03-forbidden` | بيانات الوكيل وخمسة تبويبات، والوكيل المعطّل بشريطه وزر الإرجاع عنه ونموذج الإرجاع المشترك (بأسطره من الرصيد) وملخصه. |
+| 16 تشرين الثاني 2026 | M04 · العملاء | `M04-default` · `M04-loading` · `M04-empty` · `M04-error` · `M04-forbidden` | 24 عميلاً بوكيلهم ومحافظتهم وهل هم مربوطون بجهة زيارة. |
+| 16 تشرين الثاني 2026 | M07 · المستحقات | `M07-default` · `M07-refer` · `M07-referred` · `M07-refer-conflict` · `M07-loading` · `M07-empty` · `M07-error` · `M07-forbidden` | التحصيل لكل وكيل (بطاقة تفلتر الجدول)، والتسليمات غير المسدّدة (المتأخر أولاً) و«إحالة للقانوني» بنافذة، والمحال يعرض رقم نزاعه، وتعارض 409. |
+| 16 تشرين الثاني 2026 | M11 · رسائل الموقع | `M11-default` · `M11-details` · `M11-handle` · `M11-handled` · `M11-already-handled` · `M11-loading` · `M11-empty` · `M11-error` · `M11-forbidden` | 17 رسالة بأنواعها الثلاثة، الجديدة أولاً، بفلتر النوع والحالة ودرج ونافذة «تعليم: عولجت» بملاحظة إلزامية. أُضيف `site-message-types.ts`. بذلك تنتهي الدفعة الأولى من قسم مدير المبيعات؛ تبقى M05 وM06 وM08 وM09 وM10 للدفعة الثانية. أسئلة في §39 إلى §44. |
+| 16 تشرين الثاني 2026 | M05 · صفحة العميل | `M05-default` · `M05-payment` · `M05-returns` · `M05-rep-visits` · `M05-my-visits` · `M05-unlinked` · `M05-not-found` · `M05-loading` · `M05-error` · `M05-forbidden` | بيانات العميل وجهة الزيارة المربوطة، وخمسة أقسام للقراءة. العميل غير المربوط بلا زيارات مندوبين. الـview مشترك مع A07. |
+| 16 تشرين الثاني 2026 | M06 · التسليمات | `M06-read-only` · `M06-filter-unpaid` · `M06-details` · `M06-approval-pending-view` · `M06-paid` · `M06-written-off` · `M06-cancelled` · `M06-referred` · `M06-not-found` · `M06-loading` · `M06-empty` · `M06-error` · `M06-forbidden` | قائمة التسليمات وتفاصيلها للقراءة بلا زر قرار: طلب الإلغاء والشطب يراه مدير المبيعات وقراره للمدير التنفيذي. الـviews مشتركة مع A09 وA10. |
+| 16 تشرين الثاني 2026 | M08 · قرارات المرتجع والتالف | `M08-list` · `M08-customer-return` · `M08-customer-return-damaged` · `M08-agent-damage` · `M08-warehouse-damage` · `M08-agent-return` · `M08-reject-dialog` · `M08-already-decided` · `M08-decided` · `M08-no-permission` · `M08-loading` · `M08-empty` · `M08-error` · `M08-forbidden` | أربعة تبويبات بعدّاد المعلّق، ودرج قرار لكل نوع (أُعيد للمخزون · تالف بمسؤولية · اعتماد · رفض بسبب)، و409 `already_decided` بسجل القرار الساري. أُضيف `return-kinds.ts`. |
+| 16 تشرين الثاني 2026 | M09 · زيارة جديدة | `M09-default` · `M09-locating` · `M09-location-denied` · `M09-ready` · `M09-validation` · `M09-saved` · `M09-forbidden` | نموذج الزيارة بموقع المتصفح الإلزامي: الطلب والرفض («فعّل الموقع») ولا حفظ بلا موقع. موبايل أولاً. |
+| 16 تشرين الثاني 2026 | M10 · زياراتي | `M10-default` · `M10-no-goal` · `M10-loading` · `M10-empty` · `M10-error` · `M10-forbidden` | عدد زياراتي مقابل هدف الشهر (13 من 20) وقائمتها بفلتر الفترة. موبايل أولاً. بذلك ينتهي القسم 01 (مدير المبيعات M01–M11)؛ تبقى A07 وA09 وA10 وA13 وA16 لمجموعة A بأفعال الوكيل. أسئلة في §45 إلى §49. |
+| 17 تشرين الثاني 2026 | M12–M18 · مدير المكتب العلمي | `M12` · `M13` · `M14` · `M15` · `M16` · `M17` · `M18` (المفاتيح في جدول القسم) | بُنيت الشاشات السبع بإعادة استعمال W09 (طلبات العينات) وأنماط M01 والزيارات. Views جديدة: `ScientificDashboardView` و`RepsListView` و`VisitPointsListView` و`VisitPointDetailsView` و`MarketIntelView` و`RepSampleBalancesView` و`SampleRequestFormView`، و`intel-types.ts`. بذلك ينتهي القسم 02 ومجموعة المديرين M. أسئلة في §50 إلى §55. |
+| 17 تشرين الثاني 2026 | E01–E02 · اللوحة والمتابعة | `E01-default` · `E01-provisional` · `E02-audit` · `E02-access` · `E02-details` · `E02-monitoring` والحالات العامة | لوحة المدير التنفيذي (للعرض لا للتقييم) وسجل التدقيق بتبويب الاطلاع على السري ودرج التغييرات. بذلك ينتهي القسم 01 من مجموعة E. أسئلة في §56 و§57. |
+| 17 تشرين الثاني 2026 | E03–E05 · الميزانية والبنود والخصومات | `E03-default` · `E03-edit` · `E03-missing-actual` · `E03-closed` · `E04-default` · `E04-form` · `E04-system` · `E05-default` · `E05-new-form` · `E05-reverse` · `E05-month-closed` والحالات العامة | الدفعة الأولى من القسم 02؛ تبقى E06–E09. أسئلة في §58 و§59. |
+| 17 تشرين الثاني 2026 | E06–E09 · الإغلاق والتقييم والنقاط وموظف الشهر | `E06-open` · `E06-waiting` · `E06-closed` · `E07-default` · `E07-incomplete` · `E07-locked` · `E08-provisional` · `E08-final` · `E09-default` · `E09-tie` · `E09-skipped` · `E09-choose-other` · `E09-approved` · `E09-month-not-closed` والحالات العامة | بذلك ينتهي القسم 02 (E03–E09). أسئلة في §60 إلى §63. |
+| 17 تشرين الثاني 2026 | E10–E12 · الأصناف والأسعار | `E10-default` · `E10-disabled-filter` · `E11-empty` · `E11-product-site` · `E11-validation` · `E12-product` · `E12-sample` · `E12-new-price` · `E12-past-date` · `E12-disable` · `E12-disabled` والحالات العامة | أُضيف `components/data/portfolio.ts`. وأُزيلت `@tablet:` من views هذه الجلسة (الميزانية والنقاط وطلب العينات) التزاماً بقاعدة الـ responsive. أسئلة في §64 إلى §66. |
+| 17 تشرين الثاني 2026 | E13–E15 · الإعدادات العامة والقوائم والعطل | `E13-default` · `E13-edit` · `E13-verification-note` · `E14-default` · `E14-form` · `E14-system-entry` · `E15-default` · `E15-form` · `E15-past` والحالات العامة | أُضيف `features/settings/components/SettingsTabs.tsx` (أقسام الإعدادات E13–E17 تبويبات تحت عنصر «الإعدادات»)، و`components/data/list-keys.ts` (أسماء مفاتيح القوائم وتصنيف المناطق)، و`weights_must_total_100` في `error-messages.ts`. أسئلة في §67 إلى §69. |
+| 18 تشرين الثاني 2026 | E16–E18 · الأوزان والهيكل الجغرافي والتفويض | `E16-default` · `E16-edit` · `E16-sum-error` · `E16-next-month-note` · `E17-default` · `E17-form` · `E17-move` · `E18-none` · `E18-active` · `E18-form` · `E18-overlap` والحالات العامة | انتهت مجموعة المدير التنفيذي (E01–E18). أُضيف `delegatedTo` إلى `ShellScreen` (شريط «فوّضت …» في E18). `delegation_overlap` بـ 409 كما في العقد (SCREENS تقول 422). أسئلة في §70 إلى §72. |
