@@ -123,7 +123,7 @@ function makeMe(id: number, name: string, email: string, key: RoleKey, extra: Pa
 
 const delegation = { id: 3, from: "2026-11-10", to: "2026-11-15" } satisfies NonNullable<Me["active_delegation"]>;
 
-export type ShellUserKey = "agent" | "executive" | "delegate" | "logistics" | "warehouse_worker" | "supervisor" | "scientific_manager" | "monitoring" | "sales_manager";
+export type ShellUserKey = "agent" | "executive" | "delegate" | "logistics" | "warehouse_worker" | "supervisor" | "scientific_manager" | "monitoring" | "sales_manager" | "it" | "accountant" | "legal";
 
 export const shellUsers: Record<ShellUserKey, ShellUser> = {
   logistics: { me: makeMe(3, "رامي السيد", "rami@trust.example", "logistics", { department: "LOGISTICS" }), unreadCount: 2 },
@@ -138,7 +138,7 @@ export const shellUsers: Record<ShellUserKey, ShellUser> = {
   agent: { me: makeMe(41, "ياسر الحمصي", "yasser@yasmine-distribution.example", "agent"), unreadCount: 3 },
   /** المراقبة تقرّر في الزيارات المشكوك فيها وفي العلامات: `visits.decide` و`flags.decide` صراحةً (عنصر القائمة يكفيه `visits.view` المؤقت). */
   monitoring: { me: makeMe(50, "جمال الحكيم", "jamal@trust.example", "monitoring", { department: "MONITORING", permissions: [...rolePermissions("monitoring"), "visits.decide", "flags.decide", "investigations.manage"] }), unreadCount: 3 },
-  executive: { me: makeMe(1, "زياد المصري", "ziad@trust.example", "executive", { department: "EXECUTIVE", permissions: [...rolePermissions("executive"), "investigations.decide"] }), unreadCount: 8, pendingCount: 7 },
+  executive: { me: makeMe(1, "زياد المصري", "ziad@trust.example", "executive", { department: "EXECUTIVE", permissions: [...rolePermissions("executive"), "investigations.decide", "disputes.decide"] }), unreadCount: 8, pendingCount: 7 },
   /**
    * مدير المبيعات بلا تفويض: يعالج رسائل الموقع (`site_messages.handle`) ويحيل الدين المتعثر للقانوني (`disputes.refer`) صراحةً: مفتاحان مؤكدان في العقد.
    * لا نضيف `agent_returns.create` (إرجاع عن وكيل معطَّل) لأن عنصر القائمة «الإرجاع للمستودع» للوكيل مشتق منه فيتسرّب إليه: §41.7. ورنا هي نفسها صاحبة التفويض في `delegate`.
@@ -148,6 +148,11 @@ export const shellUsers: Record<ShellUserKey, ShellUser> = {
     unreadCount: 4,
     pendingCount: 5,
   },
+  /** IT ينشئ الحسابات ويعدّلها ويعطّلها: `users.manage` صراحةً (عنصر القائمة يكفيه `users.view`). */
+  /** القانوني يضيف الوثائق ويجدّدها ويدير النزاعات: `legal.manage` و`disputes.manage` صراحةً (عنصرا القائمة يكفيهما `legal.view` و`disputes.view`). */
+  legal: { me: makeMe(60, "لينا الخطيب", "lina@trust.example", "legal", { department: "LEGAL", permissions: [...rolePermissions("legal"), "legal.manage", "disputes.manage"] }), unreadCount: 2 },
+  accountant: { me: makeMe(52, "سمر العبدالله", "samar@trust.example", "accountant", { department: "ACCOUNTING" }), unreadCount: 1 },
+  it: { me: makeMe(9, "طارق النحاس", "tarek@trust.example", "it", { department: "IT", permissions: [...rolePermissions("it"), "users.manage"] }), unreadCount: 2 },
   /** مدير المبيعات مفوَّض عن المدير التنفيذي: يرى بانتظار قراري، وصلاحيات التفويض داخل permissions. */
   delegate: {
     me: makeMe(6, "رنا الشامي", "rana@trust.example", "sales_manager", { department: "SALES", active_delegation: delegation }),

@@ -34,9 +34,9 @@ type DecisionPanelProps = {
   rejectLabel?: string;
   /** الاعتماد يُنفَّذ الآن. */
   approving?: boolean;
-  /** «رفض» يفتح ReasonDialog (الأب يفتحها). */
+  /** «رفض» يفتح ReasonDialog (الأب يفتحها). بدونه زر واحد: القرار خيار من children (قرار التقرير الدوري بستة خيارات). */
   onApprove: () => void;
-  onReject: () => void;
+  onReject?: () => void;
   className?: string;
 };
 
@@ -80,9 +80,11 @@ export function DecisionPanel({
             <Button key="approve" className="flex-1" loading={approving} disabled={forbidden || approveDisabled} onClick={onApprove}>
               {approveLabel}
             </Button>
-            <Button key="reject" className="flex-1" variant="danger" disabled={forbidden || approving} onClick={onReject}>
-              {rejectLabel}
-            </Button>
+            {onReject ? (
+              <Button key="reject" className="flex-1" variant="danger" disabled={forbidden || approving} onClick={onReject}>
+                {rejectLabel}
+              </Button>
+            ) : null}
           </CaptureRow>
           {forbidden && forbiddenNote ? <p className="text-start text-label text-fg-muted">{`لا تقرر فيما يخصّك. ${forbiddenNote}`}</p> : null}
           {!forbidden && approveDisabled && approveHint ? <p className="text-start text-label text-fg-muted">{approveHint}</p> : null}

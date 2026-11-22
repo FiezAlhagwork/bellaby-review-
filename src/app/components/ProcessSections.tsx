@@ -196,6 +196,10 @@ export function DecisionSection() {
             <DecisionPanel state="self-decision-forbidden" summary="طلب إجازتك أنت من 20 تشرين الثاني." forbiddenNote="ينتظر قرار المدير التنفيذي." onApprove={noop} onReject={noop} />
           </div>
           <div className="flex min-w-0 flex-1 flex-col gap-2">
+            <p className="text-label font-medium text-fg-muted">زر واحد والقرار خيار (التقرير الدوري)</p>
+            <DecisionPanel summary="تقرير اللوجستيات الشهري لتشرين الأول، روجع من المراقبة." approveLabel="إصدار القرار" approveDisabled approveHint="اختر القرار لتفعيل «إصدار القرار»." onApprove={noop} />
+          </div>
+          <div className="flex min-w-0 flex-1 flex-col gap-2">
             <p className="text-label font-medium text-fg-muted">اسم الزر الثاني (قرار الجرد)</p>
             <DecisionPanel summary="جرد #34 لمستودع دمشق الرئيسي: 4 أسطر فيها فرق." rejectLabel="إرجاع لإعادة العدّ" onApprove={noop} onReject={noop} />
           </div>

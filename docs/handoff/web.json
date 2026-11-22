@@ -14765,6 +14765,6890 @@
         "القرار 13: شخص واحد، والاعتمادات التشغيلية وحدها.",
         "§72."
       ]
+    },
+    "I01": {
+      "id": "I01",
+      "name": "المستخدمون",
+      "group": "it-accounting-legal",
+      "design_source": {
+        "view": "src/features/users/views/UsersListView.tsx",
+        "page": "src/app/it-accounting-legal/i01-users/page.tsx"
+      },
+      "route": "/dashboard/users",
+      "api": [
+        {
+          "id": "listUsers",
+          "method": "GET",
+          "path": "/users",
+          "request": {
+            "q": "filters.q",
+            "role_id": "filters.roleId",
+            "department": "filters.department",
+            "is_active": "filters.status",
+            "page": "state"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<User>"
+          }
+        },
+        {
+          "id": "listRoles",
+          "method": "GET",
+          "path": "/roles",
+          "request": {},
+          "success": {
+            "status": 200,
+            "model": "Role[] (خيارات الدور)"
+          }
+        }
+      ],
+      "view_props": {
+        "users": "Loadable<{ data: User[], meta }>",
+        "roles": "RoleRef[]",
+        "filters": "UserFilters",
+        "canCreate": "users.manage"
+      },
+      "permissions": [
+        "users.view",
+        "users.manage"
+      ],
+      "components": [
+        "FilterBar",
+        "Combobox",
+        "DataTable",
+        "Badge",
+        "Pagination"
+      ],
+      "states": [
+        {
+          "key": "I01-default",
+          "label": "الافتراضي",
+          "drawn": true,
+          "when": {
+            "api": "listUsers",
+            "data": "meta.total > 0"
+          },
+          "ui": [
+            "DataTable"
+          ]
+        },
+        {
+          "key": "I01-disabled-filter",
+          "label": "فلتر المعطّلين",
+          "drawn": true,
+          "when": {
+            "request": "is_active=false"
+          },
+          "ui": [
+            "DataTable",
+            "شارة الفلتر"
+          ]
+        },
+        {
+          "key": "I01-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "listUsers",
+            "status": "pending"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "I01-empty",
+          "label": "لا توجد بيانات",
+          "drawn": true,
+          "when": {
+            "api": "listUsers",
+            "data": "meta.total = 0"
+          },
+          "ui": [
+            "EmptyState"
+          ]
+        },
+        {
+          "key": "I01-error",
+          "label": "خطأ",
+          "drawn": true,
+          "when": {
+            "api": "listUsers",
+            "status": "5xx/429"
+          },
+          "ui": [
+            "ErrorState + إعادة المحاولة"
+          ]
+        },
+        {
+          "key": "I01-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "listUsers",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "«حساب جديد»",
+          "to": "I02"
+        },
+        {
+          "on": "الصف",
+          "to": "I03"
+        }
+      ],
+      "after_mutation": {},
+      "notes": [
+        "§73."
+      ]
+    },
+    "I02": {
+      "id": "I02",
+      "name": "حساب جديد",
+      "group": "it-accounting-legal",
+      "design_source": {
+        "view": "src/features/users/views/UserFormView.tsx",
+        "page": "src/app/it-accounting-legal/i02-new-user/page.tsx"
+      },
+      "route": "/dashboard/users/new",
+      "api": [
+        {
+          "id": "createUser",
+          "method": "POST",
+          "path": "/users",
+          "request": {
+            "name": "form.name",
+            "email": "form.email (ويب)",
+            "phone": "+963 + form.phone (مندوب)",
+            "role_id": "form.roleId",
+            "department": "form.department",
+            "is_department_head": "form.isDepartmentHead",
+            "manager_id": "form.managerId",
+            "agent_id": "form.agentId",
+            "governorate_ids": "form.governorateIds"
+          },
+          "success": {
+            "status": 201,
+            "model": "User"
+          },
+          "errors": {
+            "422": "validation_failed تحت الحقول"
+          }
+        }
+      ],
+      "view_props": {
+        "form": "UserForm",
+        "roles": "Role[]",
+        "managers": "UserRef[]",
+        "agents": "AgentRef[]",
+        "governorates": "Governorate[]",
+        "errors": "validation_failed"
+      },
+      "permissions": [
+        "users.manage"
+      ],
+      "components": [
+        "Card",
+        "RadioCard",
+        "Input",
+        "PhoneInput",
+        "Select",
+        "Switch",
+        "Combobox (متعدد)"
+      ],
+      "states": [
+        {
+          "key": "I02-empty",
+          "label": "فارغ",
+          "drawn": true,
+          "when": {
+            "ui": "قبل اختيار النوع"
+          },
+          "ui": [
+            "الحفظ معطّل وسببه ظاهر"
+          ]
+        },
+        {
+          "key": "I02-web",
+          "label": "موظف ويب",
+          "drawn": true,
+          "when": {
+            "ui": "النوع WEB"
+          },
+          "ui": [
+            "بريد Google",
+            "رئيس القسم"
+          ]
+        },
+        {
+          "key": "I02-rep",
+          "label": "مندوب",
+          "drawn": true,
+          "when": {
+            "ui": "النوع REP"
+          },
+          "ui": [
+            "PhoneInput"
+          ]
+        },
+        {
+          "key": "I02-validation",
+          "label": "خطأ من الخادم",
+          "drawn": true,
+          "when": {
+            "api": "createUser",
+            "status": 422,
+            "codes": [
+              "validation_failed"
+            ]
+          },
+          "ui": [
+            "نص الخادم تحت الحقل"
+          ]
+        },
+        {
+          "key": "I02-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "status": 403
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "«إنشاء الحساب»",
+          "to": "I03"
+        },
+        {
+          "on": "«إلغاء»",
+          "to": "I01"
+        }
+      ],
+      "after_mutation": {
+        "createUser": "الانتقال إلى صفحة المستخدم"
+      },
+      "notes": [
+        "لا تسجيل ذاتي.",
+        "§74."
+      ]
+    },
+    "I03": {
+      "id": "I03",
+      "name": "صفحة المستخدم",
+      "group": "it-accounting-legal",
+      "design_source": {
+        "view": "src/features/users/views/UserDetailsView.tsx",
+        "page": "src/app/it-accounting-legal/i03-user/page.tsx"
+      },
+      "route": "/dashboard/users/{id}",
+      "api": [
+        {
+          "id": "getUser",
+          "method": "GET",
+          "path": "/users/{id}",
+          "request": {
+            "id": "route"
+          },
+          "success": {
+            "status": 200,
+            "model": "User"
+          }
+        },
+        {
+          "id": "getProfile",
+          "method": "GET",
+          "path": "/users/{id}/profile",
+          "request": {
+            "id": "route"
+          },
+          "success": {
+            "status": 200,
+            "model": "Profile (contract أو null)"
+          }
+        },
+        {
+          "id": "preview",
+          "method": "GET",
+          "path": "/users/{id}/deactivation-preview",
+          "request": {
+            "id": "route"
+          },
+          "success": {
+            "status": 200,
+            "model": "DeactivationPreview"
+          }
+        },
+        {
+          "id": "deactivate",
+          "method": "POST",
+          "path": "/users/{id}/deactivate",
+          "request": {
+            "reason": "reason"
+          },
+          "success": {
+            "status": 200,
+            "model": "User"
+          },
+          "errors": {
+            "422": "validation_failed (reason)"
+          }
+        },
+        {
+          "id": "activate",
+          "method": "POST",
+          "path": "/users/{id}/activate",
+          "request": {
+            "id": "route"
+          },
+          "success": {
+            "status": 200,
+            "model": "User"
+          }
+        }
+      ],
+      "view_props": {
+        "user": "Loadable<User>",
+        "contract": "Profile.contract | null",
+        "canManage": "users.manage",
+        "preview": "Loadable<DeactivationPreview> | null",
+        "reason": "string",
+        "confirmingActivate": "boolean"
+      },
+      "permissions": [
+        "users.view",
+        "users.manage"
+      ],
+      "components": [
+        "PageHeader",
+        "DescriptionList",
+        "Card",
+        "AttachmentList",
+        "Dialog",
+        "Banner",
+        "Textarea",
+        "ConfirmDialog",
+        "NotFoundState"
+      ],
+      "states": [
+        {
+          "key": "I03-active",
+          "label": "حساب مفعّل",
+          "drawn": true,
+          "when": {
+            "data": "is_active = true"
+          },
+          "ui": [
+            "«تعطيل الحساب»"
+          ]
+        },
+        {
+          "key": "I03-deactivate-preview",
+          "label": "معاينة التعطيل",
+          "drawn": true,
+          "when": {
+            "api": "preview"
+          },
+          "ui": [
+            "Dialog: المعلّق وما يحدث له، وسبب إلزامي"
+          ]
+        },
+        {
+          "key": "I03-rep-active-warning",
+          "label": "مندوب عليه رصيد",
+          "drawn": true,
+          "when": {
+            "api": "preview",
+            "data": "balance غير فارغ"
+          },
+          "ui": [
+            "Banner warning",
+            "أسطر الرصيد"
+          ]
+        },
+        {
+          "key": "I03-disabled",
+          "label": "حساب معطّل",
+          "drawn": true,
+          "when": {
+            "data": "is_active = false"
+          },
+          "ui": [
+            "Banner warning",
+            "«تفعيل الحساب»"
+          ]
+        },
+        {
+          "key": "I03-contract",
+          "label": "العقد والراتب",
+          "drawn": true,
+          "when": {
+            "api": "getProfile",
+            "data": "contract ليس null"
+          },
+          "ui": [
+            "Card «العقد والراتب»"
+          ]
+        },
+        {
+          "key": "I03-not-found",
+          "label": "غير موجود",
+          "drawn": true,
+          "when": {
+            "api": "getUser",
+            "status": 404
+          },
+          "ui": [
+            "NotFoundState"
+          ]
+        },
+        {
+          "key": "I03-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "getUser",
+            "status": "pending"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "I03-error",
+          "label": "خطأ",
+          "drawn": true,
+          "when": {
+            "api": "getUser",
+            "status": "5xx/429"
+          },
+          "ui": [
+            "ErrorState + إعادة المحاولة"
+          ]
+        },
+        {
+          "key": "I03-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "getUser",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [],
+      "after_mutation": {
+        "deactivate": "تحديث الحالة وإغلاق النافذة",
+        "activate": "تحديث الحالة"
+      },
+      "notes": [
+        "القرار 14: التعطيل فوري ولا يحذف شيئاً.",
+        "§75."
+      ]
+    },
+    "I04": {
+      "id": "I04",
+      "name": "الأدوار والصلاحيات",
+      "group": "it-accounting-legal",
+      "design_source": {
+        "view": "src/features/roles/views/RolesView.tsx",
+        "page": "src/app/it-accounting-legal/i04-roles/page.tsx"
+      },
+      "route": "/dashboard/roles",
+      "api": [
+        {
+          "id": "listRoles",
+          "method": "GET",
+          "path": "/roles",
+          "request": {},
+          "success": {
+            "status": 200,
+            "model": "Role[]"
+          }
+        },
+        {
+          "id": "listPermissions",
+          "method": "GET",
+          "path": "/permissions",
+          "request": {},
+          "success": {
+            "status": 200,
+            "model": "PermissionGroup[]"
+          }
+        },
+        {
+          "id": "createRole",
+          "method": "POST",
+          "path": "/roles",
+          "request": {
+            "name / platform / job_description / permissions": "draft"
+          },
+          "success": {
+            "status": 201,
+            "model": "Role"
+          },
+          "errors": {
+            "422": "validation_failed"
+          }
+        },
+        {
+          "id": "updateRole",
+          "method": "PUT",
+          "path": "/roles/{id}",
+          "request": {
+            "name / platform / job_description / permissions": "draft"
+          },
+          "success": {
+            "status": 200,
+            "model": "Role"
+          },
+          "errors": {
+            "409": "system_role_locked",
+            "422": "validation_failed"
+          }
+        },
+        {
+          "id": "deleteRole",
+          "method": "DELETE",
+          "path": "/roles/{id}",
+          "request": {
+            "id": "deleting.id"
+          },
+          "success": {
+            "status": 204,
+            "model": "—"
+          },
+          "errors": {
+            "409": "role_in_use / system_role_locked"
+          }
+        }
+      ],
+      "view_props": {
+        "roles": "Loadable<Role[]>",
+        "permissionGroups": "Loadable<PermissionGroup[]>",
+        "canManage": "roles.manage",
+        "draft": "RoleDraft | null",
+        "draftError": "system_role_locked",
+        "deleting": "Role | null",
+        "actionError": "role_in_use"
+      },
+      "permissions": [
+        "roles.manage"
+      ],
+      "components": [
+        "DataTable",
+        "Menu",
+        "Drawer",
+        "Input",
+        "RadioCard",
+        "Textarea",
+        "Checkbox",
+        "Badge",
+        "Banner",
+        "ConfirmDialog"
+      ],
+      "states": [
+        {
+          "key": "I04-list",
+          "label": "القائمة",
+          "drawn": true,
+          "when": {
+            "api": "listRoles"
+          },
+          "ui": [
+            "DataTable"
+          ]
+        },
+        {
+          "key": "I04-edit",
+          "label": "تعديل الدور",
+          "drawn": true,
+          "when": {
+            "ui": "الصف أو «تعديل»"
+          },
+          "ui": [
+            "Drawer: الصلاحيات بالوحدة و«يشمله التفويض»"
+          ]
+        },
+        {
+          "key": "I04-system-role",
+          "label": "دور نظامي",
+          "drawn": true,
+          "when": {
+            "data": "is_system = true",
+            "codes": [
+              "system_role_locked"
+            ]
+          },
+          "ui": [
+            "Drawer للقراءة",
+            "حذف معطّل مع السبب"
+          ]
+        },
+        {
+          "key": "I04-delete",
+          "label": "حذف دور",
+          "drawn": true,
+          "when": {
+            "data": "users_count = 0 و is_system = false"
+          },
+          "ui": [
+            "ConfirmDialog danger"
+          ]
+        },
+        {
+          "key": "I04-role-in-use",
+          "label": "دور مستعمل",
+          "drawn": true,
+          "when": {
+            "api": "deleteRole",
+            "status": 409,
+            "codes": [
+              "role_in_use"
+            ]
+          },
+          "ui": [
+            "Banner danger"
+          ]
+        },
+        {
+          "key": "I04-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "listRoles",
+            "status": "pending"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "I04-empty",
+          "label": "لا توجد بيانات",
+          "drawn": true,
+          "when": {
+            "api": "listRoles",
+            "data": "data = []"
+          },
+          "ui": [
+            "EmptyState"
+          ]
+        },
+        {
+          "key": "I04-error",
+          "label": "خطأ",
+          "drawn": true,
+          "when": {
+            "api": "listRoles",
+            "status": "5xx/429"
+          },
+          "ui": [
+            "ErrorState + إعادة المحاولة"
+          ]
+        },
+        {
+          "key": "I04-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "listRoles",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [],
+      "after_mutation": {
+        "createRole": "إضافة الصف",
+        "updateRole": "تحديث الصف",
+        "deleteRole": "حذف الصف"
+      },
+      "notes": [
+        "§76."
+      ]
+    },
+    "I05": {
+      "id": "I05",
+      "name": "الأجهزة",
+      "group": "it-accounting-legal",
+      "design_source": {
+        "view": "src/features/devices/views/DevicesView.tsx",
+        "page": "src/app/it-accounting-legal/i05-devices/page.tsx"
+      },
+      "route": "/dashboard/devices",
+      "api": [
+        {
+          "id": "listDevices",
+          "method": "GET",
+          "path": "/devices",
+          "request": {
+            "page": "state",
+            "user_id": "اختياري"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<Device>"
+          }
+        }
+      ],
+      "view_props": {
+        "devices": "Loadable<{ data: Device[], meta }>"
+      },
+      "permissions": [
+        "devices.manage"
+      ],
+      "components": [
+        "DataTable",
+        "Badge",
+        "Pagination"
+      ],
+      "states": [
+        {
+          "key": "I05-default",
+          "label": "الافتراضي",
+          "drawn": true,
+          "when": {
+            "api": "listDevices"
+          },
+          "ui": [
+            "DataTable"
+          ]
+        },
+        {
+          "key": "I05-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "listDevices",
+            "status": "pending"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "I05-empty",
+          "label": "لا توجد بيانات",
+          "drawn": true,
+          "when": {
+            "api": "listDevices",
+            "data": "data = []"
+          },
+          "ui": [
+            "EmptyState"
+          ]
+        },
+        {
+          "key": "I05-error",
+          "label": "خطأ",
+          "drawn": true,
+          "when": {
+            "api": "listDevices",
+            "status": "5xx/429"
+          },
+          "ui": [
+            "ErrorState + إعادة المحاولة"
+          ]
+        },
+        {
+          "key": "I05-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "listDevices",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [],
+      "after_mutation": {},
+      "notes": [
+        "§77."
+      ]
+    },
+    "I06": {
+      "id": "I06",
+      "name": "طلبات تغيير الجهاز",
+      "group": "it-accounting-legal",
+      "design_source": {
+        "view": "src/features/devices/views/DeviceRequestsView.tsx",
+        "page": "src/app/it-accounting-legal/i06-device-requests/page.tsx"
+      },
+      "route": "/dashboard/device-requests",
+      "api": [
+        {
+          "id": "listRequests",
+          "method": "GET",
+          "path": "/device-change-requests",
+          "request": {
+            "status": "status",
+            "page": "state"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<DeviceChangeRequest>"
+          }
+        },
+        {
+          "id": "decide",
+          "method": "POST",
+          "path": "/device-change-requests/{id}/decision",
+          "request": {
+            "decision": "deciding.decision",
+            "reason": "reason"
+          },
+          "success": {
+            "status": 200,
+            "model": "DeviceChangeRequest"
+          },
+          "errors": {
+            "409": "invalid_status",
+            "422": "validation_failed (reason)"
+          }
+        }
+      ],
+      "view_props": {
+        "requests": "Loadable<{ data: DeviceChangeRequest[], meta }>",
+        "status": "RequestStatus | null",
+        "canDecide": "devices.manage",
+        "staleBefore": "ISO datetime (§78)",
+        "deciding": "DeviceDecision | null",
+        "reason": "string",
+        "decisionError": "invalid_status"
+      },
+      "permissions": [
+        "devices.manage"
+      ],
+      "components": [
+        "FilterBar",
+        "Combobox",
+        "DataTable",
+        "Menu",
+        "Badge",
+        "ReasonDialog",
+        "Banner",
+        "Pagination"
+      ],
+      "states": [
+        {
+          "key": "I06-pending",
+          "label": "معلّقة",
+          "drawn": true,
+          "when": {
+            "request": "status=PENDING"
+          },
+          "ui": [
+            "DataTable",
+            "موافقة ورفض في قائمة الصف"
+          ]
+        },
+        {
+          "key": "I06-unsynced-warning",
+          "label": "لم يُزامن منذ مدة",
+          "drawn": true,
+          "when": {
+            "data": "old_device_last_sync_at < staleBefore"
+          },
+          "ui": [
+            "Badge warning",
+            "تحذير في نافذة الموافقة"
+          ]
+        },
+        {
+          "key": "I06-approved",
+          "label": "مقبولة",
+          "drawn": true,
+          "when": {
+            "request": "status=APPROVED"
+          },
+          "ui": [
+            "من قرّر ومتى"
+          ]
+        },
+        {
+          "key": "I06-rejected",
+          "label": "مرفوضة",
+          "drawn": true,
+          "when": {
+            "request": "status=REJECTED"
+          },
+          "ui": [
+            "من قرّر ومتى"
+          ]
+        },
+        {
+          "key": "I06-invalid-status",
+          "label": "قُرّر قبلك",
+          "drawn": true,
+          "when": {
+            "api": "decide",
+            "status": 409,
+            "codes": [
+              "invalid_status"
+            ]
+          },
+          "ui": [
+            "Banner danger"
+          ]
+        },
+        {
+          "key": "I06-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "listRequests",
+            "status": "pending"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "I06-error",
+          "label": "خطأ",
+          "drawn": true,
+          "when": {
+            "api": "listRequests",
+            "status": "5xx/429"
+          },
+          "ui": [
+            "ErrorState + إعادة المحاولة"
+          ]
+        },
+        {
+          "key": "I06-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "listRequests",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [],
+      "after_mutation": {
+        "decide": "تحديث الصف"
+      },
+      "notes": [
+        "الموافقة تنقل الربط وتنهي جلسة القديم. المهلة 24 ساعة عمل.",
+        "§78."
+      ]
+    },
+    "I07": {
+      "id": "I07",
+      "name": "المحاولات غير المصرّح بها",
+      "group": "it-accounting-legal",
+      "design_source": {
+        "view": "src/features/security/views/SecurityEventsView.tsx",
+        "page": "src/app/it-accounting-legal/i07-attempts/page.tsx"
+      },
+      "route": "/dashboard/security/attempts",
+      "api": [
+        {
+          "id": "listEvents",
+          "method": "GET",
+          "path": "/security-events",
+          "request": {
+            "handled": "tab = handled",
+            "page": "state"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<SecurityEvent>"
+          }
+        },
+        {
+          "id": "handleEvent",
+          "method": "POST",
+          "path": "/security-events/{id}/handle",
+          "request": {
+            "action": "handling.action",
+            "note": "note"
+          },
+          "success": {
+            "status": 200,
+            "model": "SecurityEvent"
+          },
+          "errors": {
+            "409": "عولجت مسبقاً (§79)",
+            "422": "validation_failed (note)"
+          }
+        }
+      ],
+      "view_props": {
+        "events": "Loadable<{ data: SecurityEvent[], meta }>",
+        "tab": "open | handled",
+        "canHandle": "security.manage",
+        "handling": "EventHandling | null",
+        "note": "string"
+      },
+      "permissions": [
+        "security.manage"
+      ],
+      "components": [
+        "SegmentedControl",
+        "DataTable",
+        "Menu",
+        "Badge",
+        "ReasonDialog",
+        "Banner",
+        "Pagination"
+      ],
+      "states": [
+        {
+          "key": "I07-default",
+          "label": "بانتظار المعالجة",
+          "drawn": true,
+          "when": {
+            "request": "handled=false"
+          },
+          "ui": [
+            "DataTable",
+            "مهلة 24 ساعة عمل"
+          ]
+        },
+        {
+          "key": "I07-handle",
+          "label": "المعالجة",
+          "drawn": true,
+          "when": {
+            "ui": "«حظر» أو «تجاهل»"
+          },
+          "ui": [
+            "ReasonDialog: ملاحظة إلزامية"
+          ]
+        },
+        {
+          "key": "I07-handled",
+          "label": "معالجة",
+          "drawn": true,
+          "when": {
+            "request": "handled=true"
+          },
+          "ui": [
+            "من عالج ومتى والملاحظة"
+          ]
+        },
+        {
+          "key": "I07-already-handled",
+          "label": "عولجت مسبقاً",
+          "drawn": true,
+          "when": {
+            "api": "handleEvent",
+            "status": 409
+          },
+          "ui": [
+            "Banner danger"
+          ]
+        },
+        {
+          "key": "I07-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "listEvents",
+            "status": "pending"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "I07-empty",
+          "label": "لا توجد بيانات",
+          "drawn": true,
+          "when": {
+            "api": "listEvents",
+            "data": "data = []"
+          },
+          "ui": [
+            "EmptyState"
+          ]
+        },
+        {
+          "key": "I07-error",
+          "label": "خطأ",
+          "drawn": true,
+          "when": {
+            "api": "listEvents",
+            "status": "5xx/429"
+          },
+          "ui": [
+            "ErrorState + إعادة المحاولة"
+          ]
+        },
+        {
+          "key": "I07-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "listEvents",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [],
+      "after_mutation": {
+        "handleEvent": "نقل الصف إلى «معالجة»"
+      },
+      "notes": [
+        "§79."
+      ]
+    },
+    "I08": {
+      "id": "I08",
+      "name": "الحظر",
+      "group": "it-accounting-legal",
+      "design_source": {
+        "view": "src/features/security/views/SecurityBlocksView.tsx",
+        "page": "src/app/it-accounting-legal/i08-blocks/page.tsx"
+      },
+      "route": "/dashboard/security/blocks",
+      "api": [
+        {
+          "id": "listBlocks",
+          "method": "GET",
+          "path": "/blocks",
+          "request": {
+            "active": "tab = active",
+            "page": "state"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<Block>"
+          }
+        },
+        {
+          "id": "createBlock",
+          "method": "POST",
+          "path": "/blocks",
+          "request": {
+            "type": "form.type",
+            "value": "form.value",
+            "reason": "form.reason"
+          },
+          "success": {
+            "status": 201,
+            "model": "Block"
+          },
+          "errors": {
+            "422": "validation_failed"
+          }
+        },
+        {
+          "id": "liftBlock",
+          "method": "POST",
+          "path": "/blocks/{id}/lift",
+          "request": {
+            "reason": "reason"
+          },
+          "success": {
+            "status": 200,
+            "model": "Block"
+          },
+          "errors": {
+            "409": "مرفوع مسبقاً (§80)",
+            "422": "validation_failed (reason)"
+          }
+        }
+      ],
+      "view_props": {
+        "blocks": "Loadable<{ data: Block[], meta }>",
+        "tab": "active | lifted",
+        "canManage": "security.manage",
+        "form": "BlockForm | null",
+        "lifting": "Block | null",
+        "reason": "string"
+      },
+      "permissions": [
+        "security.manage"
+      ],
+      "components": [
+        "SegmentedControl",
+        "DataTable",
+        "Menu",
+        "ReasonDialog",
+        "Dialog",
+        "RadioCard",
+        "Input",
+        "Textarea",
+        "Pagination"
+      ],
+      "states": [
+        {
+          "key": "I08-default",
+          "label": "الافتراضي",
+          "drawn": true,
+          "when": {
+            "request": "active=true"
+          },
+          "ui": [
+            "DataTable"
+          ]
+        },
+        {
+          "key": "I08-lift",
+          "label": "رفع الحظر",
+          "drawn": true,
+          "when": {
+            "ui": "«رفع الحظر»"
+          },
+          "ui": [
+            "ReasonDialog"
+          ]
+        },
+        {
+          "key": "I08-new",
+          "label": "حظر جديد",
+          "drawn": true,
+          "when": {
+            "ui": "«حظر جديد»"
+          },
+          "ui": [
+            "Dialog: النوع والقيمة والسبب"
+          ]
+        },
+        {
+          "key": "I08-lifted",
+          "label": "المرفوعة",
+          "drawn": true,
+          "when": {
+            "request": "active=false"
+          },
+          "ui": [
+            "سبب الرفع ومتى"
+          ]
+        },
+        {
+          "key": "I08-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "listBlocks",
+            "status": "pending"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "I08-empty",
+          "label": "لا توجد بيانات",
+          "drawn": true,
+          "when": {
+            "api": "listBlocks",
+            "data": "data = []"
+          },
+          "ui": [
+            "EmptyState"
+          ]
+        },
+        {
+          "key": "I08-error",
+          "label": "خطأ",
+          "drawn": true,
+          "when": {
+            "api": "listBlocks",
+            "status": "5xx/429"
+          },
+          "ui": [
+            "ErrorState + إعادة المحاولة"
+          ]
+        },
+        {
+          "key": "I08-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "listBlocks",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [],
+      "after_mutation": {
+        "createBlock": "إضافة الصف",
+        "liftBlock": "نقل الصف إلى «رُفع حظره»"
+      },
+      "notes": [
+        "§80."
+      ]
+    },
+    "I09": {
+      "id": "I09",
+      "name": "إصدارات التطبيق",
+      "group": "it-accounting-legal",
+      "design_source": {
+        "view": "src/features/settings/views/AppVersionView.tsx",
+        "page": "src/app/it-accounting-legal/i09-app-versions/page.tsx"
+      },
+      "route": "/dashboard/app-versions",
+      "api": [
+        {
+          "id": "getVersion",
+          "method": "GET",
+          "path": "/settings/app-version",
+          "request": {},
+          "success": {
+            "status": 200,
+            "model": "AppVersionSettings"
+          }
+        },
+        {
+          "id": "putVersion",
+          "method": "PUT",
+          "path": "/settings/app-version",
+          "request": {
+            "min_app_version": "draft.min",
+            "latest_app_version": "draft.latest",
+            "apk_url": "draft.apkUrl"
+          },
+          "success": {
+            "status": 200,
+            "model": "AppVersionSettings"
+          },
+          "errors": {
+            "422": "validation_failed تحت الحقول"
+          }
+        }
+      ],
+      "view_props": {
+        "version": "Loadable<AppVersionSettings>",
+        "canManage": "app_versions.manage",
+        "draft": "AppVersionDraft | null",
+        "errors": "validation_failed"
+      },
+      "permissions": [
+        "app_versions.manage"
+      ],
+      "components": [
+        "Card",
+        "DescriptionList",
+        "Input",
+        "Banner"
+      ],
+      "states": [
+        {
+          "key": "I09-default",
+          "label": "الافتراضي",
+          "drawn": true,
+          "when": {
+            "api": "getVersion"
+          },
+          "ui": [
+            "DescriptionList"
+          ]
+        },
+        {
+          "key": "I09-edit",
+          "label": "تعديل",
+          "drawn": true,
+          "when": {
+            "ui": "«تعديل»"
+          },
+          "ui": [
+            "حقول بصيغة X.Y.Z ورابط https",
+            "Banner warning"
+          ]
+        },
+        {
+          "key": "I09-validation",
+          "label": "خطأ من الخادم",
+          "drawn": true,
+          "when": {
+            "api": "putVersion",
+            "status": 422
+          },
+          "ui": [
+            "نص الخادم تحت الحقل"
+          ]
+        },
+        {
+          "key": "I09-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "getVersion",
+            "status": "pending"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "I09-error",
+          "label": "خطأ",
+          "drawn": true,
+          "when": {
+            "api": "getVersion",
+            "status": "5xx/429"
+          },
+          "ui": [
+            "ErrorState + إعادة المحاولة"
+          ]
+        },
+        {
+          "key": "I09-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "getVersion",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [],
+      "after_mutation": {
+        "putVersion": "الخروج من التعديل"
+      },
+      "notes": [
+        "§81."
+      ]
+    },
+    "I10": {
+      "id": "I10",
+      "name": "محتوى الموقع",
+      "group": "it-accounting-legal",
+      "design_source": {
+        "view": "src/features/site-content/views/SiteContentView.tsx",
+        "page": "src/app/it-accounting-legal/i10-site-content/page.tsx"
+      },
+      "route": "/dashboard/site-content",
+      "api": [
+        {
+          "id": "getPage",
+          "method": "GET",
+          "path": "/site/pages/{slug}",
+          "request": {
+            "slug": "home | about"
+          },
+          "success": {
+            "status": 200,
+            "model": "SitePage"
+          }
+        },
+        {
+          "id": "putPage",
+          "method": "PUT",
+          "path": "/site/pages/{slug}",
+          "request": {
+            "title / sections / images / seo_*": "pageDraft"
+          },
+          "success": {
+            "status": 200,
+            "model": "SitePage"
+          },
+          "errors": {
+            "422": "validation_failed"
+          }
+        },
+        {
+          "id": "listProducts",
+          "method": "GET",
+          "path": "/items",
+          "request": {
+            "type": "PRODUCT"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<Item>"
+          }
+        },
+        {
+          "id": "toggleProduct",
+          "method": "PATCH",
+          "path": "/items/{id}",
+          "request": {
+            "show_on_site": "boolean"
+          },
+          "success": {
+            "status": 200,
+            "model": "Item"
+          }
+        },
+        {
+          "id": "listAgents",
+          "method": "GET",
+          "path": "/agents",
+          "request": {},
+          "success": {
+            "status": 200,
+            "model": "Paginated<Agent>"
+          }
+        },
+        {
+          "id": "toggleAgent",
+          "method": "PATCH",
+          "path": "/agents/{id}",
+          "request": {
+            "show_on_site": "boolean"
+          },
+          "success": {
+            "status": 200,
+            "model": "Agent"
+          }
+        },
+        {
+          "id": "putSiteSettings",
+          "method": "PUT",
+          "path": "/settings/site",
+          "request": {
+            "breastfeeding_notice": "notice.notice",
+            "company_name": "notice.companyName"
+          },
+          "success": {
+            "status": 200,
+            "model": "SiteSettings"
+          },
+          "errors": {
+            "422": "validation_failed"
+          }
+        }
+      ],
+      "view_props": {
+        "tab": "SiteTab",
+        "pageSlug": "home | about",
+        "page": "Loadable<SitePage>",
+        "pageDraft": "PageDraft",
+        "images": "UploadFile[]",
+        "products": "Loadable<Item[]>",
+        "agents": "Loadable<Agent[]>",
+        "notice": "NoticeDraft",
+        "canManage": "site.manage"
+      },
+      "permissions": [
+        "site.manage"
+      ],
+      "components": [
+        "Tabs",
+        "SegmentedControl",
+        "Card",
+        "Input",
+        "Textarea",
+        "FileUpload",
+        "DataTable",
+        "Switch",
+        "Banner"
+      ],
+      "states": [
+        {
+          "key": "I10-pages",
+          "label": "الصفحات",
+          "drawn": true,
+          "when": {
+            "api": "getPage"
+          },
+          "ui": [
+            "النصوص والصور وSEO"
+          ]
+        },
+        {
+          "key": "I10-products",
+          "label": "المنتجات",
+          "drawn": true,
+          "when": {
+            "api": "listProducts"
+          },
+          "ui": [
+            "DataTable + Switch"
+          ]
+        },
+        {
+          "key": "I10-agents",
+          "label": "الوكلاء",
+          "drawn": true,
+          "when": {
+            "api": "listAgents"
+          },
+          "ui": [
+            "DataTable + Switch"
+          ]
+        },
+        {
+          "key": "I10-notice",
+          "label": "عبارة الرضاعة",
+          "drawn": true,
+          "when": {
+            "ui": "تبويب العبارة"
+          },
+          "ui": [
+            "Textarea",
+            "حفظ العبارة"
+          ]
+        },
+        {
+          "key": "I10-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "getPage",
+            "status": "pending"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "I10-error",
+          "label": "خطأ",
+          "drawn": true,
+          "when": {
+            "api": "getPage",
+            "status": "5xx/429"
+          },
+          "ui": [
+            "ErrorState + إعادة المحاولة"
+          ]
+        },
+        {
+          "key": "I10-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "getPage",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "«تعديل حقول العرض»",
+          "to": "E12"
+        }
+      ],
+      "after_mutation": {
+        "putPage": "شريط «حُفظت الصفحة»",
+        "putSiteSettings": "شريط «حُفظت العبارة»"
+      },
+      "notes": [
+        "القرار 14.",
+        "§82."
+      ]
+    },
+    "I11": {
+      "id": "I11",
+      "name": "لوحة المحاسبة",
+      "group": "it-accounting-legal",
+      "design_source": {
+        "view": "src/features/accounting/views/AccountingHomeView.tsx",
+        "page": "src/app/it-accounting-legal/i11-home/page.tsx"
+      },
+      "route": "/dashboard",
+      "api": [
+        {
+          "id": "getClosing",
+          "method": "GET",
+          "path": "/month-closings/{month}",
+          "request": {
+            "month": "الشهر الجاري"
+          },
+          "success": {
+            "status": 200,
+            "model": "MonthClosing"
+          }
+        },
+        {
+          "id": "listDeliveries",
+          "method": "GET",
+          "path": "/deliveries",
+          "request": {
+            "agent_id": "agentId",
+            "page": "state",
+            "per_page": "state"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<Delivery>"
+          }
+        }
+      ],
+      "view_props": {
+        "closing": "Loadable<MonthClosing>",
+        "deliveries": "Loadable<{ data: Delivery[], meta }>",
+        "agents": "AgentRef[]",
+        "agentId": "string | null",
+        "onOpenExpenses": "→ I12"
+      },
+      "permissions": [
+        "dashboard.accounting"
+      ],
+      "components": [
+        "PageHeader",
+        "Banner",
+        "Card",
+        "StatusBadge",
+        "DescriptionList",
+        "Combobox",
+        "DataTable",
+        "Pagination"
+      ],
+      "states": [
+        {
+          "key": "I11-default",
+          "label": "الافتراضي",
+          "drawn": true,
+          "when": {
+            "api": "getClosing",
+            "data": "missing_expenses = []"
+          },
+          "ui": [
+            "بطاقة الإغلاق",
+            "DataTable للاطلاع"
+          ]
+        },
+        {
+          "key": "I11-expense-reminder",
+          "label": "تذكير المصروف",
+          "drawn": true,
+          "when": {
+            "api": "getClosing",
+            "data": "missing_expenses ≠ [] و status ≠ CLOSED"
+          },
+          "ui": [
+            "Banner warning + «إدخال المصروف»"
+          ]
+        },
+        {
+          "key": "I11-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "listDeliveries",
+            "status": "pending"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "I11-error",
+          "label": "خطأ",
+          "drawn": true,
+          "when": {
+            "api": "listDeliveries",
+            "status": "5xx/429"
+          },
+          "ui": [
+            "ErrorState + إعادة المحاولة"
+          ]
+        },
+        {
+          "key": "I11-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "listDeliveries",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "«إدخال المصروف»",
+          "to": "I12"
+        }
+      ],
+      "after_mutation": {},
+      "notes": [
+        "DashboardSummary بلا حقول: اللوحة مركّبة (§83)."
+      ]
+    },
+    "I12": {
+      "id": "I12",
+      "name": "المصروف الفعلي",
+      "group": "it-accounting-legal",
+      "design_source": {
+        "view": "src/features/budgets/views/ActualExpenseView.tsx",
+        "page": "src/app/it-accounting-legal/i12-actual-expense/page.tsx"
+      },
+      "route": "/dashboard/expenses",
+      "api": [
+        {
+          "id": "getBudget",
+          "method": "GET",
+          "path": "/budgets/{month}",
+          "request": {
+            "month": "month"
+          },
+          "success": {
+            "status": 200,
+            "model": "Budget"
+          }
+        },
+        {
+          "id": "putExpenses",
+          "method": "PUT",
+          "path": "/expenses/{month}",
+          "request": {
+            "lines": "[{ category_id, actual }] للبنود ENTERED المكتوبة فقط"
+          },
+          "success": {
+            "status": 200,
+            "model": "Budget"
+          },
+          "errors": {
+            "409": "month_closed",
+            "422": "validation_failed (lines.N.actual)"
+          }
+        }
+      ],
+      "view_props": {
+        "month": "IsoMonth",
+        "closedMonths": "IsoMonth[]",
+        "budget": "Loadable<Budget>",
+        "canEnter": "expenses.enter",
+        "draft": "ExpenseDraft",
+        "errors": "validation_failed",
+        "saveError": "month_closed",
+        "savedMessage": "string"
+      },
+      "permissions": [
+        "expenses.enter"
+      ],
+      "components": [
+        "PageHeader",
+        "MonthPicker",
+        "DataTable",
+        "MoneyInput",
+        "Badge",
+        "Banner",
+        "Button"
+      ],
+      "states": [
+        {
+          "key": "I12-default",
+          "label": "الافتراضي",
+          "drawn": true,
+          "when": {
+            "api": "getBudget",
+            "data": "locked = false"
+          },
+          "ui": [
+            "MoneyInput لكل بند ENTERED",
+            "العينات محسوبة للقراءة"
+          ]
+        },
+        {
+          "key": "I12-missing",
+          "label": "بنود ناقصة",
+          "drawn": true,
+          "when": {
+            "data": "actual = null لبند ENTERED"
+          },
+          "ui": [
+            "Badge ناقص",
+            "Banner warning"
+          ]
+        },
+        {
+          "key": "I12-closed",
+          "label": "مقفل",
+          "drawn": true,
+          "when": {
+            "data": "locked = true"
+          },
+          "ui": [
+            "Banner info",
+            "للقراءة"
+          ]
+        },
+        {
+          "key": "I12-validation",
+          "label": "خطأ التحقق",
+          "drawn": true,
+          "when": {
+            "api": "putExpenses",
+            "status": 422
+          },
+          "ui": [
+            "حقل invalid",
+            "نص الخادم تحت الجدول باسم البند"
+          ]
+        },
+        {
+          "key": "I12-month-closed",
+          "label": "رفض الحفظ",
+          "drawn": true,
+          "when": {
+            "api": "putExpenses",
+            "status": 409,
+            "codes": [
+              "month_closed"
+            ]
+          },
+          "ui": [
+            "Banner danger"
+          ]
+        },
+        {
+          "key": "I12-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "getBudget",
+            "status": "pending"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "I12-error",
+          "label": "خطأ",
+          "drawn": true,
+          "when": {
+            "api": "getBudget",
+            "status": "5xx/429"
+          },
+          "ui": [
+            "ErrorState + إعادة المحاولة"
+          ]
+        },
+        {
+          "key": "I12-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "getBudget",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [],
+      "after_mutation": {
+        "putExpenses": "تحديث الفعلي ومن أدخله، وشريط «حُفظ المصروف»"
+      },
+      "notes": [
+        "لا تُعرض الميزانية ولا النسبة (§84)."
+      ]
+    },
+    "I13": {
+      "id": "I13",
+      "name": "تقرير الدوام",
+      "group": "it-accounting-legal",
+      "design_source": {
+        "view": "src/features/accounting/views/AccountingReportView.tsx",
+        "page": "src/app/it-accounting-legal/i13-attendance-report/page.tsx"
+      },
+      "route": "/dashboard/accounting/attendance-report",
+      "api": [
+        {
+          "id": "getReport",
+          "method": "GET",
+          "path": "/accounting/attendance-report",
+          "request": {
+            "month": "month",
+            "format": "json"
+          },
+          "success": {
+            "status": 200,
+            "model": "ReportResult"
+          }
+        },
+        {
+          "id": "exportReport",
+          "method": "GET",
+          "path": "/accounting/attendance-report",
+          "request": {
+            "month": "month",
+            "format": "xlsx"
+          },
+          "success": {
+            "status": 200,
+            "model": "binary (xlsx)"
+          }
+        }
+      ],
+      "view_props": {
+        "title": "string",
+        "description": "string",
+        "month": "IsoMonth",
+        "closedMonths": "IsoMonth[]",
+        "report": "Loadable<ReportResult>",
+        "onExport": "format=xlsx",
+        "exporting": "boolean"
+      },
+      "permissions": [
+        "accounting.reports"
+      ],
+      "components": [
+        "PageHeader",
+        "MonthPicker",
+        "Badge",
+        "Banner",
+        "ReportTable (DataTable + DescriptionList للإجمالي)"
+      ],
+      "states": [
+        {
+          "key": "I13-provisional",
+          "label": "مبدئي",
+          "drawn": true,
+          "when": {
+            "api": "getReport",
+            "data": "is_final = false"
+          },
+          "ui": [
+            "Badge مبدئي",
+            "Banner warning"
+          ]
+        },
+        {
+          "key": "I13-final",
+          "label": "نهائي",
+          "drawn": true,
+          "when": {
+            "api": "getReport",
+            "data": "is_final = true"
+          },
+          "ui": [
+            "Badge نهائي"
+          ]
+        },
+        {
+          "key": "I13-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "getReport",
+            "status": "pending"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "I13-empty",
+          "label": "لا توجد بيانات",
+          "drawn": true,
+          "when": {
+            "api": "getReport",
+            "data": "rows = []"
+          },
+          "ui": [
+            "EmptyState"
+          ]
+        },
+        {
+          "key": "I13-error",
+          "label": "خطأ",
+          "drawn": true,
+          "when": {
+            "api": "getReport",
+            "status": "5xx/429"
+          },
+          "ui": [
+            "ErrorState + إعادة المحاولة"
+          ]
+        },
+        {
+          "key": "I13-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "getReport",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [],
+      "after_mutation": {},
+      "notes": [
+        "الأعمدة من الخادم كما هي.",
+        "§85."
+      ]
+    },
+    "I14": {
+      "id": "I14",
+      "name": "تقرير الخصومات",
+      "group": "it-accounting-legal",
+      "design_source": {
+        "view": "src/features/accounting/views/AccountingReportView.tsx",
+        "page": "src/app/it-accounting-legal/i14-deductions-report/page.tsx"
+      },
+      "route": "/dashboard/accounting/deductions-report",
+      "api": [
+        {
+          "id": "getReport",
+          "method": "GET",
+          "path": "/accounting/deductions-report",
+          "request": {
+            "month": "month",
+            "format": "json"
+          },
+          "success": {
+            "status": 200,
+            "model": "ReportResult"
+          }
+        },
+        {
+          "id": "exportReport",
+          "method": "GET",
+          "path": "/accounting/deductions-report",
+          "request": {
+            "month": "month",
+            "format": "xlsx"
+          },
+          "success": {
+            "status": 200,
+            "model": "binary (xlsx)"
+          }
+        }
+      ],
+      "view_props": {
+        "title": "string",
+        "description": "string",
+        "month": "IsoMonth",
+        "closedMonths": "IsoMonth[]",
+        "report": "Loadable<ReportResult>",
+        "onExport": "format=xlsx",
+        "exporting": "boolean"
+      },
+      "permissions": [
+        "accounting.reports"
+      ],
+      "components": [
+        "PageHeader",
+        "MonthPicker",
+        "Badge",
+        "Banner",
+        "ReportTable (DataTable + DescriptionList للإجمالي)"
+      ],
+      "states": [
+        {
+          "key": "I14-provisional",
+          "label": "مبدئي",
+          "drawn": true,
+          "when": {
+            "api": "getReport",
+            "data": "is_final = false"
+          },
+          "ui": [
+            "Badge مبدئي",
+            "Banner warning"
+          ]
+        },
+        {
+          "key": "I14-final",
+          "label": "نهائي",
+          "drawn": true,
+          "when": {
+            "api": "getReport",
+            "data": "is_final = true"
+          },
+          "ui": [
+            "Badge نهائي"
+          ]
+        },
+        {
+          "key": "I14-with-reversal",
+          "label": "مع قيد معاكس",
+          "drawn": true,
+          "when": {
+            "api": "getReport",
+            "data": "سطر أصلي وسطر بقيمة سالبة"
+          },
+          "ui": [
+            "السطران كما يصلان (§86)"
+          ]
+        },
+        {
+          "key": "I14-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "getReport",
+            "status": "pending"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "I14-empty",
+          "label": "لا توجد بيانات",
+          "drawn": true,
+          "when": {
+            "api": "getReport",
+            "data": "rows = []"
+          },
+          "ui": [
+            "EmptyState"
+          ]
+        },
+        {
+          "key": "I14-error",
+          "label": "خطأ",
+          "drawn": true,
+          "when": {
+            "api": "getReport",
+            "status": "5xx/429"
+          },
+          "ui": [
+            "ErrorState + إعادة المحاولة"
+          ]
+        },
+        {
+          "key": "I14-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "getReport",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [],
+      "after_mutation": {},
+      "notes": [
+        "الأعمدة من الخادم كما هي.",
+        "§85."
+      ]
+    },
+    "I15": {
+      "id": "I15",
+      "name": "الوثائق القانونية",
+      "group": "it-accounting-legal",
+      "design_source": {
+        "view": "src/features/legal/views/LegalDocumentsView.tsx",
+        "page": "src/app/it-accounting-legal/i15-legal-documents/page.tsx"
+      },
+      "route": "/dashboard/legal/documents",
+      "api": [
+        {
+          "id": "listDocuments",
+          "method": "GET",
+          "path": "/legal-documents",
+          "request": {
+            "category": "filters.category",
+            "status": "filters.status",
+            "expiring_within_days": "filters.expiringOnly ? contract_alert_days : —",
+            "page": "state",
+            "per_page": "state"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<LegalDocument>"
+          }
+        }
+      ],
+      "view_props": {
+        "documents": "Loadable<{ data: LegalDocument[], meta }>",
+        "filters": "LegalDocumentFilters",
+        "expiringWithinDays": "number (contract_alert_days)",
+        "canCreate": "legal.manage"
+      },
+      "permissions": [
+        "legal.view",
+        "legal.manage"
+      ],
+      "components": [
+        "PageHeader",
+        "FilterBar",
+        "Combobox",
+        "Checkbox",
+        "DataTable",
+        "StatusCell",
+        "Pagination",
+        "EmptyState"
+      ],
+      "states": [
+        {
+          "key": "I15-default",
+          "label": "الافتراضي",
+          "drawn": true,
+          "when": {
+            "api": "listDocuments"
+          },
+          "ui": [
+            "DataTable"
+          ]
+        },
+        {
+          "key": "I15-expiring-filter",
+          "label": "قريبة الانتهاء",
+          "drawn": true,
+          "when": {
+            "request": "expiring_within_days = 30"
+          },
+          "ui": [
+            "شارة الفلتر"
+          ]
+        },
+        {
+          "key": "I15-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "listDocuments",
+            "status": "pending"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "I15-empty",
+          "label": "لا توجد بيانات",
+          "drawn": true,
+          "when": {
+            "api": "listDocuments",
+            "data": "data = []"
+          },
+          "ui": [
+            "EmptyState"
+          ]
+        },
+        {
+          "key": "I15-error",
+          "label": "خطأ",
+          "drawn": true,
+          "when": {
+            "api": "listDocuments",
+            "status": "5xx/429"
+          },
+          "ui": [
+            "ErrorState + إعادة المحاولة"
+          ]
+        },
+        {
+          "key": "I15-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "listDocuments",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "«وثيقة جديدة»",
+          "to": "I16"
+        },
+        {
+          "on": "الصف",
+          "to": "I17"
+        }
+      ],
+      "after_mutation": {},
+      "notes": [
+        "§87."
+      ]
+    },
+    "I16": {
+      "id": "I16",
+      "name": "وثيقة جديدة",
+      "group": "it-accounting-legal",
+      "design_source": {
+        "view": "src/features/legal/views/LegalDocumentFormView.tsx",
+        "page": "src/app/it-accounting-legal/i16-new-legal-document/page.tsx"
+      },
+      "route": "/dashboard/legal/documents/new",
+      "api": [
+        {
+          "id": "upload",
+          "method": "POST",
+          "path": "/uploads",
+          "request": {
+            "file": "form.file"
+          },
+          "success": {
+            "status": 201,
+            "model": "Upload"
+          }
+        },
+        {
+          "id": "createDocument",
+          "method": "POST",
+          "path": "/legal-documents",
+          "request": {
+            "title": "form.title",
+            "category": "form.category",
+            "parties": "form.parties (بلا الفارغ)",
+            "starts_on": "form.startsOn",
+            "expires_on": "form.expiresOn",
+            "alert_days": "form.alertDays",
+            "file_upload_id": "upload.id"
+          },
+          "success": {
+            "status": 201,
+            "model": "LegalDocument"
+          },
+          "errors": {
+            "422": "validation_failed تحت الحقول"
+          }
+        }
+      ],
+      "view_props": {
+        "form": "LegalDocumentForm",
+        "errors": "validation_failed",
+        "submitError": "code",
+        "today": "IsoDate"
+      },
+      "permissions": [
+        "legal.manage"
+      ],
+      "components": [
+        "PageHeader",
+        "Card",
+        "Field",
+        "Input",
+        "Select",
+        "IconButton",
+        "DatePicker",
+        "NumberInput",
+        "FileUpload",
+        "Banner"
+      ],
+      "states": [
+        {
+          "key": "I16-empty",
+          "label": "فارغ",
+          "drawn": true,
+          "when": {
+            "ui": "النموذج فارغ"
+          },
+          "ui": [
+            "الحفظ معطّل وسببه ظاهر"
+          ]
+        },
+        {
+          "key": "I16-validation",
+          "label": "خطأ التحقق",
+          "drawn": true,
+          "when": {
+            "api": "createDocument",
+            "status": 422
+          },
+          "ui": [
+            "نص الخادم تحت الحقل"
+          ]
+        },
+        {
+          "key": "I16-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "status": 403
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "«إلغاء»",
+          "to": "I15"
+        }
+      ],
+      "after_mutation": {
+        "createDocument": "الانتقال إلى صفحة الوثيقة (I17)"
+      },
+      "notes": [
+        "§88."
+      ]
+    },
+    "I17": {
+      "id": "I17",
+      "name": "صفحة الوثيقة",
+      "group": "it-accounting-legal",
+      "design_source": {
+        "view": "src/features/legal/views/LegalDocumentDetailsView.tsx",
+        "page": "src/app/it-accounting-legal/i17-legal-document/page.tsx"
+      },
+      "route": "/dashboard/legal/documents/{id}",
+      "api": [
+        {
+          "id": "getDocument",
+          "method": "GET",
+          "path": "/legal-documents/{id}",
+          "request": {},
+          "success": {
+            "status": 200,
+            "model": "LegalDocument"
+          },
+          "errors": {
+            "404": "not_found"
+          }
+        },
+        {
+          "id": "addVersion",
+          "method": "POST",
+          "path": "/legal-documents/{id}/versions",
+          "request": {
+            "reason": "renew.reason",
+            "file_upload_id": "upload.id",
+            "starts_on": "renew.startsOn",
+            "expires_on": "renew.expiresOn"
+          },
+          "success": {
+            "status": 200,
+            "model": "LegalDocument"
+          },
+          "errors": {
+            "409": "invalid_status",
+            "422": "validation_failed"
+          }
+        },
+        {
+          "id": "intentionalExpiry",
+          "method": "POST",
+          "path": "/legal-documents/{id}/intentional-expiry",
+          "request": {
+            "reason": "expiryReason (≤1000)"
+          },
+          "success": {
+            "status": 200,
+            "model": "LegalDocument"
+          },
+          "errors": {
+            "409": "انتهت فعلاً (§89)",
+            "422": "validation_failed"
+          }
+        }
+      ],
+      "view_props": {
+        "document": "Loadable<LegalDocument>",
+        "canManage": "legal.manage",
+        "renew": "RenewForm | null",
+        "expiring": "boolean",
+        "expiryReason": "string",
+        "errors": "validation_failed",
+        "actionError": "code"
+      },
+      "permissions": [
+        "legal.view",
+        "legal.manage"
+      ],
+      "components": [
+        "PageHeader",
+        "StatusBadge",
+        "Banner",
+        "Card",
+        "DescriptionList",
+        "AttachmentList",
+        "Dialog",
+        "DatePicker",
+        "FileUpload",
+        "Textarea",
+        "ReasonDialog",
+        "NotFoundState"
+      ],
+      "states": [
+        {
+          "key": "I17-active",
+          "label": "سارية",
+          "drawn": true,
+          "when": {
+            "data": "status = ACTIVE"
+          },
+          "ui": [
+            "البيانات والنسخ"
+          ]
+        },
+        {
+          "key": "I17-expiring",
+          "label": "قريبة الانتهاء",
+          "drawn": true,
+          "when": {
+            "data": "status = EXPIRING"
+          },
+          "ui": [
+            "Banner warning بالأيام الباقية"
+          ]
+        },
+        {
+          "key": "I17-renew",
+          "label": "تجديد",
+          "drawn": true,
+          "when": {
+            "ui": "«تجديد»"
+          },
+          "ui": [
+            "Dialog: السبب والملف والتواريخ"
+          ]
+        },
+        {
+          "key": "I17-intentional-expiry",
+          "label": "منتهية بقصد",
+          "drawn": true,
+          "when": {
+            "ui": "«منتهية بقصد»"
+          },
+          "ui": [
+            "ReasonDialog ≤1000"
+          ]
+        },
+        {
+          "key": "I17-expired",
+          "label": "منتهية",
+          "drawn": true,
+          "when": {
+            "data": "status = EXPIRED"
+          },
+          "ui": [
+            "Banner danger",
+            "«منتهية بقصد» معطّل"
+          ]
+        },
+        {
+          "key": "I17-intentionally-expired",
+          "label": "أُنهيت بقصد",
+          "drawn": true,
+          "when": {
+            "data": "status = INTENTIONALLY_EXPIRED"
+          },
+          "ui": [
+            "Banner بالسبب"
+          ]
+        },
+        {
+          "key": "I17-already-expired",
+          "label": "انتهت فعلاً",
+          "drawn": true,
+          "when": {
+            "api": "intentionalExpiry",
+            "status": 409
+          },
+          "ui": [
+            "الخطأ تحت السبب"
+          ]
+        },
+        {
+          "key": "I17-not-found",
+          "label": "غير موجودة",
+          "drawn": true,
+          "when": {
+            "api": "getDocument",
+            "status": 404
+          },
+          "ui": [
+            "NotFoundState"
+          ]
+        },
+        {
+          "key": "I17-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "getDocument",
+            "status": "pending"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "I17-error",
+          "label": "خطأ",
+          "drawn": true,
+          "when": {
+            "api": "getDocument",
+            "status": "5xx/429"
+          },
+          "ui": [
+            "ErrorState + إعادة المحاولة"
+          ]
+        },
+        {
+          "key": "I17-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "getDocument",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "«رجوع»",
+          "to": "I15"
+        }
+      ],
+      "after_mutation": {
+        "addVersion": "إضافة النسخة في رأس القائمة وتحديث الحالة",
+        "intentionalExpiry": "الحالة «منتهية بقصد» وسببها"
+      },
+      "notes": [
+        "القرار 14: كل تعديل نسخة جديدة، ولا حذف.",
+        "§89."
+      ]
+    },
+    "I18": {
+      "id": "I18",
+      "name": "النزاعات",
+      "group": "it-accounting-legal",
+      "design_source": {
+        "view": "src/features/disputes/views/DisputesListView.tsx",
+        "page": "src/app/it-accounting-legal/i18-disputes/page.tsx"
+      },
+      "route": "/dashboard/legal/disputes",
+      "api": [
+        {
+          "id": "listDisputes",
+          "method": "GET",
+          "path": "/disputes",
+          "request": {
+            "status": "filters.status",
+            "page": "state",
+            "per_page": "state"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<Dispute>"
+          }
+        }
+      ],
+      "view_props": {
+        "disputes": "Loadable<{ data: Dispute[], meta }>",
+        "filters": "DisputeFilters",
+        "canCreate": "disputes.manage"
+      },
+      "permissions": [
+        "disputes.view",
+        "disputes.manage"
+      ],
+      "components": [
+        "PageHeader",
+        "ConfidentialBanner",
+        "FilterBar",
+        "Combobox",
+        "DataTable",
+        "StatusCell",
+        "Pagination",
+        "EmptyState"
+      ],
+      "states": [
+        {
+          "key": "I18-default",
+          "label": "الافتراضي",
+          "drawn": true,
+          "when": {
+            "api": "listDisputes"
+          },
+          "ui": [
+            "DataTable"
+          ]
+        },
+        {
+          "key": "I18-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "listDisputes",
+            "status": "pending"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "I18-empty",
+          "label": "لا توجد بيانات",
+          "drawn": true,
+          "when": {
+            "api": "listDisputes",
+            "data": "data = []"
+          },
+          "ui": [
+            "EmptyState"
+          ]
+        },
+        {
+          "key": "I18-error",
+          "label": "خطأ",
+          "drawn": true,
+          "when": {
+            "api": "listDisputes",
+            "status": "5xx/429"
+          },
+          "ui": [
+            "ErrorState + إعادة المحاولة"
+          ]
+        },
+        {
+          "key": "I18-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "listDisputes",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "«فتح نزاع»",
+          "to": "I19"
+        },
+        {
+          "on": "الصف",
+          "to": "I20"
+        }
+      ],
+      "after_mutation": {},
+      "notes": [
+        "سري، ولا يشمله التفويض.",
+        "§90."
+      ]
+    },
+    "I19": {
+      "id": "I19",
+      "name": "فتح نزاع",
+      "group": "it-accounting-legal",
+      "design_source": {
+        "view": "src/features/disputes/views/DisputeFormView.tsx",
+        "page": "src/app/it-accounting-legal/i19-new-dispute/page.tsx"
+      },
+      "route": "/dashboard/legal/disputes/new",
+      "api": [
+        {
+          "id": "listDeliveries",
+          "method": "GET",
+          "path": "/deliveries",
+          "request": {
+            "status": "UNPAID"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<Delivery>"
+          }
+        },
+        {
+          "id": "createDispute",
+          "method": "POST",
+          "path": "/disputes",
+          "request": {
+            "title": "form.title",
+            "delivery_id": "form.deliveryId",
+            "description": "form.description"
+          },
+          "success": {
+            "status": 201,
+            "model": "Dispute"
+          },
+          "errors": {
+            "422": "validation_failed"
+          }
+        }
+      ],
+      "view_props": {
+        "form": "DisputeForm",
+        "deliveries": "Delivery[]",
+        "referral": "DisputeReferral | null",
+        "errors": "validation_failed",
+        "submitError": "code"
+      },
+      "permissions": [
+        "disputes.manage"
+      ],
+      "components": [
+        "PageHeader",
+        "ConfidentialBanner",
+        "Banner",
+        "Card",
+        "Field",
+        "Input",
+        "Combobox",
+        "Textarea"
+      ],
+      "states": [
+        {
+          "key": "I19-direct",
+          "label": "مباشر",
+          "drawn": true,
+          "when": {
+            "ui": "النموذج فارغ"
+          },
+          "ui": [
+            "الحفظ معطّل حتى العنوان"
+          ]
+        },
+        {
+          "key": "I19-from-referral",
+          "label": "محال",
+          "drawn": true,
+          "when": {
+            "ui": "من refer-dispute (§91.4)"
+          },
+          "ui": [
+            "Banner الإحالة",
+            "التسليم مقفل"
+          ]
+        },
+        {
+          "key": "I19-validation",
+          "label": "خطأ التحقق",
+          "drawn": true,
+          "when": {
+            "api": "createDispute",
+            "status": 422
+          },
+          "ui": [
+            "نص الخادم تحت الحقل"
+          ]
+        },
+        {
+          "key": "I19-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "status": 403
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "«إلغاء»",
+          "to": "I18"
+        }
+      ],
+      "after_mutation": {
+        "createDispute": "الانتقال إلى ملف النزاع (I20)"
+      },
+      "notes": [
+        "§91."
+      ]
+    },
+    "I20": {
+      "id": "I20",
+      "name": "ملف النزاع",
+      "group": "it-accounting-legal",
+      "design_source": {
+        "view": "src/features/disputes/views/DisputeDetailsView.tsx",
+        "page": "src/app/it-accounting-legal/i20-dispute/page.tsx"
+      },
+      "route": "/dashboard/legal/disputes/{id}",
+      "api": [
+        {
+          "id": "getDispute",
+          "method": "GET",
+          "path": "/disputes/{id}",
+          "request": {},
+          "success": {
+            "status": 200,
+            "model": "Dispute"
+          },
+          "errors": {
+            "404": "not_found"
+          }
+        },
+        {
+          "id": "completeStage",
+          "method": "POST",
+          "path": "/disputes/{id}/complete-stage",
+          "request": {
+            "summary": "stageForm.summary",
+            "attachments": "upload ids",
+            "risk": "{ level, value } في المرحلة 4"
+          },
+          "success": {
+            "status": 200,
+            "model": "Dispute"
+          },
+          "errors": {
+            "409": "invalid_status",
+            "422": "validation_failed"
+          }
+        },
+        {
+          "id": "recommendation",
+          "method": "POST",
+          "path": "/disputes/{id}/recommendation",
+          "request": {
+            "recommendation": "recommendation"
+          },
+          "success": {
+            "status": 200,
+            "model": "Dispute"
+          },
+          "errors": {
+            "409": "invalid_status",
+            "422": "validation_failed"
+          }
+        },
+        {
+          "id": "decision",
+          "method": "POST",
+          "path": "/disputes/{id}/decision",
+          "request": {
+            "type": "APPROVED_RECOMMENDATION | OTHER_SOLUTION",
+            "text": "otherSolution.text",
+            "reason": "otherSolution.reason"
+          },
+          "success": {
+            "status": 200,
+            "model": "Dispute"
+          },
+          "errors": {
+            "409": "invalid_status",
+            "422": "validation_failed"
+          }
+        },
+        {
+          "id": "execute",
+          "method": "POST",
+          "path": "/disputes/{id}/execute",
+          "request": {
+            "summary": "executeSummary"
+          },
+          "success": {
+            "status": 200,
+            "model": "Dispute"
+          },
+          "errors": {
+            "409": "invalid_status",
+            "422": "validation_failed"
+          }
+        },
+        {
+          "id": "closeResolved",
+          "method": "POST",
+          "path": "/disputes/{id}/close-resolved",
+          "request": {
+            "reason": "resolvedDialog.reason (≤1000)"
+          },
+          "success": {
+            "status": 200,
+            "model": "Dispute"
+          },
+          "errors": {
+            "409": "invalid_status",
+            "422": "validation_failed"
+          }
+        }
+      ],
+      "view_props": {
+        "dispute": "Loadable<Dispute>",
+        "canManage": "disputes.manage",
+        "canDecide": "disputes.decide",
+        "stageForm": "DisputeStageForm",
+        "recommendation": "string",
+        "executeSummary": "string",
+        "approving": "boolean",
+        "otherSolution": "OtherSolutionForm | null",
+        "resolvedDialog": "ResolvedDialog | null",
+        "busy": "boolean",
+        "errors": "validation_failed",
+        "actionError": "code"
+      },
+      "permissions": [
+        "disputes.view",
+        "disputes.manage"
+      ],
+      "components": [
+        "PageHeader",
+        "ConfidentialBanner",
+        "StageTimeline",
+        "Card",
+        "Field",
+        "Textarea",
+        "Radio",
+        "MoneyInput",
+        "FileUpload",
+        "DescriptionList",
+        "DecisionRecord",
+        "AttachmentList",
+        "ReasonDialog",
+        "ConfirmDialog",
+        "Dialog",
+        "NotFoundState"
+      ],
+      "states": [
+        {
+          "key": "I20-stage-2",
+          "label": "المرحلة 2",
+          "drawn": true,
+          "when": {
+            "data": "status = STAGE_2"
+          },
+          "ui": [
+            "نموذج المرحلة"
+          ]
+        },
+        {
+          "key": "I20-stage-4",
+          "label": "المرحلة 4",
+          "drawn": true,
+          "when": {
+            "data": "status = STAGE_4"
+          },
+          "ui": [
+            "مستوى الخطر وقيمته"
+          ]
+        },
+        {
+          "key": "I20-stage-6",
+          "label": "المرحلة 6",
+          "drawn": true,
+          "when": {
+            "data": "status = STAGE_6"
+          },
+          "ui": [
+            "نموذج التوصية"
+          ]
+        },
+        {
+          "key": "I20-awaiting-decision",
+          "label": "بانتظار القرار",
+          "drawn": true,
+          "when": {
+            "data": "status = AWAITING_DECISION"
+          },
+          "ui": [
+            "Banner warning"
+          ]
+        },
+        {
+          "key": "I20-stage-7",
+          "label": "المرحلة 7",
+          "drawn": true,
+          "when": {
+            "data": "status = STAGE_7"
+          },
+          "ui": [
+            "DecisionRecord",
+            "نموذج التنفيذ"
+          ]
+        },
+        {
+          "key": "I20-closed",
+          "label": "مغلق",
+          "drawn": true,
+          "when": {
+            "data": "status = CLOSED"
+          },
+          "ui": [
+            "كل المراحل مكتملة"
+          ]
+        },
+        {
+          "key": "I20-closed-resolved",
+          "label": "زال السبب",
+          "drawn": true,
+          "when": {
+            "data": "status = CLOSED_RESOLVED"
+          },
+          "ui": [
+            "EarlyClose بالسبب"
+          ]
+        },
+        {
+          "key": "I20-close-resolved-dialog",
+          "label": "نافذة زال السبب",
+          "drawn": true,
+          "when": {
+            "ui": "«زال السبب»"
+          },
+          "ui": [
+            "ReasonDialog ≤1000"
+          ]
+        },
+        {
+          "key": "I20-invalid-status",
+          "label": "تغيّرت الحالة",
+          "drawn": true,
+          "when": {
+            "status": 409,
+            "codes": [
+              "invalid_status"
+            ]
+          },
+          "ui": [
+            "Banner warning"
+          ]
+        },
+        {
+          "key": "I20-not-found",
+          "label": "غير موجود",
+          "drawn": true,
+          "when": {
+            "api": "getDispute",
+            "status": 404
+          },
+          "ui": [
+            "NotFoundState"
+          ]
+        },
+        {
+          "key": "I20-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "getDispute",
+            "status": "pending"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "I20-error",
+          "label": "خطأ",
+          "drawn": true,
+          "when": {
+            "api": "getDispute",
+            "status": "5xx/429"
+          },
+          "ui": [
+            "ErrorState + إعادة المحاولة"
+          ]
+        },
+        {
+          "key": "I20-forbidden",
+          "label": "لا صلاحية",
+          "drawn": true,
+          "when": {
+            "api": "getDispute",
+            "status": 403,
+            "codes": [
+              "forbidden"
+            ]
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "«رجوع»",
+          "to": "I18"
+        }
+      ],
+      "after_mutation": {
+        "completeStage": "المرحلة التالية",
+        "recommendation": "بانتظار القرار",
+        "decision": "المرحلة 7 وسجل القرار",
+        "execute": "مغلق",
+        "closeResolved": "زال السبب بسببه"
+      },
+      "notes": [
+        "القرار 14.",
+        "§92."
+      ]
+    },
+    "I21": {
+      "id": "I21",
+      "name": "قرار النزاع",
+      "group": "it-accounting-legal",
+      "design_source": {
+        "view": "src/features/disputes/views/DisputeDetailsView.tsx",
+        "page": "src/app/it-accounting-legal/i21-dispute-decision/page.tsx"
+      },
+      "route": "/dashboard/legal/disputes/{id}",
+      "api": [
+        {
+          "id": "getDispute",
+          "method": "GET",
+          "path": "/disputes/{id}",
+          "request": {},
+          "success": {
+            "status": 200,
+            "model": "Dispute"
+          },
+          "errors": {
+            "404": "not_found"
+          }
+        },
+        {
+          "id": "completeStage",
+          "method": "POST",
+          "path": "/disputes/{id}/complete-stage",
+          "request": {
+            "summary": "stageForm.summary",
+            "attachments": "upload ids",
+            "risk": "{ level, value } في المرحلة 4"
+          },
+          "success": {
+            "status": 200,
+            "model": "Dispute"
+          },
+          "errors": {
+            "409": "invalid_status",
+            "422": "validation_failed"
+          }
+        },
+        {
+          "id": "recommendation",
+          "method": "POST",
+          "path": "/disputes/{id}/recommendation",
+          "request": {
+            "recommendation": "recommendation"
+          },
+          "success": {
+            "status": 200,
+            "model": "Dispute"
+          },
+          "errors": {
+            "409": "invalid_status",
+            "422": "validation_failed"
+          }
+        },
+        {
+          "id": "decision",
+          "method": "POST",
+          "path": "/disputes/{id}/decision",
+          "request": {
+            "type": "APPROVED_RECOMMENDATION | OTHER_SOLUTION",
+            "text": "otherSolution.text",
+            "reason": "otherSolution.reason"
+          },
+          "success": {
+            "status": 200,
+            "model": "Dispute"
+          },
+          "errors": {
+            "409": "invalid_status",
+            "422": "validation_failed"
+          }
+        },
+        {
+          "id": "execute",
+          "method": "POST",
+          "path": "/disputes/{id}/execute",
+          "request": {
+            "summary": "executeSummary"
+          },
+          "success": {
+            "status": 200,
+            "model": "Dispute"
+          },
+          "errors": {
+            "409": "invalid_status",
+            "422": "validation_failed"
+          }
+        },
+        {
+          "id": "closeResolved",
+          "method": "POST",
+          "path": "/disputes/{id}/close-resolved",
+          "request": {
+            "reason": "resolvedDialog.reason (≤1000)"
+          },
+          "success": {
+            "status": 200,
+            "model": "Dispute"
+          },
+          "errors": {
+            "409": "invalid_status",
+            "422": "validation_failed"
+          }
+        }
+      ],
+      "view_props": {
+        "dispute": "Loadable<Dispute>",
+        "canManage": "disputes.manage",
+        "canDecide": "disputes.decide",
+        "stageForm": "DisputeStageForm",
+        "recommendation": "string",
+        "executeSummary": "string",
+        "approving": "boolean",
+        "otherSolution": "OtherSolutionForm | null",
+        "resolvedDialog": "ResolvedDialog | null",
+        "busy": "boolean",
+        "errors": "validation_failed",
+        "actionError": "code"
+      },
+      "permissions": [
+        "disputes.decide"
+      ],
+      "components": [
+        "PageHeader",
+        "ConfidentialBanner",
+        "StageTimeline",
+        "Card",
+        "Field",
+        "Textarea",
+        "Radio",
+        "MoneyInput",
+        "FileUpload",
+        "DescriptionList",
+        "DecisionRecord",
+        "AttachmentList",
+        "ReasonDialog",
+        "ConfirmDialog",
+        "Dialog",
+        "NotFoundState"
+      ],
+      "states": [
+        {
+          "key": "I21-awaiting-me",
+          "label": "بانتظاري",
+          "drawn": true,
+          "when": {
+            "data": "status = AWAITING_DECISION",
+            "flag": "canDecide"
+          },
+          "ui": [
+            "«اعتماد التوصية» و«حل آخر»"
+          ]
+        },
+        {
+          "key": "I21-approve-confirm",
+          "label": "تأكيد الاعتماد",
+          "drawn": true,
+          "when": {
+            "ui": "«اعتماد التوصية»"
+          },
+          "ui": [
+            "ConfirmDialog"
+          ]
+        },
+        {
+          "key": "I21-other-solution",
+          "label": "حل آخر",
+          "drawn": true,
+          "when": {
+            "ui": "«حل آخر»"
+          },
+          "ui": [
+            "Dialog: الحل والسبب"
+          ]
+        },
+        {
+          "key": "I21-invalid-status",
+          "label": "قُرّر مسبقاً",
+          "drawn": true,
+          "when": {
+            "api": "decision",
+            "status": 409
+          },
+          "ui": [
+            "Banner warning"
+          ]
+        },
+        {
+          "key": "I21-delegate-forbidden",
+          "label": "المفوَّض",
+          "drawn": true,
+          "when": {
+            "status": 403
+          },
+          "ui": [
+            "ForbiddenState"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "من «بانتظار قراري»",
+          "to": "I21"
+        }
+      ],
+      "after_mutation": {
+        "completeStage": "المرحلة التالية",
+        "recommendation": "بانتظار القرار",
+        "decision": "المرحلة 7 وسجل القرار",
+        "execute": "مغلق",
+        "closeResolved": "زال السبب بسببه"
+      },
+      "notes": [
+        "شاشة I20 نفسها بعلم canDecide.",
+        "لا تفويض (القرار 15).",
+        "§93."
+      ]
+    },
+    "G03": {
+      "id": "G03",
+      "name": "الإشعارات",
+      "group": "shared",
+      "design_source": {
+        "view": "src/features/notifications/views/NotificationsView.tsx",
+        "page": "src/app/shared/g03-notifications/page.tsx"
+      },
+      "route": "/dashboard/notifications",
+      "api": [
+        {
+          "id": "listNotifications",
+          "method": "GET",
+          "path": "/notifications",
+          "request": {
+            "unread": "tab = unread",
+            "page": "state"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<Notification> + unread_count"
+          }
+        },
+        {
+          "id": "readOne",
+          "method": "POST",
+          "path": "/notifications/{id}/read",
+          "request": {},
+          "success": {
+            "status": 204,
+            "model": "—"
+          }
+        },
+        {
+          "id": "readAll",
+          "method": "POST",
+          "path": "/notifications/read-all",
+          "request": {},
+          "success": {
+            "status": 204,
+            "model": "—"
+          }
+        }
+      ],
+      "view_props": {
+        "notifications": "Loadable<{ data, meta, unreadCount }>",
+        "tab": "all | unread",
+        "now": "string (UTC)",
+        "onOpen": "Notification",
+        "onMarkAllRead": "() => void"
+      },
+      "permissions": [],
+      "components": [
+        "PageHeader",
+        "SegmentedControl",
+        "NotificationList",
+        "Pagination"
+      ],
+      "states": [
+        {
+          "key": "G03-default",
+          "label": "مختلطة",
+          "drawn": true,
+          "when": {
+            "api": "listNotifications"
+          },
+          "ui": [
+            "مجموعات اليوم والأسبوع والأقدم"
+          ]
+        },
+        {
+          "key": "G03-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "listNotifications",
+            "status": "pending"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "G03-empty",
+          "label": "لا توجد بيانات",
+          "drawn": true,
+          "when": {
+            "api": "listNotifications",
+            "data": "data = []"
+          },
+          "ui": [
+            "EmptyState"
+          ]
+        },
+        {
+          "key": "G03-error",
+          "label": "خطأ",
+          "drawn": true,
+          "when": {
+            "api": "listNotifications",
+            "status": "5xx/429"
+          },
+          "ui": [
+            "ErrorState + إعادة المحاولة"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "الإشعار",
+          "to": "شاشة ref_type/ref_id (§94)"
+        }
+      ],
+      "after_mutation": {
+        "readOne": "إزالة علامة غير المقروء",
+        "readAll": "إزالة كل العلامات وتحديث عدّاد الجرس"
+      },
+      "notes": [
+        "النافذة من الجرس تستعمل NotificationList نفسه في Topbar (`notificationsPanel`).",
+        "§94."
+      ]
+    },
+    "G04": {
+      "id": "G04",
+      "name": "بانتظار قراري",
+      "group": "shared",
+      "design_source": {
+        "view": "src/features/pending-decisions/views/PendingDecisionsView.tsx",
+        "page": "src/app/shared/g04-pending/page.tsx"
+      },
+      "route": "/dashboard/pending",
+      "api": [
+        {
+          "id": "listPending",
+          "method": "GET",
+          "path": "/me/pending-decisions",
+          "request": {
+            "kind": "kind",
+            "page": "state"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<PendingDecision>"
+          }
+        }
+      ],
+      "view_props": {
+        "pending": "Loadable<{ data, meta }>",
+        "kind": "PendingKind | null",
+        "kinds": "PendingKind[] (أنواع الدور)",
+        "delegation": "{ from, to } | null",
+        "now": "string (UTC)"
+      },
+      "permissions": [
+        "pending_decisions.view"
+      ],
+      "components": [
+        "PageHeader",
+        "Banner",
+        "Combobox",
+        "Card",
+        "Badge",
+        "EmptyState",
+        "Pagination"
+      ],
+      "states": [
+        {
+          "key": "G04-default",
+          "label": "المدير التنفيذي",
+          "drawn": true,
+          "when": {
+            "api": "listPending"
+          },
+          "ui": [
+            "مجموعات حسب النوع"
+          ]
+        },
+        {
+          "key": "G04-sales-manager",
+          "label": "مدير المبيعات",
+          "drawn": true,
+          "when": {
+            "api": "listPending"
+          },
+          "ui": [
+            "المرتجع والتالف وإرجاع الوكيل"
+          ]
+        },
+        {
+          "key": "G04-delegate",
+          "label": "المفوَّض",
+          "drawn": true,
+          "when": {
+            "api": "listPending",
+            "user": "active_delegation"
+          },
+          "ui": [
+            "Banner التفويض",
+            "delegable فقط"
+          ]
+        },
+        {
+          "key": "G04-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "listPending",
+            "status": "pending"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "G04-empty",
+          "label": "لا توجد بيانات",
+          "drawn": true,
+          "when": {
+            "api": "listPending",
+            "data": "data = []"
+          },
+          "ui": [
+            "EmptyState"
+          ]
+        },
+        {
+          "key": "G04-error",
+          "label": "خطأ",
+          "drawn": true,
+          "when": {
+            "api": "listPending",
+            "status": "5xx/429"
+          },
+          "ui": [
+            "ErrorState + إعادة المحاولة"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "العنصر",
+          "to": "شاشة القرار بحسب kind (§95.3)"
+        }
+      ],
+      "after_mutation": {},
+      "notes": [
+        "§95."
+      ]
+    },
+    "G05": {
+      "id": "G05",
+      "name": "ملفي الشخصي",
+      "group": "shared",
+      "design_source": {
+        "view": "src/features/profile/views/MyProfileView.tsx",
+        "page": "src/app/shared/g05-profile/page.tsx"
+      },
+      "route": "/dashboard/profile",
+      "api": [
+        {
+          "id": "getProfile",
+          "method": "GET",
+          "path": "/me/profile",
+          "request": {},
+          "success": {
+            "status": 200,
+            "model": "Profile"
+          }
+        }
+      ],
+      "view_props": {
+        "profile": "Loadable<Profile>",
+        "onOpenTasks": "→ G06"
+      },
+      "permissions": [],
+      "components": [
+        "PageHeader",
+        "Card",
+        "DescriptionList",
+        "DataTable",
+        "StatusBadge",
+        "Badge",
+        "Banner",
+        "Button"
+      ],
+      "states": [
+        {
+          "key": "G05-default",
+          "label": "الافتراضي",
+          "drawn": true,
+          "when": {
+            "api": "getProfile"
+          },
+          "ui": [
+            "البيانات ووصف المهام والتقييمات والخصومات"
+          ]
+        },
+        {
+          "key": "G05-provisional",
+          "label": "مبدئي",
+          "drawn": true,
+          "when": {
+            "data": "scores[].status = PROVISIONAL"
+          },
+          "ui": [
+            "Banner info",
+            "شارة مبدئي"
+          ]
+        },
+        {
+          "key": "G05-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "getProfile",
+            "status": "pending"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "G05-error",
+          "label": "خطأ",
+          "drawn": true,
+          "when": {
+            "api": "getProfile",
+            "status": "5xx/429"
+          },
+          "ui": [
+            "ErrorState + إعادة المحاولة"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "«عرض مهامي»",
+          "to": "G06"
+        }
+      ],
+      "after_mutation": {},
+      "notes": [
+        "العقد والراتب لا يُعرضان (§96).",
+        "§96."
+      ]
+    },
+    "G06": {
+      "id": "G06",
+      "name": "المهام",
+      "group": "shared",
+      "design_source": {
+        "view": "src/features/tasks/views/TasksListView.tsx",
+        "page": "src/app/shared/g06-tasks/page.tsx"
+      },
+      "route": "/dashboard/tasks",
+      "api": [
+        {
+          "id": "listTasks",
+          "method": "GET",
+          "path": "/tasks",
+          "request": {
+            "scope": "assigned_to_me | assigned_by_me",
+            "status": "filters.status",
+            "overdue": "filters.overdueOnly",
+            "source": "filters.source",
+            "page": "state"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<Task>"
+          }
+        },
+        {
+          "id": "assignees",
+          "method": "GET",
+          "path": "/me/assignees",
+          "request": {},
+          "success": {
+            "status": 200,
+            "model": "UserRef[]"
+          }
+        }
+      ],
+      "view_props": {
+        "tasks": "Loadable<{ data, meta }>",
+        "scope": "TaskScope",
+        "filters": "TaskFilters",
+        "canAssign": "assignees.length > 0"
+      },
+      "permissions": [
+        "tasks.view"
+      ],
+      "components": [
+        "PageHeader",
+        "Tabs",
+        "FilterBar",
+        "Combobox",
+        "Checkbox",
+        "DataTable",
+        "StatusCell",
+        "Badge",
+        "Pagination",
+        "EmptyState"
+      ],
+      "states": [
+        {
+          "key": "G06-assigned-to-me",
+          "label": "المسندة إليّ",
+          "drawn": true,
+          "when": {
+            "request": "scope=assigned_to_me"
+          },
+          "ui": [
+            "عمود المُسند"
+          ]
+        },
+        {
+          "key": "G06-assigned-by-me",
+          "label": "التي أسندتها",
+          "drawn": true,
+          "when": {
+            "request": "scope=assigned_by_me"
+          },
+          "ui": [
+            "عمود المكلَّف"
+          ]
+        },
+        {
+          "key": "G06-overdue-filter",
+          "label": "المتأخرة",
+          "drawn": true,
+          "when": {
+            "request": "overdue=true"
+          },
+          "ui": [
+            "شارة الفلتر"
+          ]
+        },
+        {
+          "key": "G06-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "listTasks",
+            "status": "pending"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "G06-empty",
+          "label": "لا توجد بيانات",
+          "drawn": true,
+          "when": {
+            "api": "listTasks",
+            "data": "data = []"
+          },
+          "ui": [
+            "EmptyState"
+          ]
+        },
+        {
+          "key": "G06-error",
+          "label": "خطأ",
+          "drawn": true,
+          "when": {
+            "api": "listTasks",
+            "status": "5xx/429"
+          },
+          "ui": [
+            "ErrorState + إعادة المحاولة"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "الصف",
+          "to": "G07"
+        },
+        {
+          "on": "«إسناد مهمة»",
+          "to": "G08"
+        }
+      ],
+      "after_mutation": {},
+      "notes": [
+        "§97."
+      ]
+    },
+    "G07": {
+      "id": "G07",
+      "name": "تفاصيل المهمة",
+      "group": "shared",
+      "design_source": {
+        "view": "src/features/tasks/views/TaskDetailsView.tsx",
+        "page": "src/app/shared/g07-task/page.tsx"
+      },
+      "route": "/dashboard/tasks/{id}",
+      "api": [
+        {
+          "id": "getTask",
+          "method": "GET",
+          "path": "/tasks/{id}",
+          "request": {},
+          "success": {
+            "status": 200,
+            "model": "Task"
+          },
+          "errors": {
+            "404": "not_found"
+          }
+        },
+        {
+          "id": "start",
+          "method": "POST",
+          "path": "/tasks/{id}/start",
+          "request": {},
+          "success": {
+            "status": 200,
+            "model": "Task"
+          },
+          "errors": {
+            "409": "invalid_status"
+          }
+        },
+        {
+          "id": "submit",
+          "method": "POST",
+          "path": "/tasks/{id}/submissions",
+          "request": {
+            "note": "submit.note",
+            "attachments": "upload ids"
+          },
+          "success": {
+            "status": 200,
+            "model": "Task"
+          },
+          "errors": {
+            "409": "invalid_status",
+            "422": "validation_failed"
+          }
+        },
+        {
+          "id": "decide",
+          "method": "POST",
+          "path": "/tasks/{id}/submissions/{sid}/decision",
+          "request": {
+            "decision": "ACCEPTED | REJECTED",
+            "reason": "rejectReason"
+          },
+          "success": {
+            "status": 200,
+            "model": "Task"
+          },
+          "errors": {
+            "409": "invalid_status",
+            "422": "validation_failed"
+          }
+        },
+        {
+          "id": "reassign",
+          "method": "POST",
+          "path": "/tasks/{id}/reassign",
+          "request": {
+            "assignee_id": "reassign.assigneeId",
+            "reason": "reassign.reason"
+          },
+          "success": {
+            "status": 200,
+            "model": "Task"
+          },
+          "errors": {
+            "409": "invalid_status",
+            "422": "validation_failed"
+          }
+        },
+        {
+          "id": "resolve",
+          "method": "POST",
+          "path": "/tasks/{id}/resolve",
+          "request": {
+            "action": "DEDUCT | DEDUCT_AND_CLOSE | CLOSE",
+            "reason": "resolve.reason",
+            "deduction_amount": "resolve.amount"
+          },
+          "success": {
+            "status": 200,
+            "model": "Task"
+          },
+          "errors": {
+            "409": "ليست متأخرة (§98.5)",
+            "422": "validation_failed"
+          }
+        }
+      ],
+      "view_props": {
+        "task": "Loadable<Task>",
+        "isAssignee": "task.assignee.id === me.id",
+        "isAssigner": "task.assigned_by.id === me.id",
+        "canResolveOverdue": "tasks.resolve_overdue",
+        "canDeduct": "المدير التنفيذي (لا تفويض)",
+        "submit": "SubmitForm | null",
+        "rejectReason": "string | null",
+        "reassign": "ReassignForm | null",
+        "assignees": "UserRef[]",
+        "resolve": "ResolveForm"
+      },
+      "permissions": [
+        "tasks.view",
+        "tasks.resolve_overdue"
+      ],
+      "components": [
+        "PageHeader",
+        "StatusBadge",
+        "Badge",
+        "Banner",
+        "DecisionPanel",
+        "DecisionRecord",
+        "Card",
+        "DescriptionList",
+        "AttachmentList",
+        "RadioCard",
+        "MoneyInput",
+        "Textarea",
+        "Dialog",
+        "FileUpload",
+        "Combobox",
+        "ReasonDialog",
+        "ActivityLog"
+      ],
+      "states": [
+        {
+          "key": "G07-assignee-new",
+          "label": "المكلَّف · جديدة",
+          "drawn": true,
+          "when": {
+            "data": "status = NEW"
+          },
+          "ui": [
+            "«بدء»"
+          ]
+        },
+        {
+          "key": "G07-assignee-in-progress",
+          "label": "المكلَّف · قيد التنفيذ",
+          "drawn": true,
+          "when": {
+            "data": "status = IN_PROGRESS"
+          },
+          "ui": [
+            "«تسليم»"
+          ]
+        },
+        {
+          "key": "G07-submit-dialog",
+          "label": "نافذة التسليم",
+          "drawn": true,
+          "when": {
+            "ui": "«تسليم»"
+          },
+          "ui": [
+            "Dialog: ملاحظة ومرفقات"
+          ]
+        },
+        {
+          "key": "G07-assignee-submitted",
+          "label": "بانتظار المراجعة",
+          "drawn": true,
+          "when": {
+            "data": "status = SUBMITTED"
+          },
+          "ui": [
+            "Banner info"
+          ]
+        },
+        {
+          "key": "G07-assignee-rejected",
+          "label": "مرفوض",
+          "drawn": true,
+          "when": {
+            "data": "آخر تسليم REJECTED"
+          },
+          "ui": [
+            "Banner warning بالسبب"
+          ]
+        },
+        {
+          "key": "G07-assigner-submitted",
+          "label": "المُسند · قرار",
+          "drawn": true,
+          "when": {
+            "data": "SUBMITTED",
+            "flag": "isAssigner"
+          },
+          "ui": [
+            "DecisionPanel"
+          ]
+        },
+        {
+          "key": "G07-assigner-approved",
+          "label": "معتمدة",
+          "drawn": true,
+          "when": {
+            "data": "status = APPROVED"
+          },
+          "ui": [
+            "Banner success"
+          ]
+        },
+        {
+          "key": "G07-reassign",
+          "label": "إعادة الإسناد",
+          "drawn": true,
+          "when": {
+            "ui": "«إعادة إسناد»"
+          },
+          "ui": [
+            "Dialog: المكلَّف والسبب"
+          ]
+        },
+        {
+          "key": "G07-overdue-resolve",
+          "label": "قرار المتأخرة",
+          "drawn": true,
+          "when": {
+            "data": "is_overdue",
+            "flag": "canResolveOverdue + canDeduct"
+          },
+          "ui": [
+            "RadioCard × 4",
+            "MoneyInput",
+            "Textarea"
+          ]
+        },
+        {
+          "key": "G07-overdue-resolve-delegate",
+          "label": "قرار المتأخرة · المفوَّض",
+          "drawn": true,
+          "when": {
+            "flag": "canDeduct = false"
+          },
+          "ui": [
+            "خيارا الخصم معطّلان بسببهما"
+          ]
+        },
+        {
+          "key": "G07-resolved",
+          "label": "مغلقة بقرار",
+          "drawn": true,
+          "when": {
+            "data": "status = RESOLVED"
+          },
+          "ui": [
+            "DecisionRecord"
+          ]
+        },
+        {
+          "key": "G07-invalid-status",
+          "label": "تغيّرت الحالة",
+          "drawn": true,
+          "when": {
+            "status": 409,
+            "codes": [
+              "invalid_status"
+            ]
+          },
+          "ui": [
+            "Banner warning"
+          ]
+        },
+        {
+          "key": "G07-not-found",
+          "label": "غير موجودة",
+          "drawn": true,
+          "when": {
+            "api": "getTask",
+            "status": 404
+          },
+          "ui": [
+            "NotFoundState"
+          ]
+        },
+        {
+          "key": "G07-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "getTask",
+            "status": "pending"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "G07-error",
+          "label": "خطأ",
+          "drawn": true,
+          "when": {
+            "api": "getTask",
+            "status": "5xx/429"
+          },
+          "ui": [
+            "ErrorState + إعادة المحاولة"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "رابط الطلب",
+          "to": "G10"
+        },
+        {
+          "on": "رابط التقرير",
+          "to": "G12"
+        }
+      ],
+      "after_mutation": {
+        "start": "قيد التنفيذ",
+        "submit": "بانتظار المراجعة",
+        "decide": "معتمدة أو قيد التنفيذ مع سبب الرفض",
+        "reassign": "جديدة عند المكلَّف الجديد",
+        "resolve": "مغلقة بقرار، أو خصم وتبقى مفتوحة"
+      },
+      "notes": [
+        "القراران 1 و14.",
+        "السجل مشتق (§98.1).",
+        "§98."
+      ]
+    },
+    "G08": {
+      "id": "G08",
+      "name": "إسناد مهمة",
+      "group": "shared",
+      "design_source": {
+        "view": "src/features/tasks/views/TaskFormView.tsx",
+        "page": "src/app/shared/g08-new-task/page.tsx"
+      },
+      "route": "/dashboard/tasks/new",
+      "api": [
+        {
+          "id": "assignees",
+          "method": "GET",
+          "path": "/me/assignees",
+          "request": {},
+          "success": {
+            "status": 200,
+            "model": "UserRef[]"
+          }
+        },
+        {
+          "id": "upload",
+          "method": "POST",
+          "path": "/uploads",
+          "request": {
+            "file": "attachments"
+          },
+          "success": {
+            "status": 201,
+            "model": "Upload"
+          }
+        },
+        {
+          "id": "createTask",
+          "method": "POST",
+          "path": "/tasks",
+          "request": {
+            "assignee_id": "form.assigneeId",
+            "title": "form.title",
+            "description": "form.description",
+            "due_at": "نهاية form.dueOn بتوقيت دمشق",
+            "priority": "form.priority",
+            "attachments": "upload ids"
+          },
+          "success": {
+            "status": 201,
+            "model": "Task"
+          },
+          "errors": {
+            "422": "validation_failed · assignee_not_allowed"
+          }
+        }
+      ],
+      "view_props": {
+        "assignees": "Loadable<UserRef[]>",
+        "form": "TaskForm",
+        "errors": "validation_failed",
+        "submitError": "code",
+        "today": "IsoDate"
+      },
+      "permissions": [
+        "tasks.view"
+      ],
+      "components": [
+        "PageHeader",
+        "Card",
+        "Field",
+        "Combobox",
+        "DatePicker",
+        "Input",
+        "Textarea",
+        "SegmentedControl",
+        "FileUpload",
+        "EmptyState"
+      ],
+      "states": [
+        {
+          "key": "G08-empty",
+          "label": "فارغ",
+          "drawn": true,
+          "when": {
+            "ui": "النموذج فارغ"
+          },
+          "ui": [
+            "الحفظ معطّل وسببه"
+          ]
+        },
+        {
+          "key": "G08-filled",
+          "label": "معبّأ",
+          "drawn": true,
+          "when": {
+            "ui": "كل الحقول"
+          },
+          "ui": [
+            "الحفظ مفعّل"
+          ]
+        },
+        {
+          "key": "G08-validation",
+          "label": "خطأ التحقق",
+          "drawn": true,
+          "when": {
+            "api": "createTask",
+            "status": 422,
+            "codes": [
+              "assignee_not_allowed"
+            ]
+          },
+          "ui": [
+            "الخطأ تحت المكلَّف"
+          ]
+        },
+        {
+          "key": "G08-no-assignees",
+          "label": "لا مكلَّفين",
+          "drawn": true,
+          "when": {
+            "api": "assignees",
+            "data": "[]"
+          },
+          "ui": [
+            "EmptyState بدل النموذج"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "«إلغاء»",
+          "to": "G06"
+        }
+      ],
+      "after_mutation": {
+        "createTask": "الانتقال إلى G07"
+      },
+      "notes": [
+        "القرار 12: من لا فريق له لا يسند.",
+        "§99."
+      ]
+    },
+    "G09": {
+      "id": "G09",
+      "name": "الطلبات بين الأقسام",
+      "group": "shared",
+      "design_source": {
+        "view": "src/features/department-requests/views/DepartmentRequestsView.tsx",
+        "page": "src/app/shared/g09-department-requests/page.tsx"
+      },
+      "route": "/dashboard/department-requests",
+      "api": [
+        {
+          "id": "listRequests",
+          "method": "GET",
+          "path": "/department-requests",
+          "request": {
+            "direction": "incoming | outgoing",
+            "status": "filters.status",
+            "overdue": "filters.overdueOnly",
+            "page": "state"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<DepartmentRequest>"
+          }
+        }
+      ],
+      "view_props": {
+        "requests": "Loadable<{ data, meta }>",
+        "direction": "RequestDirection",
+        "filters": "RequestFilters"
+      },
+      "permissions": [
+        "department_requests.create"
+      ],
+      "components": [
+        "PageHeader",
+        "Tabs",
+        "FilterBar",
+        "Combobox",
+        "Checkbox",
+        "DataTable",
+        "StatusCell",
+        "Badge",
+        "Pagination",
+        "EmptyState"
+      ],
+      "states": [
+        {
+          "key": "G09-incoming",
+          "label": "الواردة",
+          "drawn": true,
+          "when": {
+            "request": "direction=incoming"
+          },
+          "ui": [
+            "عمود «من قسم»"
+          ]
+        },
+        {
+          "key": "G09-outgoing",
+          "label": "الصادرة",
+          "drawn": true,
+          "when": {
+            "request": "direction=outgoing"
+          },
+          "ui": [
+            "عمود «إلى قسم»"
+          ]
+        },
+        {
+          "key": "G09-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "listRequests",
+            "status": "pending"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "G09-empty",
+          "label": "لا توجد بيانات",
+          "drawn": true,
+          "when": {
+            "api": "listRequests",
+            "data": "data = []"
+          },
+          "ui": [
+            "EmptyState"
+          ]
+        },
+        {
+          "key": "G09-error",
+          "label": "خطأ",
+          "drawn": true,
+          "when": {
+            "api": "listRequests",
+            "status": "5xx/429"
+          },
+          "ui": [
+            "ErrorState + إعادة المحاولة"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "الصف",
+          "to": "G10"
+        }
+      ],
+      "after_mutation": {},
+      "notes": [
+        "لا زر إنشاء: الطلبات من التقرير الدوري (القرار 11).",
+        "§100."
+      ]
+    },
+    "G10": {
+      "id": "G10",
+      "name": "تفاصيل الطلب",
+      "group": "shared",
+      "design_source": {
+        "view": "src/features/department-requests/views/DepartmentRequestDetailsView.tsx",
+        "page": "src/app/shared/g10-department-request/page.tsx"
+      },
+      "route": "/dashboard/department-requests/{id}",
+      "api": [
+        {
+          "id": "getRequest",
+          "method": "GET",
+          "path": "/department-requests/{id}",
+          "request": {},
+          "success": {
+            "status": 200,
+            "model": "DepartmentRequest"
+          },
+          "errors": {
+            "404": "not_found"
+          }
+        },
+        {
+          "id": "decide",
+          "method": "POST",
+          "path": "/department-requests/{id}/decision",
+          "request": {
+            "decision": "ACCEPTED | REJECTED",
+            "reply": "dialog.reply"
+          },
+          "success": {
+            "status": 200,
+            "model": "DepartmentRequest"
+          },
+          "errors": {
+            "409": "invalid_status",
+            "422": "validation_failed"
+          }
+        },
+        {
+          "id": "complete",
+          "method": "POST",
+          "path": "/department-requests/{id}/complete",
+          "request": {
+            "reply": "dialog.reply (اختياري)"
+          },
+          "success": {
+            "status": 200,
+            "model": "DepartmentRequest"
+          },
+          "errors": {
+            "409": "invalid_status"
+          }
+        }
+      ],
+      "view_props": {
+        "request": "Loadable<DepartmentRequest>",
+        "isRecipient": "me.department === to_department",
+        "canDecide": "رئيس القسم المطلوب منه",
+        "dialog": "RequestDialog",
+        "errors": "validation_failed",
+        "actionError": "code"
+      },
+      "permissions": [
+        "department_requests.create"
+      ],
+      "components": [
+        "PageHeader",
+        "StatusBadge",
+        "Badge",
+        "Banner",
+        "DecisionPanel",
+        "DecisionRecord",
+        "Card",
+        "DescriptionList",
+        "Dialog",
+        "Textarea",
+        "ReasonDialog",
+        "NotFoundState"
+      ],
+      "states": [
+        {
+          "key": "G10-incoming-open",
+          "label": "وارد · مفتوح",
+          "drawn": true,
+          "when": {
+            "data": "status = OPEN",
+            "flag": "canDecide"
+          },
+          "ui": [
+            "DecisionPanel"
+          ]
+        },
+        {
+          "key": "G10-reject-dialog",
+          "label": "نافذة الرفض",
+          "drawn": true,
+          "when": {
+            "ui": "«رفض»"
+          },
+          "ui": [
+            "ReasonDialog"
+          ]
+        },
+        {
+          "key": "G10-incoming-in-progress",
+          "label": "وارد · قيد التنفيذ",
+          "drawn": true,
+          "when": {
+            "data": "status = IN_PROGRESS",
+            "flag": "isRecipient"
+          },
+          "ui": [
+            "المهام المربوطة",
+            "«إغلاق منجزاً»"
+          ]
+        },
+        {
+          "key": "G10-complete-dialog",
+          "label": "نافذة الإنجاز",
+          "drawn": true,
+          "when": {
+            "ui": "«إغلاق منجزاً»"
+          },
+          "ui": [
+            "Dialog برد اختياري"
+          ]
+        },
+        {
+          "key": "G10-outgoing",
+          "label": "صادر",
+          "drawn": true,
+          "when": {
+            "flag": "isRecipient = false"
+          },
+          "ui": [
+            "الحالة والرد فقط"
+          ]
+        },
+        {
+          "key": "G10-done",
+          "label": "منجز",
+          "drawn": true,
+          "when": {
+            "data": "status = DONE"
+          },
+          "ui": [
+            "DecisionRecord"
+          ]
+        },
+        {
+          "key": "G10-rejected",
+          "label": "مرفوض",
+          "drawn": true,
+          "when": {
+            "data": "status = REJECTED"
+          },
+          "ui": [
+            "DecisionRecord بالسبب"
+          ]
+        },
+        {
+          "key": "G10-overdue",
+          "label": "متأخر",
+          "drawn": true,
+          "when": {
+            "data": "is_overdue"
+          },
+          "ui": [
+            "Banner warning",
+            "شارة متأخر"
+          ]
+        },
+        {
+          "key": "G10-invalid-status",
+          "label": "تغيّرت الحالة",
+          "drawn": true,
+          "when": {
+            "status": 409,
+            "codes": [
+              "invalid_status"
+            ]
+          },
+          "ui": [
+            "Banner warning"
+          ]
+        },
+        {
+          "key": "G10-not-found",
+          "label": "غير موجود",
+          "drawn": true,
+          "when": {
+            "api": "getRequest",
+            "status": 404
+          },
+          "ui": [
+            "NotFoundState"
+          ]
+        },
+        {
+          "key": "G10-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "getRequest",
+            "status": "pending"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "G10-error",
+          "label": "خطأ",
+          "drawn": true,
+          "when": {
+            "api": "getRequest",
+            "status": "5xx/429"
+          },
+          "ui": [
+            "ErrorState + إعادة المحاولة"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "«إنشاء مهمة مربوطة»",
+          "to": "G08 (department_request_id)"
+        },
+        {
+          "on": "التقرير المصدر",
+          "to": "G12"
+        }
+      ],
+      "after_mutation": {
+        "decide": "قيد التنفيذ أو مرفوض",
+        "complete": "منجز"
+      },
+      "notes": [
+        "القرار 11: القسم الطالب لا يرى المهام.",
+        "§101."
+      ]
+    },
+    "G11": {
+      "id": "G11",
+      "name": "التقارير الدورية",
+      "group": "shared",
+      "design_source": {
+        "view": "src/features/periodic-reports/views/PeriodicReportsView.tsx",
+        "page": "src/app/shared/g11-periodic-reports/page.tsx"
+      },
+      "route": "/dashboard/periodic-reports",
+      "api": [
+        {
+          "id": "listReports",
+          "method": "GET",
+          "path": "/periodic-reports",
+          "request": {
+            "scope": "state.scope",
+            "kind": "filters.kind",
+            "status": "filters.status",
+            "department": "filters.department",
+            "page": "state"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<PeriodicReport>"
+          }
+        },
+        {
+          "id": "createReport",
+          "method": "POST",
+          "path": "/periodic-reports",
+          "request": {
+            "kind": "DAILY | WEEKLY | EXCEPTIONAL",
+            "period_start": "form.periodStart",
+            "period_end": "form.periodEnd"
+          },
+          "success": {
+            "status": 201,
+            "model": "PeriodicReport"
+          },
+          "errors": {
+            "422": "validation_failed"
+          }
+        }
+      ],
+      "view_props": {
+        "reports": "Loadable<{ data, meta }>",
+        "scopes": "من الصلاحيات: create → mine، review → to_review + all، decide → to_decide + all + mine",
+        "scope": "ReportScope",
+        "filters": "ReportFilters",
+        "now": "UTC",
+        "canCreate": "periodic_reports.create",
+        "newReport": "NewReportForm | null",
+        "createErrors": "validation_failed"
+      },
+      "permissions": [
+        "periodic_reports.create",
+        "periodic_reports.review",
+        "periodic_reports.decide"
+      ],
+      "components": [
+        "PageHeader",
+        "Tabs",
+        "FilterBar",
+        "Combobox",
+        "DataTable",
+        "StatusCell",
+        "Badge",
+        "Pagination",
+        "Dialog",
+        "RadioGroup",
+        "DatePicker",
+        "EmptyState"
+      ],
+      "states": [
+        {
+          "key": "G11-head",
+          "label": "رئيس القسم",
+          "drawn": true,
+          "when": {
+            "request": "scope=mine"
+          },
+          "ui": [
+            "زر «تقرير اختياري»",
+            "بلا عمود القسم"
+          ]
+        },
+        {
+          "key": "G11-monitoring",
+          "label": "المراقبة",
+          "drawn": true,
+          "when": {
+            "request": "scope=to_review"
+          },
+          "ui": [
+            "تبويبات",
+            "فلتر القسم"
+          ]
+        },
+        {
+          "key": "G11-executive",
+          "label": "المدير التنفيذي",
+          "drawn": true,
+          "when": {
+            "request": "scope=to_decide"
+          },
+          "ui": [
+            "تبويبات"
+          ]
+        },
+        {
+          "key": "G11-new-optional",
+          "label": "تقرير اختياري",
+          "drawn": true,
+          "when": {
+            "ui": "«تقرير اختياري»"
+          },
+          "ui": [
+            "Dialog: النوع والفترة"
+          ]
+        },
+        {
+          "key": "G11-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "listReports",
+            "status": "pending"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "G11-empty",
+          "label": "لا توجد بيانات",
+          "drawn": true,
+          "when": {
+            "api": "listReports",
+            "data": "data = []"
+          },
+          "ui": [
+            "EmptyState"
+          ]
+        },
+        {
+          "key": "G11-error",
+          "label": "خطأ",
+          "drawn": true,
+          "when": {
+            "api": "listReports",
+            "status": "5xx/429"
+          },
+          "ui": [
+            "ErrorState + إعادة المحاولة"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "الصف (كاتب، DRAFT/RETURNED/SUBMITTED)",
+          "to": "G12"
+        },
+        {
+          "on": "الصف (المراقبة، SUBMITTED)",
+          "to": "G13"
+        },
+        {
+          "on": "الصف (المدير التنفيذي، REVIEWED)",
+          "to": "G14"
+        }
+      ],
+      "after_mutation": {
+        "createReport": "يُضاف إلى «تقاريري» ويفتح G12"
+      },
+      "notes": [
+        "المهلة بالأحمر حين تفوت والحالة DRAFT/RETURNED.",
+        "§102."
+      ]
+    },
+    "G12": {
+      "id": "G12",
+      "name": "التقرير: المسودة والتحرير",
+      "group": "shared",
+      "design_source": {
+        "view": "src/features/periodic-reports/views/PeriodicReportFormView.tsx",
+        "page": "src/app/shared/g12-periodic-report/page.tsx"
+      },
+      "route": "/dashboard/periodic-reports/{id}",
+      "api": [
+        {
+          "id": "getReport",
+          "method": "GET",
+          "path": "/periodic-reports/{id}",
+          "request": {},
+          "success": {
+            "status": 200,
+            "model": "PeriodicReport"
+          },
+          "errors": {
+            "404": "not_found"
+          }
+        },
+        {
+          "id": "saveReport",
+          "method": "PATCH",
+          "path": "/periodic-reports/{id}",
+          "request": {
+            "body": "toUpdate(report, form)"
+          },
+          "success": {
+            "status": 200,
+            "model": "PeriodicReport"
+          },
+          "errors": {
+            "409": "invalid_status",
+            "422": "validation_failed | plan_responsible_outside_department"
+          }
+        },
+        {
+          "id": "submitReport",
+          "method": "POST",
+          "path": "/periodic-reports/{id}/submit",
+          "request": {
+            "declaration_confirmed": "form.declaration"
+          },
+          "success": {
+            "status": 200,
+            "model": "PeriodicReport"
+          },
+          "errors": {
+            "409": "invalid_status",
+            "422": "declaration_required | validation_failed"
+          }
+        }
+      ],
+      "view_props": {
+        "report": "Loadable<PeriodicReport>",
+        "canEdit": "الكاتب (author.id === me.id)",
+        "form": "ReportForm (formFromReport)",
+        "members": "أعضاء القسم (§103.2)",
+        "targetLabel": "اسم الهدف من معرّفاته (§103.1)",
+        "memberName": "اسم المسؤول",
+        "now/today": "UTC",
+        "errors": "validation_failed بمسار الحقل",
+        "actionError": "code"
+      },
+      "permissions": [
+        "periodic_reports.create"
+      ],
+      "components": [
+        "PageHeader",
+        "StatusBadge",
+        "Badge",
+        "Banner",
+        "Card",
+        "DescriptionList",
+        "Textarea",
+        "Input",
+        "Select",
+        "Combobox",
+        "DatePicker",
+        "NumberInput",
+        "SegmentedControl",
+        "IconButton",
+        "Checkbox",
+        "ReportSections",
+        "NotFoundState"
+      ],
+      "states": [
+        {
+          "key": "G12-draft",
+          "label": "مسودة",
+          "drawn": true,
+          "when": {
+            "data": "status = DRAFT",
+            "flag": "canEdit"
+          },
+          "ui": [
+            "النموذج كاملاً",
+            "الأقسام التلقائية بوسم «تلقائي»"
+          ]
+        },
+        {
+          "key": "G12-validation",
+          "label": "أخطاء التحقق",
+          "drawn": true,
+          "when": {
+            "status": 422,
+            "codes": [
+              "validation_failed"
+            ]
+          },
+          "ui": [
+            "نص الخادم تحت كل حقل"
+          ]
+        },
+        {
+          "key": "G12-submitted",
+          "label": "مرسل",
+          "drawn": true,
+          "when": {
+            "data": "status = SUBMITTED"
+          },
+          "ui": [
+            "Banner info بالنسخة",
+            "ReportSections للقراءة"
+          ]
+        },
+        {
+          "key": "G12-returned",
+          "label": "معاد",
+          "drawn": true,
+          "when": {
+            "data": "status = RETURNED"
+          },
+          "ui": [
+            "Banner warning بملاحظات executive_decision",
+            "النموذج"
+          ]
+        },
+        {
+          "key": "G12-overdue",
+          "label": "تجاوز المهلة",
+          "drawn": true,
+          "when": {
+            "data": "deadline_at < now && DRAFT"
+          },
+          "ui": [
+            "Badge وBanner danger"
+          ]
+        },
+        {
+          "key": "G12-targets-sales",
+          "label": "أهداف المبيعات",
+          "drawn": true,
+          "when": {
+            "data": "department = SALES"
+          },
+          "ui": [
+            "ما لم يتحقق",
+            "الأهداف",
+            "بلا تقييم فريق (team_evaluation = null)"
+          ]
+        },
+        {
+          "key": "G12-targets-scientific",
+          "label": "أهداف المكتب العلمي",
+          "drawn": true,
+          "when": {
+            "data": "department = SCIENTIFIC_OFFICE"
+          },
+          "ui": [
+            "الزيارات والفئات والمنتجات والعينات"
+          ]
+        },
+        {
+          "key": "G12-not-found",
+          "label": "غير موجود",
+          "drawn": true,
+          "when": {
+            "api": "getReport",
+            "status": 404
+          },
+          "ui": [
+            "NotFoundState"
+          ]
+        },
+        {
+          "key": "G12-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "getReport",
+            "status": "pending"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "G12-error",
+          "label": "خطأ",
+          "drawn": true,
+          "when": {
+            "api": "getReport",
+            "status": "5xx/429"
+          },
+          "ui": [
+            "ErrorState + إعادة المحاولة"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "«النسخ المرسلة»",
+          "to": "G15"
+        }
+      ],
+      "after_mutation": {
+        "saveReport": "يبقى في الصفحة",
+        "submitReport": "SUBMITTED ونسخة جديدة"
+      },
+      "notes": [
+        "القرار 11: كل سطر احتياج من قسم آخر يصير طلباً (G09) عند الإرسال.",
+        "«بوقته» بأول إرسال، والمهلة بأيام العمل.",
+        "§103."
+      ]
+    },
+    "G13": {
+      "id": "G13",
+      "name": "مراجعة المراقبة",
+      "group": "shared",
+      "design_source": {
+        "view": "src/features/periodic-reports/views/ReportReviewView.tsx",
+        "page": "src/app/shared/g13-report-review/page.tsx"
+      },
+      "route": "/dashboard/periodic-reports/{id}/review",
+      "api": [
+        {
+          "id": "getReport",
+          "method": "GET",
+          "path": "/periodic-reports/{id}",
+          "request": {},
+          "success": {
+            "status": 200,
+            "model": "PeriodicReport"
+          },
+          "errors": {
+            "404": "not_found"
+          }
+        },
+        {
+          "id": "reviewReport",
+          "method": "POST",
+          "path": "/periodic-reports/{id}/review",
+          "request": {
+            "is_complete": "form.isComplete === 'yes'",
+            "needs_verification": "form.needsVerification === 'yes'",
+            "notes": "form.notes"
+          },
+          "success": {
+            "status": 200,
+            "model": "PeriodicReport"
+          },
+          "errors": {
+            "409": "invalid_status",
+            "422": "validation_failed"
+          }
+        }
+      ],
+      "view_props": {
+        "report": "Loadable<PeriodicReport>",
+        "canReview": "periodic_reports.review",
+        "form": "ReviewForm",
+        "errors": "validation_failed",
+        "actionError": "code",
+        "targetLabel": "كما في G12",
+        "memberName": "كما في G12"
+      },
+      "permissions": [
+        "periodic_reports.review"
+      ],
+      "components": [
+        "PageHeader",
+        "StatusBadge",
+        "Banner",
+        "Card",
+        "RadioGroup",
+        "Textarea",
+        "MonitoringReviewCard",
+        "ReportSections",
+        "NotFoundState"
+      ],
+      "states": [
+        {
+          "key": "G13-default",
+          "label": "الافتراضي",
+          "drawn": true,
+          "when": {
+            "data": "status = SUBMITTED",
+            "flag": "canReview"
+          },
+          "ui": [
+            "نموذج المراجعة",
+            "ReportSections"
+          ]
+        },
+        {
+          "key": "G13-reviewed",
+          "label": "روجع",
+          "drawn": true,
+          "when": {
+            "data": "status = REVIEWED"
+          },
+          "ui": [
+            "MonitoringReviewCard",
+            "Banner info"
+          ]
+        },
+        {
+          "key": "G13-invalid-status",
+          "label": "تغيّرت الحالة",
+          "drawn": true,
+          "when": {
+            "status": 409,
+            "codes": [
+              "invalid_status"
+            ]
+          },
+          "ui": [
+            "Banner warning"
+          ]
+        },
+        {
+          "key": "G13-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "getReport",
+            "status": "pending"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "G13-error",
+          "label": "خطأ",
+          "drawn": true,
+          "when": {
+            "api": "getReport",
+            "status": "5xx/429"
+          },
+          "ui": [
+            "ErrorState + إعادة المحاولة"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "بعد المراجعة",
+          "to": "G11 (to_review)"
+        }
+      ],
+      "after_mutation": {
+        "reviewReport": "REVIEWED ← المدير التنفيذي (G14)"
+      },
+      "notes": [
+        "المراقبة تراجع ولا تعتمد ولا تعيد.",
+        "§104."
+      ]
+    },
+    "G14": {
+      "id": "G14",
+      "name": "قرار المدير التنفيذي على التقرير",
+      "group": "shared",
+      "design_source": {
+        "view": "src/features/periodic-reports/views/ReportDecisionView.tsx",
+        "page": "src/app/shared/g14-report-decision/page.tsx"
+      },
+      "route": "/dashboard/periodic-reports/{id}/decision",
+      "api": [
+        {
+          "id": "getReport",
+          "method": "GET",
+          "path": "/periodic-reports/{id}",
+          "request": {},
+          "success": {
+            "status": 200,
+            "model": "PeriodicReport"
+          },
+          "errors": {
+            "404": "not_found"
+          }
+        },
+        {
+          "id": "decide",
+          "method": "POST",
+          "path": "/periodic-reports/{id}/decision",
+          "request": {
+            "decision": "form.decision",
+            "notes": "form.notes",
+            "required_action": "form.requiredAction"
+          },
+          "success": {
+            "status": 200,
+            "model": "PeriodicReport"
+          },
+          "errors": {
+            "409": "invalid_status",
+            "422": "validation_failed"
+          }
+        }
+      ],
+      "view_props": {
+        "report": "Loadable<PeriodicReport>",
+        "canDecide": "periodic_reports.decide أو التفويض",
+        "isOwnReport": "مفوَّض و report.department === me.department",
+        "onBehalfOf": "me.active_delegation ← اسم المدير التنفيذي",
+        "form": "ReportDecisionForm",
+        "errors": "validation_failed",
+        "actionError": "code"
+      },
+      "permissions": [
+        "periodic_reports.decide"
+      ],
+      "components": [
+        "PageHeader",
+        "StatusBadge",
+        "Banner",
+        "MonitoringReviewCard",
+        "DecisionPanel (بلا onReject)",
+        "RadioGroup",
+        "RadioCard",
+        "Textarea",
+        "DecisionRecord",
+        "ReportSections"
+      ],
+      "states": [
+        {
+          "key": "G14-default",
+          "label": "الافتراضي",
+          "drawn": true,
+          "when": {
+            "data": "status = REVIEWED",
+            "flag": "canDecide"
+          },
+          "ui": [
+            "القرارات الستة",
+            "«إصدار القرار» معطّل حتى الاختيار"
+          ]
+        },
+        {
+          "key": "G14-follow-up-action",
+          "label": "إجراء متابعة",
+          "drawn": true,
+          "when": {
+            "ui": "APPROVE_WITH_FOLLOW_UP"
+          },
+          "ui": [
+            "«الإجراء المطلوب» إلزامي"
+          ]
+        },
+        {
+          "key": "G14-returned",
+          "label": "أُعيد",
+          "drawn": true,
+          "when": {
+            "data": "status = RETURNED"
+          },
+          "ui": [
+            "DecisionRecord",
+            "Banner warning"
+          ]
+        },
+        {
+          "key": "G14-approved",
+          "label": "معتمد",
+          "drawn": true,
+          "when": {
+            "data": "status = APPROVED"
+          },
+          "ui": [
+            "DecisionRecord",
+            "Banner success: الخطة مهام والأهداف خطة الشهر التالي"
+          ]
+        },
+        {
+          "key": "G14-follow-up-approved",
+          "label": "معتمد بمتابعة",
+          "drawn": true,
+          "when": {
+            "data": "decision = APPROVE_WITH_FOLLOW_UP"
+          },
+          "ui": [
+            "Banner: فُتحت مهمة لرئيس القسم"
+          ]
+        },
+        {
+          "key": "G14-delegated",
+          "label": "بالتفويض",
+          "drawn": true,
+          "when": {
+            "flag": "onBehalfOf"
+          },
+          "ui": [
+            "Banner info",
+            "DecisionRecord onBehalf"
+          ]
+        },
+        {
+          "key": "G14-self-decision-forbidden",
+          "label": "لا تقرر فيما يخصّك",
+          "drawn": true,
+          "when": {
+            "flag": "isOwnReport"
+          },
+          "ui": [
+            "DecisionPanel self-decision-forbidden"
+          ]
+        },
+        {
+          "key": "G14-invalid-status",
+          "label": "تغيّرت الحالة",
+          "drawn": true,
+          "when": {
+            "status": 409,
+            "codes": [
+              "invalid_status"
+            ]
+          },
+          "ui": [
+            "Banner warning"
+          ]
+        },
+        {
+          "key": "G14-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "getReport",
+            "status": "pending"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "G14-error",
+          "label": "خطأ",
+          "drawn": true,
+          "when": {
+            "api": "getReport",
+            "status": "5xx/429"
+          },
+          "ui": [
+            "ErrorState + إعادة المحاولة"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "«النسخ المرسلة»",
+          "to": "G15"
+        },
+        {
+          "on": "بعد القرار",
+          "to": "G04"
+        }
+      ],
+      "after_mutation": {
+        "decide": "APPROVED أو RETURNED، والتقرير يخرج من «بانتظار قراري»"
+      },
+      "notes": [
+        "الأربعة الأولى ← APPROVED، والأخيران ← RETURNED.",
+        "§105."
+      ]
+    },
+    "G15": {
+      "id": "G15",
+      "name": "نسخ التقرير",
+      "group": "shared",
+      "design_source": {
+        "view": "src/features/periodic-reports/views/ReportVersionsView.tsx",
+        "page": "src/app/shared/g15-report-versions/page.tsx"
+      },
+      "route": "/dashboard/periodic-reports/{id}/versions",
+      "api": [
+        {
+          "id": "listVersions",
+          "method": "GET",
+          "path": "/periodic-reports/{id}/versions",
+          "request": {},
+          "success": {
+            "status": 200,
+            "model": "PeriodicReportVersion[]"
+          },
+          "errors": {
+            "404": "not_found"
+          }
+        }
+      ],
+      "view_props": {
+        "versions": "Loadable<{ version, submittedAt, report }[]> (report من snapshot: §106)",
+        "selected": "رقم النسخة (الافتراضي الأخيرة)"
+      },
+      "permissions": [],
+      "components": [
+        "PageHeader",
+        "SegmentedControl",
+        "Banner",
+        "ReportSections",
+        "EmptyState"
+      ],
+      "states": [
+        {
+          "key": "G15-default",
+          "label": "الافتراضي",
+          "drawn": true,
+          "when": {
+            "data": "versions.length = 2"
+          },
+          "ui": [
+            "SegmentedControl بالنسخ",
+            "ReportSections للنسخة المختارة"
+          ]
+        },
+        {
+          "key": "G15-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "listVersions",
+            "status": "pending"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "G15-error",
+          "label": "خطأ",
+          "drawn": true,
+          "when": {
+            "api": "listVersions",
+            "status": "5xx/429"
+          },
+          "ui": [
+            "ErrorState + إعادة المحاولة"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "رجوع",
+          "to": "G12 أو G14"
+        }
+      ],
+      "after_mutation": {},
+      "notes": [
+        "§106."
+      ]
+    },
+    "G16": {
+      "id": "G16",
+      "name": "الخطة الشهرية",
+      "group": "shared",
+      "design_source": {
+        "view": "src/features/plans/views/MonthlyPlanView.tsx",
+        "page": "src/app/shared/g16-monthly-plan/page.tsx"
+      },
+      "route": "/dashboard/plans/{department}/{month}",
+      "api": [
+        {
+          "id": "getPlan",
+          "method": "GET",
+          "path": "/plans/{department}/{month}",
+          "request": {},
+          "success": {
+            "status": 200,
+            "model": "MonthlyPlan"
+          },
+          "errors": {
+            "404": "not_found ← لا خطة"
+          }
+        },
+        {
+          "id": "requestRevision",
+          "method": "POST",
+          "path": "/plans/{department}/{month}/revisions",
+          "request": {
+            "targets": "revisionTargets(plan, form)",
+            "reason": "form.reason"
+          },
+          "success": {
+            "status": 201,
+            "model": "MonthlyPlan"
+          },
+          "errors": {
+            "409": "تعديل معلّق (§107.1)",
+            "422": "validation_failed"
+          }
+        },
+        {
+          "id": "decideRevision",
+          "method": "POST",
+          "path": "/plans/{department}/{month}/revisions/{id}/decision",
+          "request": {
+            "decision": "APPROVED | REJECTED",
+            "reason": "rejectReason"
+          },
+          "success": {
+            "status": 200,
+            "model": "MonthlyPlan"
+          },
+          "errors": {
+            "409": "already_decided | invalid_status",
+            "422": "validation_failed"
+          }
+        }
+      ],
+      "view_props": {
+        "plan": "Loadable<MonthlyPlan>",
+        "month": "IsoMonth",
+        "department": "Department",
+        "canPickDepartment": "plans.approve",
+        "canRequestRevision": "رئيس القسم صاحب الخطة",
+        "canApprove": "plans.approve",
+        "revision": "RevisionForm | null",
+        "rejectReason": "string | null",
+        "actionError": "code",
+        "conflict": "ConflictDecided.decided_by/decided_at"
+      },
+      "permissions": [
+        "plans.view",
+        "plans.approve"
+      ],
+      "components": [
+        "PageHeader",
+        "StatusBadge",
+        "MonthPicker",
+        "Select",
+        "DecisionPanel",
+        "DataTable",
+        "Card",
+        "Dialog",
+        "NumberInput",
+        "Textarea",
+        "ReasonDialog",
+        "Banner",
+        "EmptyState"
+      ],
+      "states": [
+        {
+          "key": "G16-approved",
+          "label": "سارية",
+          "drawn": true,
+          "when": {
+            "data": "status = APPROVED"
+          },
+          "ui": [
+            "الأهداف بالمخطط والفعلي والنسبة",
+            "«طلب تعديل»"
+          ]
+        },
+        {
+          "key": "G16-revision-pending",
+          "label": "تعديل معلّق",
+          "drawn": true,
+          "when": {
+            "data": "status = REVISION_PENDING"
+          },
+          "ui": [
+            "Banner",
+            "التعديل المقترح مقابل الساري",
+            "«طلب تعديل» معطّل"
+          ]
+        },
+        {
+          "key": "G16-revision-form",
+          "label": "نافذة التعديل",
+          "drawn": true,
+          "when": {
+            "ui": "«طلب تعديل»"
+          },
+          "ui": [
+            "Dialog: قيمة لكل هدف والسبب إلزامي"
+          ]
+        },
+        {
+          "key": "G16-revision-decision",
+          "label": "قرار التعديل",
+          "drawn": true,
+          "when": {
+            "flag": "canApprove",
+            "data": "pending_revision"
+          },
+          "ui": [
+            "DecisionPanel",
+            "ReasonDialog للرفض"
+          ]
+        },
+        {
+          "key": "G16-already-decided",
+          "label": "قرّر غيرك أولاً",
+          "drawn": true,
+          "when": {
+            "status": 409,
+            "codes": [
+              "already_decided"
+            ]
+          },
+          "ui": [
+            "Banner بمن قرّر ومتى"
+          ]
+        },
+        {
+          "key": "G16-no-plan",
+          "label": "لا خطة",
+          "drawn": true,
+          "when": {
+            "api": "getPlan",
+            "status": 404
+          },
+          "ui": [
+            "EmptyState"
+          ]
+        },
+        {
+          "key": "G16-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "getPlan",
+            "status": "pending"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "G16-error",
+          "label": "خطأ",
+          "drawn": true,
+          "when": {
+            "api": "getPlan",
+            "status": "5xx/429"
+          },
+          "ui": [
+            "ErrorState + إعادة المحاولة"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "«من التقرير #»",
+          "to": "G12/G14"
+        }
+      ],
+      "after_mutation": {
+        "requestRevision": "REVISION_PENDING",
+        "decideRevision": "اعتماد ← نسخة جديدة؛ رفض ← تبقى السارية"
+      },
+      "notes": [
+        "الخطة = أهداف التقرير الشهري المعتمد للشهر السابق.",
+        "§107."
+      ]
+    },
+    "G17": {
+      "id": "G17",
+      "name": "إجازاتي",
+      "group": "shared",
+      "design_source": {
+        "view": "src/features/leaves/views/MyLeavesView.tsx",
+        "page": "src/app/shared/g17-my-leaves/page.tsx"
+      },
+      "route": "/dashboard/leaves/mine",
+      "api": [
+        {
+          "id": "listMine",
+          "method": "GET",
+          "path": "/leaves",
+          "request": {
+            "scope": "mine",
+            "page": "state"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<Leave>"
+          }
+        },
+        {
+          "id": "requestLeave",
+          "method": "POST",
+          "path": "/leaves",
+          "request": {
+            "from": "form.from",
+            "to": "form.to",
+            "reason": "form.reason"
+          },
+          "success": {
+            "status": 201,
+            "model": "Leave"
+          },
+          "errors": {
+            "422": "validation_failed | leave_before_current_month"
+          }
+        },
+        {
+          "id": "cancelLeave",
+          "method": "POST",
+          "path": "/leaves/{id}/cancel",
+          "request": {},
+          "success": {
+            "status": 200,
+            "model": "Leave"
+          },
+          "errors": {
+            "409": "leave_already_decided"
+          }
+        }
+      ],
+      "view_props": {
+        "leaves": "Loadable<{ data, meta }>",
+        "request": "LeaveRequestForm | null",
+        "requestErrors": "validation_failed",
+        "requestError": "code",
+        "today/monthStart": "اليوم وأول الشهر (Asia/Damascus)",
+        "cancelTarget": "Leave | null",
+        "actionError": "code"
+      },
+      "permissions": [
+        "leaves.create"
+      ],
+      "components": [
+        "PageHeader",
+        "DataTable",
+        "StatusCell",
+        "Pagination",
+        "Dialog",
+        "DatePicker",
+        "Textarea",
+        "Banner",
+        "ConfirmDialog",
+        "EmptyState"
+      ],
+      "states": [
+        {
+          "key": "G17-default",
+          "label": "الافتراضي",
+          "drawn": true,
+          "when": {
+            "api": "listMine"
+          },
+          "ui": [
+            "السجل",
+            "«إلغاء الطلب» للمعلّقة"
+          ]
+        },
+        {
+          "key": "G17-request-form",
+          "label": "نافذة الطلب",
+          "drawn": true,
+          "when": {
+            "ui": "«طلب إجازة»"
+          },
+          "ui": [
+            "Dialog"
+          ]
+        },
+        {
+          "key": "G17-past-days",
+          "label": "يبدأ بيوم مضى",
+          "drawn": true,
+          "when": {
+            "ui": "from < today"
+          },
+          "ui": [
+            "Banner info"
+          ]
+        },
+        {
+          "key": "G17-cancel-confirm",
+          "label": "تأكيد الإلغاء",
+          "drawn": true,
+          "when": {
+            "ui": "«إلغاء الطلب»"
+          },
+          "ui": [
+            "ConfirmDialog danger"
+          ]
+        },
+        {
+          "key": "G17-before-month",
+          "label": "قبل الشهر الحالي",
+          "drawn": true,
+          "when": {
+            "status": 422,
+            "codes": [
+              "leave_before_current_month"
+            ]
+          },
+          "ui": [
+            "Banner danger في النافذة"
+          ]
+        },
+        {
+          "key": "G17-already-decided",
+          "label": "بُتّ فيها",
+          "drawn": true,
+          "when": {
+            "status": 409,
+            "codes": [
+              "leave_already_decided"
+            ]
+          },
+          "ui": [
+            "Banner warning"
+          ]
+        },
+        {
+          "key": "G17-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "listMine",
+            "status": "pending"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "G17-empty",
+          "label": "لا توجد بيانات",
+          "drawn": true,
+          "when": {
+            "api": "listMine",
+            "data": "data = []"
+          },
+          "ui": [
+            "EmptyState"
+          ]
+        },
+        {
+          "key": "G17-error",
+          "label": "خطأ",
+          "drawn": true,
+          "when": {
+            "api": "listMine",
+            "status": "5xx/429"
+          },
+          "ui": [
+            "ErrorState + إعادة المحاولة"
+          ]
+        }
+      ],
+      "navigation": [],
+      "after_mutation": {
+        "requestLeave": "صف معلّق أول القائمة",
+        "cancelLeave": "CANCELLED"
+      },
+      "notes": [
+        "الوكلاء خارج الإجازات، والمندوب يطلب من التطبيق.",
+        "§108."
+      ]
+    },
+    "G18": {
+      "id": "G18",
+      "name": "طلبات الإجازة للموافقة",
+      "group": "shared",
+      "design_source": {
+        "view": "src/features/leaves/views/LeaveApprovalsView.tsx",
+        "page": "src/app/shared/g18-leave-approvals/page.tsx"
+      },
+      "route": "/dashboard/leaves",
+      "api": [
+        {
+          "id": "listLeaves",
+          "method": "GET",
+          "path": "/leaves",
+          "request": {
+            "scope": "to_decide (المدير) | all (المحاسب)",
+            "status": "filters.status",
+            "page": "state"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<Leave>"
+          }
+        },
+        {
+          "id": "decideLeave",
+          "method": "POST",
+          "path": "/leaves/{id}/decision",
+          "request": {
+            "decision": "APPROVED | REJECTED",
+            "reason": "dialog.reason"
+          },
+          "success": {
+            "status": 200,
+            "model": "Leave"
+          },
+          "errors": {
+            "409": "already_decided | invalid_status",
+            "422": "validation_failed"
+          }
+        }
+      ],
+      "view_props": {
+        "leaves": "Loadable<{ data, meta }>",
+        "canDecide": "leaves.approve و scope=to_decide (المحاسب false)",
+        "filters": "LeaveFilters",
+        "today": "Asia/Damascus",
+        "dialog": "LeaveDialog",
+        "conflict": "ConflictDecided.decided_by/decided_at"
+      },
+      "permissions": [
+        "leaves.approve"
+      ],
+      "components": [
+        "PageHeader",
+        "FilterBar",
+        "Combobox",
+        "DataTable",
+        "StatusCell",
+        "Badge",
+        "Button",
+        "ConfirmDialog",
+        "ReasonDialog",
+        "Banner",
+        "Pagination",
+        "EmptyState"
+      ],
+      "states": [
+        {
+          "key": "G18-approver",
+          "label": "المدير المباشر",
+          "drawn": true,
+          "when": {
+            "request": "scope=to_decide"
+          },
+          "ui": [
+            "«اعتماد» و«رفض» للمعلّقة"
+          ]
+        },
+        {
+          "key": "G18-accountant",
+          "label": "المحاسب",
+          "drawn": true,
+          "when": {
+            "request": "scope=all"
+          },
+          "ui": [
+            "عمود الموافق",
+            "بلا أزرار"
+          ]
+        },
+        {
+          "key": "G18-past-days-approved",
+          "label": "اعتماد أيام مضت",
+          "drawn": true,
+          "when": {
+            "ui": "«اعتماد» و from < today"
+          },
+          "ui": [
+            "ConfirmDialog: ستُغلق علامات الغياب"
+          ]
+        },
+        {
+          "key": "G18-reject-dialog",
+          "label": "نافذة الرفض",
+          "drawn": true,
+          "when": {
+            "ui": "«رفض»"
+          },
+          "ui": [
+            "ReasonDialog"
+          ]
+        },
+        {
+          "key": "G18-already-decided",
+          "label": "قرّر غيرك أولاً",
+          "drawn": true,
+          "when": {
+            "status": 409,
+            "codes": [
+              "already_decided"
+            ]
+          },
+          "ui": [
+            "Banner بمن قرّر ومتى"
+          ]
+        },
+        {
+          "key": "G18-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "listLeaves",
+            "status": "pending"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "G18-empty",
+          "label": "لا توجد بيانات",
+          "drawn": true,
+          "when": {
+            "api": "listLeaves",
+            "data": "data = []"
+          },
+          "ui": [
+            "EmptyState"
+          ]
+        },
+        {
+          "key": "G18-error",
+          "label": "خطأ",
+          "drawn": true,
+          "when": {
+            "api": "listLeaves",
+            "status": "5xx/429"
+          },
+          "ui": [
+            "ErrorState + إعادة المحاولة"
+          ]
+        }
+      ],
+      "navigation": [],
+      "after_mutation": {
+        "decideLeave": "APPROVED أو REJECTED في الصف"
+      },
+      "notes": [
+        "القراران 9 و15. إجازة رئيس القسم لا يشملها التفويض.",
+        "المدة أيام تقويمية (§109.1).",
+        "§109."
+      ]
+    },
+    "A01": {
+      "id": "A01",
+      "name": "لوحة الوكيل",
+      "group": "agent",
+      "design_source": {
+        "view": "src/features/agents/views/AgentDashboardView.tsx",
+        "page": "src/app/agent/a01-dashboard/page.tsx"
+      },
+      "route": "/dashboard",
+      "api": [
+        {
+          "id": "receivables",
+          "method": "GET",
+          "path": "/receivables",
+          "request": {},
+          "success": {
+            "status": 200,
+            "model": "Receivable[] (صف الوكيل)"
+          }
+        },
+        {
+          "id": "pendingTransfers",
+          "method": "GET",
+          "path": "/transfers",
+          "request": {
+            "status": "IN_TRANSIT"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<Transfer>"
+          }
+        },
+        {
+          "id": "unpaid",
+          "method": "GET",
+          "path": "/deliveries",
+          "request": {
+            "status": "UNPAID"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<Delivery>"
+          }
+        },
+        {
+          "id": "summary",
+          "method": "GET",
+          "path": "/dashboard/summary",
+          "request": {},
+          "success": {
+            "status": 200,
+            "model": "DashboardSummary (بلا حقول: §110)"
+          }
+        }
+      ],
+      "view_props": {
+        "overview": "Loadable<AgentOverview>",
+        "now": "UTC",
+        "today": "Asia/Damascus"
+      },
+      "permissions": [
+        "dashboard.agent"
+      ],
+      "components": [
+        "PageHeader",
+        "Banner",
+        "KpiTile",
+        "Grid",
+        "Card",
+        "Badge",
+        "EmptyState",
+        "ErrorState"
+      ],
+      "states": [
+        {
+          "key": "A01-default",
+          "label": "الافتراضي",
+          "drawn": true,
+          "when": {
+            "data": "لا متأخر ولا صرف بالطريق"
+          },
+          "ui": [
+            "KpiTile ×4",
+            "سداد مستحق قريباً"
+          ]
+        },
+        {
+          "key": "A01-pending-receipt",
+          "label": "صرف بانتظار التأكيد",
+          "drawn": true,
+          "when": {
+            "data": "pendingTransfers.length > 0"
+          },
+          "ui": [
+            "Banner warning",
+            "قائمة بزر «تأكيد»"
+          ]
+        },
+        {
+          "key": "A01-overdue-payments",
+          "label": "سداد متأخر",
+          "drawn": true,
+          "when": {
+            "data": "overdue_deliveries > 0"
+          },
+          "ui": [
+            "المتأخر بالأحمر أولاً"
+          ]
+        },
+        {
+          "key": "A01-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "receivables",
+            "status": "pending"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "A01-error",
+          "label": "خطأ",
+          "drawn": true,
+          "when": {
+            "api": "receivables",
+            "status": "5xx/429"
+          },
+          "ui": [
+            "ErrorState + إعادة المحاولة"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "«تأكيد»",
+          "to": "A03"
+        },
+        {
+          "on": "التسليم",
+          "to": "A08"
+        }
+      ],
+      "after_mutation": {},
+      "notes": [
+        "إطاران: مكتب 1440 وموبايل 390 (SCREENS.md: كل شاشات الوكيل [موبايل]).",
+        "المبيعات والعملاء الجدد «لا بيانات» حتى §110.",
+        "§110."
+      ]
+    },
+    "A02": {
+      "id": "A02",
+      "name": "الاستلامات",
+      "group": "agent",
+      "design_source": {
+        "view": "src/features/transfers/views/AgentReceiptsView.tsx",
+        "page": "src/app/agent/a02-receipts/page.tsx"
+      },
+      "route": "/dashboard/receipts",
+      "api": [
+        {
+          "id": "listTransfers",
+          "method": "GET",
+          "path": "/transfers",
+          "request": {
+            "page": "state"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<Transfer>"
+          }
+        }
+      ],
+      "view_props": {
+        "transfers": "Loadable<{ data, meta }>"
+      },
+      "permissions": [
+        "transfers.receive"
+      ],
+      "components": [
+        "PageHeader",
+        "DataTable",
+        "DateTimeStackCell",
+        "StatusCell",
+        "Pagination",
+        "EmptyState"
+      ],
+      "states": [
+        {
+          "key": "A02-default",
+          "label": "الافتراضي",
+          "drawn": true,
+          "when": {
+            "api": "listTransfers"
+          },
+          "ui": [
+            "بالطريق ومستلم وملغى"
+          ]
+        },
+        {
+          "key": "A02-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "listTransfers",
+            "status": "pending"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "A02-empty",
+          "label": "لا توجد بيانات",
+          "drawn": true,
+          "when": {
+            "api": "listTransfers",
+            "data": "data = []"
+          },
+          "ui": [
+            "EmptyState"
+          ]
+        },
+        {
+          "key": "A02-error",
+          "label": "خطأ",
+          "drawn": true,
+          "when": {
+            "api": "listTransfers",
+            "status": "5xx/429"
+          },
+          "ui": [
+            "ErrorState + إعادة المحاولة"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "الصف",
+          "to": "A03"
+        }
+      ],
+      "after_mutation": {},
+      "notes": [
+        "إطاران: مكتب 1440 وموبايل 390 (SCREENS.md: كل شاشات الوكيل [موبايل]).",
+        "§111."
+      ]
+    },
+    "A03": {
+      "id": "A03",
+      "name": "تفاصيل الصرف",
+      "group": "agent",
+      "design_source": {
+        "view": "src/features/transfers/views/AgentTransferView.tsx",
+        "page": "src/app/agent/a03-transfer/page.tsx"
+      },
+      "route": "/dashboard/receipts/{id}",
+      "api": [
+        {
+          "id": "getTransfer",
+          "method": "GET",
+          "path": "/transfers/{id}",
+          "request": {},
+          "success": {
+            "status": 200,
+            "model": "Transfer"
+          },
+          "errors": {
+            "404": "not_found"
+          }
+        },
+        {
+          "id": "receive",
+          "method": "POST",
+          "path": "/transfers/{id}/receive",
+          "request": {},
+          "success": {
+            "status": 200,
+            "model": "Transfer"
+          },
+          "errors": {
+            "409": "invalid_status"
+          }
+        }
+      ],
+      "view_props": {
+        "transfer": "Loadable<Transfer>",
+        "canReceive": "transfers.receive",
+        "confirming": "boolean",
+        "actionError": "code",
+        "today": "Asia/Damascus",
+        "expiryAlertDays": "settings.expiry_alert_days"
+      },
+      "permissions": [
+        "transfers.receive"
+      ],
+      "components": [
+        "PageHeader",
+        "StatusBadge",
+        "Banner",
+        "Card",
+        "StockLine",
+        "DescriptionList",
+        "ConfirmDialog",
+        "NotFoundState"
+      ],
+      "states": [
+        {
+          "key": "A03-in-transit",
+          "label": "بالطريق",
+          "drawn": true,
+          "when": {
+            "data": "status = IN_TRANSIT"
+          },
+          "ui": [
+            "Banner info",
+            "«تأكيد الاستلام» في الرأس"
+          ]
+        },
+        {
+          "key": "A03-confirm",
+          "label": "نافذة التأكيد",
+          "drawn": true,
+          "when": {
+            "ui": "«تأكيد الاستلام»"
+          },
+          "ui": [
+            "ConfirmDialog"
+          ]
+        },
+        {
+          "key": "A03-received",
+          "label": "مستلم",
+          "drawn": true,
+          "when": {
+            "data": "status = RECEIVED"
+          },
+          "ui": [
+            "Banner success"
+          ]
+        },
+        {
+          "key": "A03-cancelled",
+          "label": "ملغى",
+          "drawn": true,
+          "when": {
+            "data": "status = CANCELLED"
+          },
+          "ui": [
+            "Banner بسبب الإلغاء"
+          ]
+        },
+        {
+          "key": "A03-invalid-status",
+          "label": "تغيّرت الحالة",
+          "drawn": true,
+          "when": {
+            "status": 409,
+            "codes": [
+              "invalid_status"
+            ]
+          },
+          "ui": [
+            "Banner warning"
+          ]
+        },
+        {
+          "key": "A03-not-found",
+          "label": "غير موجود",
+          "drawn": true,
+          "when": {
+            "api": "getTransfer",
+            "status": 404
+          },
+          "ui": [
+            "NotFoundState"
+          ]
+        },
+        {
+          "key": "A03-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "getTransfer",
+            "status": "pending"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "A03-error",
+          "label": "خطأ",
+          "drawn": true,
+          "when": {
+            "api": "getTransfer",
+            "status": "5xx/429"
+          },
+          "ui": [
+            "ErrorState + إعادة المحاولة"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "رجوع",
+          "to": "A02"
+        }
+      ],
+      "after_mutation": {
+        "receive": "RECEIVED، والرصيد (A04) يزيد"
+      },
+      "notes": [
+        "إطاران: مكتب 1440 وموبايل 390 (SCREENS.md: كل شاشات الوكيل [موبايل]).",
+        "الاستلام كامل حصراً، ولا يدخل الرصيد قبل التأكيد.",
+        "§112."
+      ]
+    },
+    "A04": {
+      "id": "A04",
+      "name": "رصيدي",
+      "group": "agent",
+      "design_source": {
+        "view": "src/features/stock/views/AgentStockView.tsx",
+        "page": "src/app/agent/a04-stock/page.tsx"
+      },
+      "route": "/dashboard/stock",
+      "api": [
+        {
+          "id": "balances",
+          "method": "GET",
+          "path": "/stock/balances",
+          "request": {
+            "group_by": "batch"
+          },
+          "success": {
+            "status": 200,
+            "model": "BalanceLine[]"
+          }
+        }
+      ],
+      "view_props": {
+        "balances": "Loadable<BalanceLine[]>",
+        "today": "Asia/Damascus",
+        "expiryAlertDays": "settings.expiry_alert_days"
+      },
+      "permissions": [
+        "agent_stock.view"
+      ],
+      "components": [
+        "PageHeader",
+        "Banner",
+        "Card",
+        "StockLine",
+        "EmptyState",
+        "ErrorState"
+      ],
+      "states": [
+        {
+          "key": "A04-default",
+          "label": "الافتراضي",
+          "drawn": true,
+          "when": {
+            "api": "balances"
+          },
+          "ui": [
+            "Card لكل صنف بإجماليه"
+          ]
+        },
+        {
+          "key": "A04-suspended-batch",
+          "label": "دفعة موقوفة",
+          "drawn": true,
+          "when": {
+            "data": "batch.status = SUSPENDED"
+          },
+          "ui": [
+            "Banner danger",
+            "شارة موقوفة"
+          ]
+        },
+        {
+          "key": "A04-near-expiry",
+          "label": "قريبة الانتهاء",
+          "drawn": true,
+          "when": {
+            "data": "expiry_date − today ≤ expiryAlertDays"
+          },
+          "ui": [
+            "Banner warning",
+            "شارة الانتهاء"
+          ]
+        },
+        {
+          "key": "A04-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "balances",
+            "status": "pending"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "A04-empty",
+          "label": "لا توجد بيانات",
+          "drawn": true,
+          "when": {
+            "api": "balances",
+            "data": "data = []"
+          },
+          "ui": [
+            "EmptyState"
+          ]
+        },
+        {
+          "key": "A04-error",
+          "label": "خطأ",
+          "drawn": true,
+          "when": {
+            "api": "balances",
+            "status": "5xx/429"
+          },
+          "ui": [
+            "ErrorState + إعادة المحاولة"
+          ]
+        }
+      ],
+      "navigation": [],
+      "after_mutation": {},
+      "notes": [
+        "إطاران: مكتب 1440 وموبايل 390 (SCREENS.md: كل شاشات الوكيل [موبايل]).",
+        "الموقوفة تُرجَع بطلب إرجاع (A12–A16).",
+        "§113."
+      ]
     }
   }
 }

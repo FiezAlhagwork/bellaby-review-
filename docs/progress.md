@@ -66,42 +66,42 @@
 |---|---|---|---|---|---|
 | G01 | تسجيل الدخول · موبايل | `default` · `signing-in` · `not-allowed` · `account-disabled` · `blocked` | Clerk، ثم `GET /me` | `/shared/g01-sign-in`، والـ view في `features/auth/views/SignInView.tsx`. رموز الرفض: `account_not_provisioned` و`account_disabled` و`email_blocked` | 👀 |
 | G02 | إطار اللوحة · موبايل | `default` · `executive` · `delegate-active` · `delegation-given` · `tablet` · `mobile-drawer` | `GET /me` (`permissions`، `active_delegation`، `role`، `department`، `governorates`) | `/shared/g02-dashboard-frame`. الشاشة هي `DashboardShell` نفسه، والقائمة من `config/navigation.ts` بالصلاحيات (74 عنصراً، 26 مفتاحاً مؤقتاً في `docs/backend-requests.md`). `tablet` و`mobile-drawer` مخفيتان في نسخة المراجعة (مبدّل المقاس يغطيهما) | 👀 |
-| G03 | الإشعارات | `default` · `empty` | `GET /notifications`، و`POST /notifications/{id}/read`، و`POST /notifications/read-all` |  | ⬜ |
-| G04 | بانتظار قراري | `default` · `sales-manager` · `delegate` · `empty` | `GET /me/pending-decisions` |  | ⬜ |
-| G05 | ملفي الشخصي | `default` · `provisional` | `GET /me/profile` |  | ⬜ |
+| G03 | الإشعارات | `default` · `empty` · `loading` · `error` | `GET /notifications`، و`POST /notifications/{id}/read`، و`POST /notifications/read-all` | `/shared/g03-notifications`، والـ view `features/notifications/views/NotificationsView.tsx` حول `NotificationList`. أسئلة في §94 | 👀 |
+| G04 | بانتظار قراري | `default` · `sales-manager` · `delegate` · `empty` · `loading` · `error` | `GET /me/pending-decisions` | `/shared/g04-pending`، والـ view `features/pending-decisions/views/PendingDecisionsView.tsx`. أسئلة في §95 | 👀 |
+| G05 | ملفي الشخصي | `default` · `provisional` · `loading` · `error` | `GET /me/profile` | `/shared/g05-profile`، والـ view `features/profile/views/MyProfileView.tsx`. أسئلة في §96 | 👀 |
 
 ### 02 · المهام — G06 إلى G08
 
 | # | الشاشة | الحالات (المفاتيح) | العقد | ملاحظات | الحالة |
 |---|---|---|---|---|---|
-| G06 | المهام | `assigned-to-me` · `assigned-by-me` · `overdue-filter` | `GET /tasks` |  | ⬜ |
-| G07 | تفاصيل المهمة | `assignee-new` · `assignee-in-progress` · `assignee-submitted` · `assignee-rejected` · `assigner-submitted` · `assigner-approved` · `reassign` · `overdue-resolve` · `resolved` | `GET /tasks/{id}`، و`POST /tasks/{id}/start`، و`/submissions`، و`/submissions/{sid}/decision`، و`/reassign`، و`/resolve`، و`POST /deductions` |  | ⬜ |
-| G08 | إسناد مهمة | `empty` · `filled` · `validation` · `no-assignees` | `GET /me/assignees`، و`POST /tasks`، و`POST /uploads` |  | ⬜ |
+| G06 | المهام | `assigned-to-me` · `assigned-by-me` · `overdue-filter` · `loading` · `empty` · `error` | `GET /tasks` | `/shared/g06-tasks`، والـ view `features/tasks/views/TasksListView.tsx`. لا فلتر فترة في العقد. أسئلة في §97 | 👀 |
+| G07 | تفاصيل المهمة | `assignee-new` · `assignee-in-progress` · `submit-dialog` · `assignee-submitted` · `assignee-rejected` · `assigner-submitted` · `assigner-approved` · `reassign` · `overdue-resolve` · `overdue-resolve-delegate` · `resolved` · `invalid-status` · `not-found` · `loading` · `error` | `GET /tasks/{id}`، و`POST /tasks/{id}/start`، و`/submissions`، و`/submissions/{sid}/decision`، و`/reassign`، و`/resolve`، و`POST /deductions` | `/shared/g07-task`، والـ view `features/tasks/views/TaskDetailsView.tsx`. السجل مشتق من حقول المهمة. أسئلة في §98 | 👀 |
+| G08 | إسناد مهمة | `empty` · `filled` · `validation` · `no-assignees` | `GET /me/assignees`، و`POST /tasks`، و`POST /uploads` | `/shared/g08-new-task`، والـ view `features/tasks/views/TaskFormView.tsx`. أسئلة في §99 | 👀 |
 
 ### 03 · الطلبات بين الأقسام — G09 إلى G10
 
 | # | الشاشة | الحالات (المفاتيح) | العقد | ملاحظات | الحالة |
 |---|---|---|---|---|---|
-| G09 | الطلبات بين الأقسام | `incoming` · `outgoing` | `GET /department-requests` |  | ⬜ |
-| G10 | تفاصيل الطلب | `incoming-open` · `incoming-in-progress` · `outgoing` · `done` · `rejected` · `overdue` | `GET /department-requests/{id}`، و`/decision`، و`/complete`، و`POST /tasks` (`department_request_id`) |  | ⬜ |
+| G09 | الطلبات بين الأقسام | `incoming` · `outgoing` · `loading` · `empty` · `error` | `GET /department-requests` | `/shared/g09-department-requests`، والـ view `features/department-requests/views/DepartmentRequestsView.tsx`. لا زر إنشاء (تُنشأ من التقرير الدوري). أسئلة في §100 | 👀 |
+| G10 | تفاصيل الطلب | `incoming-open` · `reject-dialog` · `incoming-in-progress` · `complete-dialog` · `outgoing` · `done` · `rejected` · `overdue` · `invalid-status` · `not-found` · `loading` · `error` | `GET /department-requests/{id}`، و`/decision`، و`/complete`، و`POST /tasks` (`department_request_id`) | `/shared/g10-department-request`، والـ view `features/department-requests/views/DepartmentRequestDetailsView.tsx`. المهام المربوطة عدد فقط. أسئلة في §101 | 👀 |
 
 ### 04 · التقرير الدوري والخطة — G11 إلى G16
 
 | # | الشاشة | الحالات (المفاتيح) | العقد | ملاحظات | الحالة |
 |---|---|---|---|---|---|
-| G11 | التقارير الدورية | `head` · `monitoring` · `executive` · `new-optional` | `GET /periodic-reports`، و`POST /periodic-reports` |  | ⬜ |
-| G12 | التقرير: المسودة والتحرير | `draft` · `validation` · `submitted` · `returned` · `overdue` · `targets-sales` · `targets-scientific` | `GET /periodic-reports/{id}`، و`PATCH`، و`/submit` |  | ⬜ |
-| G13 | مراجعة المراقبة | `default` · `reviewed` | `POST /periodic-reports/{id}/review` |  | ⬜ |
-| G14 | قرار المدير التنفيذي على التقرير | `default` · `follow-up-action` · `returned` · `approved` | `POST /periodic-reports/{id}/decision` |  | ⬜ |
-| G15 | نسخ التقرير | `default` | `GET /periodic-reports/{id}/versions` |  | ⬜ |
-| G16 | الخطة الشهرية | `approved` · `revision-pending` · `revision-form` · `revision-decision` · `no-plan` | `GET /plans/{department}/{month}`، و`POST …/revisions`، و`…/revisions/{id}/decision` |  | ⬜ |
+| G11 | التقارير الدورية | `head` · `monitoring` · `executive` · `new-optional` · `loading` · `empty` · `error` | `GET /periodic-reports`، و`POST /periodic-reports` | `/shared/g11-periodic-reports`، والـ view `features/periodic-reports/views/PeriodicReportsView.tsx`. أسئلة في §102 | 👀 |
+| G12 | التقرير: المسودة والتحرير | `draft` · `validation` · `submitted` · `returned` · `overdue` · `targets-sales` · `targets-scientific` · `not-found` · `loading` · `error` | `GET /periodic-reports/{id}`، و`PATCH`، و`/submit` | `/shared/g12-periodic-report`، والـ view `features/periodic-reports/views/PeriodicReportFormView.tsx` والقراءة في `components/ReportSections.tsx`. أسئلة في §103 | 👀 |
+| G13 | مراجعة المراقبة | `default` · `reviewed` · `invalid-status` · `loading` · `error` | `POST /periodic-reports/{id}/review` | `/shared/g13-report-review`، والـ view `features/periodic-reports/views/ReportReviewView.tsx`. أسئلة في §104 | 👀 |
+| G14 | قرار المدير التنفيذي على التقرير | `default` · `follow-up-action` · `returned` · `approved` · `follow-up-approved` · `delegated` · `self-decision-forbidden` · `invalid-status` · `loading` · `error` | `POST /periodic-reports/{id}/decision` | `/shared/g14-report-decision`، والـ view `features/periodic-reports/views/ReportDecisionView.tsx`. `DecisionPanel` صار `onReject` فيه اختيارياً. أسئلة في §105 | 👀 |
+| G15 | نسخ التقرير | `default` · `loading` · `error` | `GET /periodic-reports/{id}/versions` | `/shared/g15-report-versions`، والـ view `features/periodic-reports/views/ReportVersionsView.tsx`. أسئلة في §106 | 👀 |
+| G16 | الخطة الشهرية | `approved` · `revision-pending` · `revision-form` · `revision-decision` · `already-decided` · `no-plan` · `loading` · `error` | `GET /plans/{department}/{month}`، و`POST …/revisions`، و`…/revisions/{id}/decision` | `/shared/g16-monthly-plan`، والـ view `features/plans/views/MonthlyPlanView.tsx`. أسئلة في §107 | 👀 |
 
 ### 05 · الإجازات — G17 إلى G18
 
 | # | الشاشة | الحالات (المفاتيح) | العقد | ملاحظات | الحالة |
 |---|---|---|---|---|---|
-| G17 | إجازاتي | `default` · `request-form` · `past-days` · `cancel-confirm` | `GET /leaves`، و`POST /leaves`، و`POST /leaves/{id}/cancel` |  | ⬜ |
-| G18 | طلبات الإجازة للموافقة | `approver` · `accountant` · `past-days-approved` | `GET /leaves`، و`POST /leaves/{id}/decision` |  | ⬜ |
+| G17 | إجازاتي | `default` · `request-form` · `past-days` · `cancel-confirm` · `before-month` · `already-decided` · `loading` · `empty` · `error` | `GET /leaves`، و`POST /leaves`، و`POST /leaves/{id}/cancel` | `/shared/g17-my-leaves`، والـ view `features/leaves/views/MyLeavesView.tsx`. أسئلة في §108 | 👀 |
+| G18 | طلبات الإجازة للموافقة | `approver` · `accountant` · `past-days-approved` · `reject-dialog` · `already-decided` · `loading` · `empty` · `error` | `GET /leaves`، و`POST /leaves/{id}/decision` | `/shared/g18-leave-approvals`، والـ view `features/leaves/views/LeaveApprovalsView.tsx`. المدة أيام تقويمية. أسئلة في §109 | 👀 |
 
 ## الوكيل — A
 
@@ -109,10 +109,10 @@
 
 | # | الشاشة | الحالات (المفاتيح) | العقد | ملاحظات | الحالة |
 |---|---|---|---|---|---|
-| A01 | لوحة الوكيل | `default` · `pending-receipt` · `overdue-payments` | `GET /dashboard/summary`، و`GET /transfers?status=IN_TRANSIT`، و`GET /receivables` |  | ⬜ |
-| A02 | الاستلامات | `default` | `GET /transfers` |  | ⬜ |
-| A03 | تفاصيل الصرف | `in-transit` · `confirm` · `received` · `cancelled` | `GET /transfers/{id}`، و`POST /transfers/{id}/receive` |  | ⬜ |
-| A04 | رصيدي | `default` · `suspended-batch` · `near-expiry` | `GET /stock/balances` |  | ⬜ |
+| A01 | لوحة الوكيل | `default` · `pending-receipt` · `overdue-payments` · `loading` · `error` | `GET /dashboard/summary`، و`GET /transfers?status=IN_TRANSIT`، و`GET /receivables` | `/agent/a01-dashboard`، والـ view `features/agents/views/AgentDashboardView.tsx`. اللوحة من القوائم. أسئلة في §110 | 👀 |
+| A02 | الاستلامات | `default` · `loading` · `empty` · `error` | `GET /transfers` | `/agent/a02-receipts`، والـ view `features/transfers/views/AgentReceiptsView.tsx`. أسئلة في §111 | 👀 |
+| A03 | تفاصيل الصرف | `in-transit` · `confirm` · `received` · `cancelled` · `invalid-status` · `not-found` · `loading` · `error` | `GET /transfers/{id}`، و`POST /transfers/{id}/receive` | `/agent/a03-transfer`، والـ view `features/transfers/views/AgentTransferView.tsx`. أسئلة في §112 | 👀 |
+| A04 | رصيدي | `default` · `suspended-batch` · `near-expiry` · `loading` · `empty` · `error` | `GET /stock/balances` | `/agent/a04-stock`، والـ view `features/stock/views/AgentStockView.tsx`. أسئلة في §113 | 👀 |
 
 ### 02 · العملاء — A05 إلى A07
 
@@ -307,37 +307,37 @@
 
 | # | الشاشة | الحالات (المفاتيح) | العقد | ملاحظات | الحالة |
 |---|---|---|---|---|---|
-| I01 | المستخدمون | `default` · `disabled-filter` | `GET /users` |  | ⬜ |
-| I02 | حساب جديد | `web` · `rep` · `validation` | `POST /users` |  | ⬜ |
-| I03 | صفحة المستخدم | `active` · `deactivate-preview` · `rep-active-warning` · `disabled` | `GET /users/{id}`، و`PATCH`، و`/deactivation-preview`، و`/deactivate`، و`/activate`، و`PUT /users/{id}/contract` |  | ⬜ |
-| I04 | الأدوار والصلاحيات | `list` · `edit` · `system-role` · `delete` | `GET /roles`، و`POST`، و`PUT /roles/{id}`، و`DELETE`، و`GET /permissions` |  | ⬜ |
-| I05 | الأجهزة | `default` | `GET /devices` |  | ⬜ |
-| I06 | طلبات تغيير الجهاز | `pending` · `unsynced-warning` · `approved` · `rejected` | `GET /device-change-requests`، و`/{id}/decision` |  | ⬜ |
-| I07 | المحاولات غير المصرّح بها | `default` · `handle` · `handled` | `GET /security-events`، و`/{id}/handle` |  | ⬜ |
-| I08 | الحظر | `default` · `lift` | `GET /blocks`، و`POST /blocks`، و`/{id}/lift` |  | ⬜ |
-| I09 | إصدارات التطبيق | `default` · `edit` | `GET /settings/app-version`، و`PUT` |  | ⬜ |
-| I10 | محتوى الموقع | `pages` · `products` · `agents` · `notice` | `GET /site/pages/{slug}`، و`PUT`، و`PATCH /items/{id}`، و`PATCH /agents/{id}`، و`PUT /settings/site` |  | ⬜ |
+| I01 | المستخدمون | `default` · `disabled-filter` · `loading` · `empty` · `error` · `forbidden` | `GET /users` | `/it-accounting-legal/i01-users`، والـ view `features/users/views/UsersListView.tsx`. أسئلة في §73 | 👀 |
+| I02 | حساب جديد | `empty` · `web` · `rep` · `validation` · `forbidden` | `POST /users` | `/it-accounting-legal/i02-new-user`، والـ view `features/users/views/UserFormView.tsx` (صفحة لا نافذة). أسئلة في §74 | 👀 |
+| I03 | صفحة المستخدم | `active` · `deactivate-preview` · `rep-active-warning` · `disabled` · `contract` · `not-found` · `loading` · `error` · `forbidden` | `GET /users/{id}`، و`PATCH`، و`/deactivation-preview`، و`/deactivate`، و`/activate`، و`PUT /users/{id}/contract` | `/it-accounting-legal/i03-user`، والـ view `features/users/views/UserDetailsView.tsx`. أسئلة في §75 | 👀 |
+| I04 | الأدوار والصلاحيات | `list` · `edit` · `system-role` · `delete` · `role-in-use` · `loading` · `empty` · `error` · `forbidden` | `GET /roles`، و`POST`، و`PUT /roles/{id}`، و`DELETE`، و`GET /permissions` | `/it-accounting-legal/i04-roles`، والـ view `features/roles/views/RolesView.tsx` (الدور في درج). أسئلة في §76 | 👀 |
+| I05 | الأجهزة | `default` · `loading` · `empty` · `error` · `forbidden` | `GET /devices` | `/it-accounting-legal/i05-devices`، والـ view `features/devices/views/DevicesView.tsx`. أسئلة في §77 | 👀 |
+| I06 | طلبات تغيير الجهاز | `pending` · `unsynced-warning` · `approved` · `rejected` · `invalid-status` · `loading` · `error` · `forbidden` | `GET /device-change-requests`، و`/{id}/decision` | `/it-accounting-legal/i06-device-requests`، والـ view `features/devices/views/DeviceRequestsView.tsx`. أسئلة في §78 | 👀 |
+| I07 | المحاولات غير المصرّح بها | `default` · `handle` · `handled` · `already-handled` · `loading` · `empty` · `error` · `forbidden` | `GET /security-events`، و`/{id}/handle` | `/it-accounting-legal/i07-attempts`، والـ view `features/security/views/SecurityEventsView.tsx`. أسئلة في §79 | 👀 |
+| I08 | الحظر | `default` · `lift` · `new` · `lifted` · `loading` · `empty` · `error` · `forbidden` | `GET /blocks`، و`POST /blocks`، و`/{id}/lift` | `/it-accounting-legal/i08-blocks`، والـ view `features/security/views/SecurityBlocksView.tsx`. أسئلة في §80 | 👀 |
+| I09 | إصدارات التطبيق | `default` · `edit` · `validation` · `loading` · `error` · `forbidden` | `GET /settings/app-version`، و`PUT` | `/it-accounting-legal/i09-app-versions`، والـ view `features/settings/views/AppVersionView.tsx`. أسئلة في §81 | 👀 |
+| I10 | محتوى الموقع | `pages` · `products` · `agents` · `notice` · `loading` · `error` · `forbidden` | `GET /site/pages/{slug}`، و`PUT`، و`PATCH /items/{id}`، و`PATCH /agents/{id}`، و`PUT /settings/site` | `/it-accounting-legal/i10-site-content`، والـ view `features/site-content/views/SiteContentView.tsx`. أسئلة في §82 | 👀 |
 
 ### 02 · المحاسبة — I11 إلى I14
 
 | # | الشاشة | الحالات (المفاتيح) | العقد | ملاحظات | الحالة |
 |---|---|---|---|---|---|
-| I11 | لوحة المحاسبة | `default` · `expense-reminder` | `GET /dashboard/summary`، و`GET /deliveries` |  | ⬜ |
-| I12 | المصروف الفعلي | `default` · `missing` · `closed` | `GET /budgets/{month}`، و`PUT /expenses/{month}` |  | ⬜ |
-| I13 | تقرير الدوام | `provisional` · `final` | `GET /accounting/attendance-report` |  | ⬜ |
-| I14 | تقرير الخصومات | `provisional` · `final` · `with-reversal` | `GET /accounting/deductions-report` |  | ⬜ |
+| I11 | لوحة المحاسبة | `default` · `expense-reminder` · `loading` · `error` · `forbidden` | `GET /dashboard/summary`، و`GET /deliveries` | `/it-accounting-legal/i11-home`، والـ view `features/accounting/views/AccountingHomeView.tsx`. مركّبة من `/month-closings` و`/deliveries`. أسئلة في §83 | 👀 |
+| I12 | المصروف الفعلي | `default` · `missing` · `closed` · `validation` · `month-closed` · `loading` · `error` · `forbidden` | `GET /budgets/{month}`، و`PUT /expenses/{month}` | `/it-accounting-legal/i12-actual-expense`، والـ view `features/budgets/views/ActualExpenseView.tsx`. أسئلة في §84 | 👀 |
+| I13 | تقرير الدوام | `provisional` · `final` · `loading` · `empty` · `error` · `forbidden` | `GET /accounting/attendance-report` | `/it-accounting-legal/i13-attendance-report`، والـ view `features/accounting/views/AccountingReportView.tsx` مع `ReportTable`. أسئلة في §85 | 👀 |
+| I14 | تقرير الخصومات | `provisional` · `final` · `with-reversal` · `loading` · `empty` · `error` · `forbidden` | `GET /accounting/deductions-report` | `/it-accounting-legal/i14-deductions-report`، والـ view نفسه لـ I13. أسئلة في §85 و§86 | 👀 |
 
 ### 03 · القانوني — I15 إلى I21
 
 | # | الشاشة | الحالات (المفاتيح) | العقد | ملاحظات | الحالة |
 |---|---|---|---|---|---|
-| I15 | الوثائق القانونية | `default` · `expiring-filter` | `GET /legal-documents` |  | ⬜ |
-| I16 | وثيقة جديدة | `empty` · `validation` | `POST /legal-documents` |  | ⬜ |
-| I17 | صفحة الوثيقة | `active` · `expiring` · `renew` · `intentional-expiry` · `expired` | `GET /legal-documents/{id}`، و`/versions`، و`/intentional-expiry` |  | ⬜ |
-| I18 | النزاعات | `default` | `GET /disputes` |  | ⬜ |
-| I19 | فتح نزاع | `direct` · `from-referral` | `POST /disputes` |  | ⬜ |
-| I20 | ملف النزاع | `stage-2` · `stage-6` · `awaiting-decision` · `stage-7` · `closed` · `closed-resolved` | `GET /disputes/{id}`، و`/complete-stage`، و`/recommendation`، و`/execute`، و`/close-resolved` |  | ⬜ |
-| I21 | قرار النزاع | `awaiting-me` · `other-solution` | `POST /disputes/{id}/decision` | (شاشة I20) | ⬜ |
+| I15 | الوثائق القانونية | `default` · `expiring-filter` · `loading` · `empty` · `error` · `forbidden` | `GET /legal-documents` | `/it-accounting-legal/i15-legal-documents`، والـ view `features/legal/views/LegalDocumentsView.tsx`. أسئلة في §87 | 👀 |
+| I16 | وثيقة جديدة | `empty` · `validation` · `forbidden` | `POST /legal-documents` | `/it-accounting-legal/i16-new-legal-document`، والـ view `features/legal/views/LegalDocumentFormView.tsx`. أسئلة في §88 | 👀 |
+| I17 | صفحة الوثيقة | `active` · `expiring` · `renew` · `intentional-expiry` · `expired` · `intentionally-expired` · `already-expired` · `not-found` · `loading` · `error` · `forbidden` | `GET /legal-documents/{id}`، و`/versions`، و`/intentional-expiry` | `/it-accounting-legal/i17-legal-document`، والـ view `features/legal/views/LegalDocumentDetailsView.tsx`. 409 «انتهت فعلاً» بـ `invalid_status` مؤقتاً. أسئلة في §89 | 👀 |
+| I18 | النزاعات | `default` · `loading` · `empty` · `error` · `forbidden` | `GET /disputes` | `/it-accounting-legal/i18-disputes`، والـ view `features/disputes/views/DisputesListView.tsx`. أسئلة في §90 | 👀 |
+| I19 | فتح نزاع | `direct` · `from-referral` · `validation` · `forbidden` | `POST /disputes` | `/it-accounting-legal/i19-new-dispute`، والـ view `features/disputes/views/DisputeFormView.tsx`. أسئلة في §91 | 👀 |
+| I20 | ملف النزاع | `stage-2` · `stage-4` · `stage-6` · `awaiting-decision` · `stage-7` · `closed` · `closed-resolved` · `close-resolved-dialog` · `invalid-status` · `not-found` · `loading` · `error` · `forbidden` | `GET /disputes/{id}`، و`/complete-stage`، و`/recommendation`، و`/execute`، و`/close-resolved` | `/it-accounting-legal/i20-dispute`، والـ view `features/disputes/views/DisputeDetailsView.tsx`. أسئلة في §92 | 👀 |
+| I21 | قرار النزاع | `awaiting-me` · `approve-confirm` · `other-solution` · `invalid-status` · `delegate-forbidden` | `POST /disputes/{id}/decision` | `/it-accounting-legal/i21-dispute-decision`: الـ view نفسه لـ I20 بعلم `canDecide`. أسئلة في §93 | 👀 |
 
 ## موقع الشركة — P
 
@@ -489,3 +489,16 @@
 | 17 تشرين الثاني 2026 | E10–E12 · الأصناف والأسعار | `E10-default` · `E10-disabled-filter` · `E11-empty` · `E11-product-site` · `E11-validation` · `E12-product` · `E12-sample` · `E12-new-price` · `E12-past-date` · `E12-disable` · `E12-disabled` والحالات العامة | أُضيف `components/data/portfolio.ts`. وأُزيلت `@tablet:` من views هذه الجلسة (الميزانية والنقاط وطلب العينات) التزاماً بقاعدة الـ responsive. أسئلة في §64 إلى §66. |
 | 17 تشرين الثاني 2026 | E13–E15 · الإعدادات العامة والقوائم والعطل | `E13-default` · `E13-edit` · `E13-verification-note` · `E14-default` · `E14-form` · `E14-system-entry` · `E15-default` · `E15-form` · `E15-past` والحالات العامة | أُضيف `features/settings/components/SettingsTabs.tsx` (أقسام الإعدادات E13–E17 تبويبات تحت عنصر «الإعدادات»)، و`components/data/list-keys.ts` (أسماء مفاتيح القوائم وتصنيف المناطق)، و`weights_must_total_100` في `error-messages.ts`. أسئلة في §67 إلى §69. |
 | 18 تشرين الثاني 2026 | E16–E18 · الأوزان والهيكل الجغرافي والتفويض | `E16-default` · `E16-edit` · `E16-sum-error` · `E16-next-month-note` · `E17-default` · `E17-form` · `E17-move` · `E18-none` · `E18-active` · `E18-form` · `E18-overlap` والحالات العامة | انتهت مجموعة المدير التنفيذي (E01–E18). أُضيف `delegatedTo` إلى `ShellScreen` (شريط «فوّضت …» في E18). `delegation_overlap` بـ 409 كما في العقد (SCREENS تقول 422). أسئلة في §70 إلى §72. |
+| 18 تشرين الثاني 2026 | I01–I03 · المستخدمون | `I01-default` · `I01-disabled-filter` · `I02-empty` · `I02-web` · `I02-rep` · `I02-validation` · `I03-active` · `I03-deactivate-preview` · `I03-rep-active-warning` · `I03-disabled` · `I03-contract` والحالات العامة | بداية المجموعة I. أُضيف مستخدم الإطار `it` في `mocks/shell-users.ts` (معه `users.manage`)، و`components/data/departments.ts` (الأقسام ونوع الحساب). أسئلة في §73 إلى §75. |
+| 18 تشرين الثاني 2026 | I04–I06 · الأدوار والأجهزة | `I04-list` · `I04-edit` · `I04-system-role` · `I04-delete` · `I04-role-in-use` · `I05-default` · `I06-pending` · `I06-unsynced-warning` · `I06-approved` · `I06-rejected` · `I06-invalid-status` والحالات العامة | أُضيف `PermissionGroup` و`RoleInput` إلى `types.ts`. صلاحيات الأدوار في المعرض من `rolePermissions` في `mocks/shell-users.ts`. أسئلة في §76 إلى §78. |
+| 18 تشرين الثاني 2026 | I07–I10 · الأمان والإصدارات والموقع | `I07-default` · `I07-handle` · `I07-handled` · `I07-already-handled` · `I08-default` · `I08-lift` · `I08-new` · `I08-lifted` · `I09-default` · `I09-edit` · `I09-validation` · `I10-pages` · `I10-products` · `I10-agents` · `I10-notice` والحالات العامة | انتهى القسم 01 (IT). أُضيفت `AppVersionSettings` و`SiteSettings` و`SitePage` إلى `types.ts`. 409 في I07 يُعرض بـ `invalid_status` مؤقتاً. أسئلة في §79 إلى §82. |
+| 18 تشرين الثاني 2026 | I11–I14 · المحاسبة | `I11-default` · `I11-expense-reminder` · `I12-default` · `I12-missing` · `I12-closed` · `I12-validation` · `I12-month-closed` · `I13-provisional` · `I13-final` · `I14-provisional` · `I14-final` · `I14-with-reversal` والحالات العامة | انتهى القسم 02 (المحاسبة). أُضيف `ReportResult` إلى `types.ts`، ومستخدم الإطار `accountant`، والمكوّن `features/accounting/components/ReportTable.tsx` لكل `ReportResult`. أسئلة في §83 إلى §86. |
+| 19 تشرين الثاني 2026 | I15–I17 · الوثائق القانونية | `I15-default` · `I15-expiring-filter` · `I16-empty` · `I16-validation` · `I17-active` · `I17-expiring` · `I17-renew` · `I17-intentional-expiry` · `I17-expired` · `I17-intentionally-expired` · `I17-already-expired` · `I17-not-found` والحالات العامة | الدفعة الأولى من القسم 03؛ تبقى النزاعات I18–I21. أُضيف `LegalDocument` إلى `types.ts`، و`legalCategoryLabels` في `components/data/legal-categories.ts`، ومستخدم الإطار `legal`. أسئلة في §87 إلى §89. |
+| 19 تشرين الثاني 2026 | I18–I21 · النزاعات | `I18-default` · `I19-direct` · `I19-from-referral` · `I19-validation` · `I20-stage-2` · `I20-stage-4` · `I20-stage-6` · `I20-awaiting-decision` · `I20-stage-7` · `I20-closed` · `I20-closed-resolved` · `I20-close-resolved-dialog` · `I20-invalid-status` · `I20-not-found` · `I21-awaiting-me` · `I21-approve-confirm` · `I21-other-solution` · `I21-invalid-status` · `I21-delegate-forbidden` والحالات العامة | انتهى القسم 03 وبه المجموعة I كلها (I01–I21). أُضيف `Dispute` و`RiskLevel` إلى `types.ts`، و`components/data/dispute-stages.ts`، و`disputes.manage` للقانوني و`disputes.decide` للمدير التنفيذي في مستخدمي الإطار. أسئلة في §90 إلى §93. |
+| 19 تشرين الثاني 2026 | G03–G05 · الإشعارات وبانتظار قراري وملفي الشخصي | `G03-default` · `G04-default` · `G04-sales-manager` · `G04-delegate` · `G05-default` · `G05-provisional` والحالات العامة | بذلك ينتهي القسم 01 من G (G01–G05). موقع الشركة P مؤجَّل بطلب المستخدم. أُضيف `Notification` إلى `types.ts`، و`components/data/pending-kinds.ts` و`notification-types.ts`. أسئلة في §94 إلى §96. |
+| 19 تشرين الثاني 2026 | G06–G08 · المهام | `G06-assigned-to-me` · `G06-assigned-by-me` · `G06-overdue-filter` · `G07-assignee-new` · `G07-assignee-in-progress` · `G07-submit-dialog` · `G07-assignee-submitted` · `G07-assignee-rejected` · `G07-assigner-submitted` · `G07-assigner-approved` · `G07-reassign` · `G07-overdue-resolve` · `G07-overdue-resolve-delegate` · `G07-resolved` · `G07-invalid-status` · `G07-not-found` · `G08-empty` · `G08-filled` · `G08-validation` · `G08-no-assignees` والحالات العامة | القسم 02 من G. أُضيف `TaskInput` و`TaskStatus` و`TaskSource` و`Priority` إلى `types.ts`، و`components/data/task-sources.ts`. أسئلة في §97 إلى §99. |
+| 22 تشرين الثاني 2026 | G09–G10 · الطلبات بين الأقسام | `G09-incoming` · `G09-outgoing` · `G10-incoming-open` · `G10-reject-dialog` · `G10-incoming-in-progress` · `G10-complete-dialog` · `G10-outgoing` · `G10-done` · `G10-rejected` · `G10-overdue` · `G10-invalid-status` · `G10-not-found` والحالات العامة | القسم 03 من G. أُضيف `DepartmentRequest` و`DeptRequestStatus` إلى `types.ts`. أسئلة في §100 و§101. |
+| 22 تشرين الثاني 2026 | G11–G13 · التقرير الدوري | `G11-head` · `G11-monitoring` · `G11-executive` · `G11-new-optional` · `G12-draft` · `G12-validation` · `G12-submitted` · `G12-returned` · `G12-overdue` · `G12-targets-sales` · `G12-targets-scientific` · `G12-not-found` · `G13-default` · `G13-reviewed` · `G13-invalid-status` والحالات العامة | القسم 04 من G (الدفعة الأولى). أُضيف `PeriodicReport` و`PeriodicReportUpdate` و`ReportKind` و`ReportStatus` و`OptionalReportKind` و`TargetMetric` و`ReportLikelihood` و`ReportRiskLevel` إلى `types.ts`، و`components/data/report-kinds.ts`. أسئلة في §102–§104. |
+| 22 تشرين الثاني 2026 | G14–G16 · قرار التقرير ونسخه والخطة | `G14-default` · `G14-follow-up-action` · `G14-returned` · `G14-approved` · `G14-follow-up-approved` · `G14-delegated` · `G14-self-decision-forbidden` · `G14-invalid-status` · `G15-default` · `G16-approved` · `G16-revision-pending` · `G16-revision-form` · `G16-revision-decision` · `G16-already-decided` · `G16-no-plan` والحالات العامة | القسم 04 من G (الدفعة الثانية). أُضيف `ExecReportDecision` و`PeriodicReportVersion` و`Month` إلى `types.ts`، و`execDecisionLabels` إلى `report-kinds.ts`. `DecisionPanel`: `onReject` اختياري (زر واحد حين يكون القرار خياراً)، وحالته في المعرض. أسئلة في §105–§107. |
+| 22 تشرين الثاني 2026 | G17–G18 · الإجازات | `G17-default` · `G17-request-form` · `G17-past-days` · `G17-cancel-confirm` · `G17-before-month` · `G17-already-decided` · `G18-approver` · `G18-accountant` · `G18-past-days-approved` · `G18-reject-dialog` · `G18-already-decided` والحالات العامة | القسم 05 من G، وبه تكتمل مجموعة G عدا ما رُسم سابقاً. أُضيف `Leave` و`LeaveStatus` إلى `types.ts`، و`features/leaves/components/leave-format.ts`. أسئلة في §108 و§109. |
+| 22 تشرين الثاني 2026 | A01–A04 · الوكيل: اللوحة والاستلام | `A01-default` · `A01-pending-receipt` · `A01-overdue-payments` · `A02-default` · `A03-in-transit` · `A03-confirm` · `A03-received` · `A03-cancelled` · `A03-invalid-status` · `A03-not-found` · `A04-default` · `A04-suspended-batch` · `A04-near-expiry` والحالات العامة، بإطاري المكتب والموبايل | القسم 01 من A. `mocks/agent.ts` متسق مع mocks المستودع (10 تشرين الثاني). أسئلة في §110–§113. |
