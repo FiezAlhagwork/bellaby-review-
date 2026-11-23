@@ -11,6 +11,13 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { Badge } from "@/components/ui/Badge";
 import { Banner } from "@/components/ui/Banner";
 import { Card } from "@/components/ui/Card";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { Dialog } from "@/components/ui/Dialog";
+import { Button } from "@/components/ui/Button";
+import { Field } from "@/components/ui/Field";
+import { RadioCard, RadioGroup } from "@/components/ui/Radio";
+import { Textarea } from "@/components/ui/Textarea";
+import { errorMessage } from "@/lib/api/error-messages";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { NotFoundState } from "@/components/ui/NotFoundState";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -19,9 +26,28 @@ import { daysBetween, type IsoDate } from "@/lib/calendar";
 import { countPhrase, formatDate, formatDateTime, formatMoney, isolate } from "@/lib/format";
 import type { Loadable } from "@/lib/loadable";
 
+type RequestType = "CANCEL" | "WRITE_OFF";
+
+/** نافذة الوكيل المفتوحة: تأكيد التحصيل الكامل، أو طلب إلغاء أو شطب بسبب إلزامي. */
+export type DeliveryDialog = { kind: "collect" } | { kind: "request"; type: RequestType | null; reason: string } | null;
+
 type DeliveryDetailsViewProps = {
   /** `GET /deliveries/{id}`. خطأ `not_found` يعرض «غير موجود أو خارج نطاقك». */
   delivery: Loadable<Delivery>;
+  /** `deliveries.collect` (الوكيل صاحب التسليم): «تأكيد التحصيل» و«طلب إلغاء أو شطب» لغير المسدد. غائب في M06. */
+  canCollect?: boolean;
+  /** «مرتجع» (A12) حين يبقى قابل للإرجاع. */
+  canReturn?: boolean;
+  dialog?: DeliveryDialog;
+  onDialogChange?: (dialog: DeliveryDialog) => void;
+  /** `POST /collect` أو `/request-approval` بحسب النافذة. */
+  onConfirm?: () => void;
+  onReturn?: () => void;
+  busy?: boolean;
+  /** `validation_failed` للنافذة (`type`، `reason`). */
+  errors?: Readonly<Record<string, string>>;
+  /** رمز بلا حقل: `invalid_status` (لم يعد غير مسدد). */
+  actionError?: string;
   /** اليوم (بتوقيت دمشق): لأيام التأخر. يُمرَّر فيبقى الـ view نقياً. */
   today: IsoDate;
   /** رجوع إلى القائمة (من «غير موجود»). */
@@ -82,9 +108,9 @@ const lineColumns: DataTableColumn<DeliveryLine>[] = [
 /**
  * تفاصيل التسليم (A10 · M06) للقراءة: العميل والوكيل، والأسطر بالسعر المنسوخ والقيمة والمرتجع المقبول والمعلّق والقابل للإرجاع، وموعد السداد وحالته،
  * والطلب المعلّق (إلغاء أو شطب) وقراره، والسجل. بلا أزرار: التحصيل وطلب الإلغاء أو الشطب للوكيل، وقرارهما للمدير التنفيذي (يشمله التفويض).
- * أفعال الوكيل تُضاف في A10 بأعلام الصلاحية.
+ * وللوكيل (A10) بأعلام الصلاحية: «تأكيد التحصيل» الكامل (لا دفعات جزئية، والوقت لحظة التأكيد على الخادم)، و«مرتجع»، و«طلب إلغاء أو شطب» بسبب.
  */
-export function DeliveryDetailsView({ delivery, today, onBack, onRetry }: DeliveryDetailsViewProps) {
+export function DeliveryDetailsView({ delivery, today, canCollect = false, canReturn = false, dialog = null, onDialogChange, onConfirm, onReturn, busy = false, errors = {}, actionError, onBack, onRetry }: DeliveryDetailsViewProps) {
   if (delivery.status === "loading") {
     return (
       <div className="flex flex-col gap-4" aria-busy="true">
@@ -108,6 +134,13 @@ export function DeliveryDetailsView({ delivery, today, onBack, onRetry }: Delive
   const lateDays = data.expected_payment_date ? daysBetween(data.expected_payment_date, today) : 0;
   const pending = data.pending_request;
   const decision = data.decision;
+  const open = data.status === "UNPAID" && !pending;
+  const returnable = lines.some((line) => (line.returnable_quantity ?? 0) > 0);
+  const actions = [
+    ...(canCollect && open ? [{ id: "request", label: "طلب إلغاء أو شطب", onSelect: () => onDialogChange?.({ kind: "request", type: null, reason: "" }) }] : []),
+    ...(canReturn && returnable && (data.status === "UNPAID" || data.status === "PAID") ? [{ id: "return", label: "مرتجع", onSelect: () => onReturn?.() }] : []),
+    ...(canCollect && open ? [{ id: "collect", label: "تأكيد التحصيل", primary: true, onSelect: () => onDialogChange?.({ kind: "collect" }) }] : []),
+  ];
 
   return (
     <>
@@ -115,9 +148,27 @@ export function DeliveryDetailsView({ delivery, today, onBack, onRetry }: Delive
         title={data.reference ?? "تفاصيل التسليم"}
         badge={data.status ? <StatusBadge entity="delivery" status={data.status} /> : undefined}
         description={`إلى ${data.customer?.name ?? "—"} · ${data.agent?.name ?? "—"}${data.delivered_at ? ` · ${formatDateTime(data.delivered_at)}` : ""}`}
+        actions={actions.length > 0 ? actions : undefined}
       />
 
       <div className="flex flex-col gap-4">
+        {actionError ? (
+          <Banner kind="warning" title="تغيّرت حالة التسليم">
+            {errorMessage(actionError)}
+          </Banner>
+        ) : null}
+
+        {canCollect && data.status === "UNPAID" && decision?.outcome === "REJECTED" ? (
+          <Banner kind="warning" title={`رُفض طلب ${decision.type ? requestLabels[decision.type] : ""}`}>
+            عاد التسليم «غير مسدد». حصّله أو اطلب من جديد بسبب آخر.
+          </Banner>
+        ) : null}
+
+        {canCollect && data.status === "CANCELLED" ? (
+          <Banner kind="neutral" title="ألغي التسليم">
+            عادت البضاعة إلى رصيدك.
+          </Banner>
+        ) : null}
         {data.is_payment_overdue ? (
           <Banner kind="warning" title="تجاوز موعد السداد">
             {`كان موعد السداد ${data.expected_payment_date ? formatDate(data.expected_payment_date) : "—"}، وتأخر ${countPhrase(lateDays, dayForms)} بلا تحصيل.`}
@@ -126,7 +177,7 @@ export function DeliveryDetailsView({ delivery, today, onBack, onRetry }: Delive
 
         {pending?.type ? (
           <Banner kind="info" title={`طلب ${requestLabels[pending.type]} بانتظار القرار`}>
-            {`${requestHints[pending.type]} السبب: «${pending.reason}». القرار للمدير التنفيذي أو من فوّضه، ولا قرار لك فيه.`}
+            {`${requestHints[pending.type]} السبب: «${pending.reason}». القرار للمدير التنفيذي أو من فوّضه${canCollect ? "." : "، ولا قرار لك فيه."}`}
           </Banner>
         ) : null}
 
@@ -175,6 +226,50 @@ export function DeliveryDetailsView({ delivery, today, onBack, onRetry }: Delive
           <ActivityLog events={buildEvents(data)} />
         </Card>
       </div>
+
+      {onDialogChange ? (
+        <>
+          <ConfirmDialog
+            open={dialog?.kind === "collect"}
+            onOpenChange={(next) => (next ? undefined : onDialogChange(null))}
+            title="تأكيد التحصيل؟"
+            description={`تؤكد أنك حصّلت ${data.estimated_value ? formatMoney(data.estimated_value) : "القيمة"} كاملةً من ${data.customer?.name ?? "العميل"}. لا دفعات جزئية، ويُسجَّل وقت السداد لحظة التأكيد.`}
+            confirmLabel="تأكيد التحصيل"
+            cancelLabel="تراجع"
+            loading={busy}
+            onConfirm={() => onConfirm?.()}
+          />
+          <Dialog
+            open={dialog?.kind === "request"}
+            onOpenChange={(next) => (next ? undefined : onDialogChange(null))}
+            dismissible={!busy}
+            title="طلب إلغاء أو شطب"
+            description="يصل إلى المدير التنفيذي، ويبقى التسليم «بانتظار الاعتماد» حتى قراره."
+            actions={[
+              <Button key="cancel" variant="secondary" disabled={busy} onClick={() => onDialogChange(null)}>
+                تراجع
+              </Button>,
+              <Button key="ok" variant="primary" loading={busy} disabled={dialog?.kind !== "request" || !dialog.type || !dialog.reason.trim()} onClick={() => onConfirm?.()}>
+                إرسال الطلب
+              </Button>,
+            ]}
+          >
+            {dialog?.kind === "request" ? (
+              <div className="flex flex-col gap-4">
+                <Field label="الطلب" required error={errors.type}>
+                  <RadioGroup aria-label="الطلب" value={dialog.type} onValueChange={(type) => onDialogChange({ ...dialog, type })} invalid={Boolean(errors.type)} disabled={busy}>
+                    <RadioCard value="CANCEL" title="إلغاء" description={requestHints.CANCEL} />
+                    <RadioCard value="WRITE_OFF" title="شطب" description={requestHints.WRITE_OFF} />
+                  </RadioGroup>
+                </Field>
+                <Field label="السبب" required error={errors.reason}>
+                  <Textarea aria-label="السبب" value={dialog.reason} onChange={(event) => onDialogChange({ ...dialog, reason: event.target.value })} invalid={Boolean(errors.reason)} disabled={busy} />
+                </Field>
+              </div>
+            ) : null}
+          </Dialog>
+        </>
+      ) : null}
     </>
   );
 }

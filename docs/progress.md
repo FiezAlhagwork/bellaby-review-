@@ -118,28 +118,28 @@
 
 | # | الشاشة | الحالات (المفاتيح) | العقد | ملاحظات | الحالة |
 |---|---|---|---|---|---|
-| A05 | عملائي | `default` · `search` | `GET /customers` |  | ⬜ |
-| A06 | عميل جديد | `empty` · `link-suggestion` · `linked` · `validation` | `GET /customers/link-suggestions`، و`POST /customers` (`visit_point_id`) |  | ⬜ |
-| A07 | صفحة العميل | `default` · `linked-point` | `GET /customers/{id}`، و`GET /deliveries?customer_id=` |  | ⬜ |
+| A05 | عملائي | `default` · `search` · `loading` · `empty` · `error` | `GET /customers` | `/agent/a05-customers`، والـ view `features/customers/views/AgentCustomersView.tsx`. «أول تسليم» بدل «آخر تسليم». أسئلة في §114 | 👀 |
+| A06 | عميل جديد | `empty` · `link-suggestion` · `linked` · `validation` | `GET /customers/link-suggestions`، و`POST /customers` (`visit_point_id`) | `/agent/a06-new-customer`، والـ view `features/customers/views/CustomerFormView.tsx`. أسئلة في §115 | 👀 |
+| A07 | صفحة العميل | `default` · `linked-point` · `payment` · `returns` · `not-found` · `loading` · `error` | `GET /customers/{id}`، و`GET /deliveries?customer_id=` | `/agent/a07-customer`، والـ view نفسه في M05 (`CustomerDetailsView` بـ`showVisits={false}`). أسئلة في §116 | 👀 |
 
 ### 03 · التسليم والتحصيل — A08 إلى A11
 
 | # | الشاشة | الحالات (المفاتيح) | العقد | ملاحظات | الحالة |
 |---|---|---|---|---|---|
-| A08 | تسجيل تسليم | `empty` · `filled` · `over-balance` · `payment-date-limit` · `review` · `saved` | `POST /deliveries`، و`GET /stock/fefo-suggestion`، و`GET /settings` (`max_payment_term_days`) |  | ⬜ |
-| A09 | التسليمات | `default` · `filter-unpaid` | `GET /deliveries` |  | ⬜ |
-| A10 | تفاصيل التسليم | `unpaid` · `collect-confirm` · `paid` · `overdue` · `request-form` · `approval-pending` · `cancelled` · `written-off` · `request-rejected` · `referred` | `GET /deliveries/{id}`، و`/collect`، و`/request-approval` |  | ⬜ |
-| A11 | المستحقات | `default` · `due-soon` · `overdue` | `GET /receivables` |  | ⬜ |
+| A08 | تسجيل تسليم | `empty` · `filled` · `over-balance` · `payment-date-limit` · `review` · `saved` | `POST /deliveries`، و`GET /stock/fefo-suggestion`، و`GET /settings` (`max_payment_term_days`) | `/agent/a08-new-delivery`، والـ view `features/deliveries/views/DeliveryFormView.tsx`. القيمة يحسبها الخادم. أسئلة في §117 | 👀 |
+| A09 | التسليمات | `default` · `filter-unpaid` · `loading` · `empty` · `error` | `GET /deliveries` | `/agent/a09-deliveries`، والـ view نفسه في M06 بلا فلتر الوكيل. أسئلة في §118 | 👀 |
+| A10 | تفاصيل التسليم | `unpaid` · `collect-confirm` · `paid` · `overdue` · `request-form` · `approval-pending` · `cancelled` · `written-off` · `request-rejected` · `referred` · `invalid-status` · `not-found` · `loading` · `error` | `GET /deliveries/{id}`، و`/collect`، و`/request-approval` | `/agent/a10-delivery`، والـ view نفسه في M06 بأعلام `canCollect` و`canReturn`. أسئلة في §119 | 👀 |
+| A11 | المستحقات | `default` · `due-soon` · `overdue` · `loading` · `empty` · `error` | `GET /receivables` | `/agent/a11-receivables`، والـ view `features/receivables/views/AgentReceivablesView.tsx`. أسئلة في §120 | 👀 |
 
 ### 04 · المرتجع والتالف والإرجاع — A12 إلى A16
 
 | # | الشاشة | الحالات (المفاتيح) | العقد | ملاحظات | الحالة |
 |---|---|---|---|---|---|
-| A12 | مرتجع من صيدلية | `empty` · `over-returnable` · `submitted` | `POST /customer-returns` (`delivery_line_id`)، و`DeliveryLine.returnable_quantity` |  | ⬜ |
-| A13 | المرتجعات والتالف | `returns` · `damage` | `GET /customer-returns`، و`GET /damage-reports` |  | ⬜ |
-| A14 | تقرير تالف | `empty` · `submitted` | `POST /damage-reports` |  | ⬜ |
-| A15 | طلب إرجاع للمستودع | `empty` · `recall-reason` · `submitted` | `POST /agent-returns` |  | ⬜ |
-| A16 | طلبات الإرجاع للمستودع | `default` | `GET /agent-returns`. --- |  | ⬜ |
+| A12 | مرتجع من صيدلية | `empty` · `over-returnable` · `submitted` | `POST /customer-returns` (`delivery_line_id`)، و`DeliveryLine.returnable_quantity` | `/agent/a12-customer-return`، والـ view `features/returns/views/CustomerReturnFormView.tsx`. أسئلة في §121 | 👀 |
+| A13 | المرتجعات والتالف | `returns` · `damage` · `loading` · `empty` · `error` | `GET /customer-returns`، و`GET /damage-reports` | `/agent/a13-returns`، والـ view `features/returns/views/AgentReturnsDamageView.tsx`. أسئلة في §122 | 👀 |
+| A14 | تقرير تالف | `empty` · `submitted` | `POST /damage-reports` | `/agent/a14-damage-report`، والـ view نفسه في W20 (`DamageReportFormView` بموقع الوكيل ووصفه). أسئلة في §123 | 👀 |
+| A15 | طلب إرجاع للمستودع | `empty` · `recall-reason` · `submitted` | `POST /agent-returns` | `/agent/a15-agent-return`، والـ view نفسه في M03 (`AgentReturnFormView` بـ`recallReasonId`). أسئلة في §124 | 👀 |
+| A16 | طلبات الإرجاع للمستودع | `default` · `loading` · `empty` · `error` | `GET /agent-returns`. --- | `/agent/a16-agent-returns`، والـ view `features/returns/views/AgentReturnRequestsView.tsx`. أسئلة في §125 | 👀 |
 
 ## المستودع — W
 
@@ -502,3 +502,6 @@
 | 22 تشرين الثاني 2026 | G14–G16 · قرار التقرير ونسخه والخطة | `G14-default` · `G14-follow-up-action` · `G14-returned` · `G14-approved` · `G14-follow-up-approved` · `G14-delegated` · `G14-self-decision-forbidden` · `G14-invalid-status` · `G15-default` · `G16-approved` · `G16-revision-pending` · `G16-revision-form` · `G16-revision-decision` · `G16-already-decided` · `G16-no-plan` والحالات العامة | القسم 04 من G (الدفعة الثانية). أُضيف `ExecReportDecision` و`PeriodicReportVersion` و`Month` إلى `types.ts`، و`execDecisionLabels` إلى `report-kinds.ts`. `DecisionPanel`: `onReject` اختياري (زر واحد حين يكون القرار خياراً)، وحالته في المعرض. أسئلة في §105–§107. |
 | 22 تشرين الثاني 2026 | G17–G18 · الإجازات | `G17-default` · `G17-request-form` · `G17-past-days` · `G17-cancel-confirm` · `G17-before-month` · `G17-already-decided` · `G18-approver` · `G18-accountant` · `G18-past-days-approved` · `G18-reject-dialog` · `G18-already-decided` والحالات العامة | القسم 05 من G، وبه تكتمل مجموعة G عدا ما رُسم سابقاً. أُضيف `Leave` و`LeaveStatus` إلى `types.ts`، و`features/leaves/components/leave-format.ts`. أسئلة في §108 و§109. |
 | 22 تشرين الثاني 2026 | A01–A04 · الوكيل: اللوحة والاستلام | `A01-default` · `A01-pending-receipt` · `A01-overdue-payments` · `A02-default` · `A03-in-transit` · `A03-confirm` · `A03-received` · `A03-cancelled` · `A03-invalid-status` · `A03-not-found` · `A04-default` · `A04-suspended-batch` · `A04-near-expiry` والحالات العامة، بإطاري المكتب والموبايل | القسم 01 من A. `mocks/agent.ts` متسق مع mocks المستودع (10 تشرين الثاني). أسئلة في §110–§113. |
+| 22 تشرين الثاني 2026 | A05–A07 · الوكيل: العملاء | `A05-default` · `A05-search` · `A06-empty` · `A06-link-suggestion` · `A06-linked` · `A06-validation` · `A07-default` · `A07-linked-point` · `A07-payment` · `A07-returns` · `A07-not-found` والحالات العامة، بإطاري المكتب والموبايل | القسم 02 من A. عملاء وكالة الياسمين من mocks المبيعات. أسئلة في §114–§116. |
+| 22 تشرين الثاني 2026 | A08–A11 · الوكيل: التسليم والتحصيل | `A08-empty` · `A08-filled` · `A08-over-balance` · `A08-payment-date-limit` · `A08-review` · `A08-saved` · `A09-default` · `A09-filter-unpaid` · `A10-unpaid` · `A10-collect-confirm` · `A10-paid` · `A10-overdue` · `A10-request-form` · `A10-approval-pending` · `A10-cancelled` · `A10-written-off` · `A10-request-rejected` · `A10-referred` · `A10-invalid-status` · `A10-not-found` · `A11-default` · `A11-due-soon` · `A11-overdue` والحالات العامة، بإطاري المكتب والموبايل | القسم 03 من A. `DeliveryDetailsView` (M06) أُضيفت له أعلام الوكيل ونافذتا التحصيل والطلب، وM06 بلا تغيير. أسئلة في §117–§120. |
+| 22 تشرين الثاني 2026 | A12–A16 · الوكيل: المرتجع والتالف والإرجاع | `A12-empty` · `A12-over-returnable` · `A12-submitted` · `A13-returns` · `A13-damage` · `A14-empty` · `A14-submitted` · `A15-empty` · `A15-recall-reason` · `A15-submitted` · `A16-default` والحالات العامة، بإطاري المكتب والموبايل | القسم 04 من A، وبه تكتمل مجموعة الوكيل. `AgentReturnFormView` أُضيف له `recallReasonId` و`onOpenRequests`، و`DamageReportFormView` أُضيف له `description`، وW20 وM03 بلا تغيير. mocks في `mocks/agent-own-returns.ts`. أسئلة في §121–§125. |

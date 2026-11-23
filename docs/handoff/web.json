@@ -21649,6 +21649,1609 @@
         "الموقوفة تُرجَع بطلب إرجاع (A12–A16).",
         "§113."
       ]
+    },
+    "A05": {
+      "id": "A05",
+      "name": "عملائي",
+      "group": "agent",
+      "design_source": {
+        "view": "src/features/customers/views/AgentCustomersView.tsx",
+        "page": "src/app/agent/a05-customers/page.tsx"
+      },
+      "route": "/dashboard/customers",
+      "api": [
+        {
+          "id": "listCustomers",
+          "method": "GET",
+          "path": "/customers",
+          "request": {
+            "q": "filters.q",
+            "governorate_id": "filters.governorateId",
+            "page": "state"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<Customer>"
+          }
+        }
+      ],
+      "view_props": {
+        "customers": "Loadable<{ data, meta }>",
+        "governorates": "me.governorates",
+        "filters": "AgentCustomerFilters",
+        "canCreate": "customers.create"
+      },
+      "permissions": [
+        "customers.create"
+      ],
+      "components": [
+        "PageHeader",
+        "FilterBar",
+        "Combobox",
+        "DataTable",
+        "Badge",
+        "DateCell",
+        "MoneyCell",
+        "Pagination",
+        "EmptyState"
+      ],
+      "states": [
+        {
+          "key": "A05-default",
+          "label": "الافتراضي",
+          "drawn": true,
+          "when": {
+            "api": "listCustomers"
+          },
+          "ui": [
+            "«مربوط» حين visit_point_id"
+          ]
+        },
+        {
+          "key": "A05-search",
+          "label": "بحث",
+          "drawn": true,
+          "when": {
+            "request": "q"
+          },
+          "ui": [
+            "نتائج البحث",
+            "«مسح البحث» حين لا نتائج"
+          ]
+        },
+        {
+          "key": "A05-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "listCustomers",
+            "status": "pending"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "A05-empty",
+          "label": "لا توجد بيانات",
+          "drawn": true,
+          "when": {
+            "api": "listCustomers",
+            "data": "data = []"
+          },
+          "ui": [
+            "EmptyState"
+          ]
+        },
+        {
+          "key": "A05-error",
+          "label": "خطأ",
+          "drawn": true,
+          "when": {
+            "api": "listCustomers",
+            "status": "5xx/429"
+          },
+          "ui": [
+            "ErrorState + إعادة المحاولة"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "الصف",
+          "to": "A07"
+        },
+        {
+          "on": "«عميل جديد»",
+          "to": "A06"
+        }
+      ],
+      "after_mutation": {},
+      "notes": [
+        "إطاران: مكتب 1440 وموبايل 390 (SCREENS.md: كل شاشات الوكيل [موبايل]).",
+        "§114."
+      ]
+    },
+    "A06": {
+      "id": "A06",
+      "name": "عميل جديد",
+      "group": "agent",
+      "design_source": {
+        "view": "src/features/customers/views/CustomerFormView.tsx",
+        "page": "src/app/agent/a06-new-customer/page.tsx"
+      },
+      "route": "/dashboard/customers/new",
+      "api": [
+        {
+          "id": "linkSuggestions",
+          "method": "GET",
+          "path": "/customers/link-suggestions",
+          "request": {
+            "name": "form.name",
+            "governorate_id": "form.governorateId"
+          },
+          "success": {
+            "status": 200,
+            "model": "{visit_point_id, name, address, similarity}[]"
+          }
+        },
+        {
+          "id": "createCustomer",
+          "method": "POST",
+          "path": "/customers",
+          "request": {
+            "name": "form.name",
+            "governorate_id": "form.governorateId",
+            "phone": "+963 + form.phone",
+            "address": "form.address",
+            "link_visit_point_id": "form.link === 'same' ? suggestion.visit_point_id : null"
+          },
+          "success": {
+            "status": 201,
+            "model": "Customer"
+          },
+          "errors": {
+            "422": "validation_failed"
+          }
+        }
+      ],
+      "view_props": {
+        "form": "CustomerForm",
+        "governorates": "me.governorates",
+        "suggestions": "LinkSuggestion[]",
+        "errors": "validation_failed",
+        "submitError": "code"
+      },
+      "permissions": [
+        "customers.create"
+      ],
+      "components": [
+        "PageHeader",
+        "Card",
+        "Field",
+        "Input",
+        "PhoneInput",
+        "Select",
+        "Textarea",
+        "RadioGroup",
+        "RadioCard",
+        "Banner",
+        "Button"
+      ],
+      "states": [
+        {
+          "key": "A06-empty",
+          "label": "فارغ",
+          "drawn": true,
+          "when": {
+            "ui": "form = empty"
+          },
+          "ui": [
+            "النموذج"
+          ]
+        },
+        {
+          "key": "A06-link-suggestion",
+          "label": "اقتراح ربط",
+          "drawn": true,
+          "when": {
+            "api": "linkSuggestions",
+            "data": "length > 0"
+          },
+          "ui": [
+            "Card الاقتراح",
+            "«حفظ» معطّل حتى الإجابة"
+          ]
+        },
+        {
+          "key": "A06-linked",
+          "label": "مربوط",
+          "drawn": true,
+          "when": {
+            "ui": "link = same"
+          },
+          "ui": [
+            "Banner success: سجل واحد"
+          ]
+        },
+        {
+          "key": "A06-validation",
+          "label": "أخطاء التحقق",
+          "drawn": true,
+          "when": {
+            "status": 422,
+            "codes": [
+              "validation_failed"
+            ]
+          },
+          "ui": [
+            "نص الخادم تحت الحقول"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "بعد الحفظ",
+          "to": "A08 (التسليم الأول)"
+        }
+      ],
+      "after_mutation": {
+        "createCustomer": "ينتقل إلى A08 بالعميل الجديد"
+      },
+      "notes": [
+        "إطاران: مكتب 1440 وموبايل 390 (SCREENS.md: كل شاشات الوكيل [موبايل]).",
+        "القرار 7.",
+        "§115."
+      ]
+    },
+    "A07": {
+      "id": "A07",
+      "name": "صفحة العميل",
+      "group": "agent",
+      "design_source": {
+        "view": "src/features/customers/views/CustomerDetailsView.tsx",
+        "page": "src/app/agent/a07-customer/page.tsx"
+      },
+      "route": "/dashboard/customers/{id}",
+      "api": [
+        {
+          "id": "getCustomer",
+          "method": "GET",
+          "path": "/customers/{id}",
+          "request": {},
+          "success": {
+            "status": 200,
+            "model": "Customer"
+          },
+          "errors": {
+            "404": "not_found"
+          }
+        },
+        {
+          "id": "deliveries",
+          "method": "GET",
+          "path": "/deliveries",
+          "request": {
+            "customer_id": "id"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<Delivery>"
+          }
+        },
+        {
+          "id": "point",
+          "method": "GET",
+          "path": "/visit-points/{visit_point_id}",
+          "request": {},
+          "success": {
+            "status": 200,
+            "model": "VisitPoint (§116)"
+          }
+        }
+      ],
+      "view_props": {
+        "customer": "Loadable<Customer>",
+        "point": "VisitPoint | null",
+        "tabs": "CustomerTabsData",
+        "tab": "CustomerTab",
+        "showVisits": "false للوكيل"
+      },
+      "permissions": [
+        "customers.create"
+      ],
+      "components": [
+        "CustomerDetailsView (M05)"
+      ],
+      "states": [
+        {
+          "key": "A07-default",
+          "label": "الافتراضي",
+          "drawn": true,
+          "when": {
+            "data": "visit_point_id = null"
+          },
+          "ui": [
+            "البيانات والتسليمات"
+          ]
+        },
+        {
+          "key": "A07-linked-point",
+          "label": "مربوط بجهة زيارة",
+          "drawn": true,
+          "when": {
+            "data": "visit_point_id"
+          },
+          "ui": [
+            "بطاقة الجهة"
+          ]
+        },
+        {
+          "key": "A07-payment",
+          "label": "السداد",
+          "drawn": true,
+          "when": {
+            "ui": "tab = payment"
+          },
+          "ui": [
+            "قسم السداد"
+          ]
+        },
+        {
+          "key": "A07-returns",
+          "label": "المرتجعات",
+          "drawn": true,
+          "when": {
+            "ui": "tab = returns"
+          },
+          "ui": [
+            "قسم المرتجعات"
+          ]
+        },
+        {
+          "key": "A07-not-found",
+          "label": "غير موجود",
+          "drawn": true,
+          "when": {
+            "api": "getCustomer",
+            "status": 404
+          },
+          "ui": [
+            "NotFoundState"
+          ]
+        },
+        {
+          "key": "A07-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "getCustomer",
+            "status": "pending"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "A07-error",
+          "label": "خطأ",
+          "drawn": true,
+          "when": {
+            "api": "getCustomer",
+            "status": "5xx/429"
+          },
+          "ui": [
+            "ErrorState + إعادة المحاولة"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "التسليم",
+          "to": "A08/A09"
+        }
+      ],
+      "after_mutation": {},
+      "notes": [
+        "إطاران: مكتب 1440 وموبايل 390 (SCREENS.md: كل شاشات الوكيل [موبايل]).",
+        "الـ view نفسه في M05 بلا قسمَي الزيارات.",
+        "§116."
+      ]
+    },
+    "A08": {
+      "id": "A08",
+      "name": "تسجيل تسليم",
+      "group": "agent",
+      "design_source": {
+        "view": "src/features/deliveries/views/DeliveryFormView.tsx",
+        "page": "src/app/agent/a08-new-delivery/page.tsx"
+      },
+      "route": "/dashboard/deliveries/new",
+      "api": [
+        {
+          "id": "customers",
+          "method": "GET",
+          "path": "/customers",
+          "request": {},
+          "success": {
+            "status": 200,
+            "model": "Paginated<Customer>"
+          }
+        },
+        {
+          "id": "fefo",
+          "method": "GET",
+          "path": "/stock/fefo-suggestion",
+          "request": {
+            "location_id": "موقع الوكيل",
+            "item_id": "line.itemId",
+            "quantity": "line.quantity"
+          },
+          "success": {
+            "status": 200,
+            "model": "{data: {batch, quantity}[], shortage}"
+          }
+        },
+        {
+          "id": "settings",
+          "method": "GET",
+          "path": "/settings",
+          "request": {},
+          "success": {
+            "status": 200,
+            "model": "Settings (max_payment_term_days)"
+          }
+        },
+        {
+          "id": "createDelivery",
+          "method": "POST",
+          "path": "/deliveries",
+          "request": {
+            "customer_id": "form.customerId",
+            "expected_payment_date": "form.expectedPaymentDate",
+            "note": "form.note",
+            "lines": "form.lines → {item_id, batch_id, quantity}"
+          },
+          "success": {
+            "status": 201,
+            "model": "Delivery"
+          },
+          "errors": {
+            "422": "validation_failed (lines.n.quantity)"
+          }
+        }
+      ],
+      "view_props": {
+        "customers": "Customer[]",
+        "items": "EditorItem[] (PRODUCT)",
+        "batches": "Record<itemId, Loadable<EditorBatch[]>>",
+        "prices": "Record<itemId, Money> (§117)",
+        "form": "DeliveryForm",
+        "step": "edit | review",
+        "maxPaymentDate": "today + max_payment_term_days",
+        "saved": "Delivery | null"
+      },
+      "permissions": [
+        "deliveries.create"
+      ],
+      "components": [
+        "PageHeader",
+        "Card",
+        "Combobox",
+        "DatePicker",
+        "Textarea",
+        "LineItemsEditor",
+        "DescriptionList",
+        "Banner",
+        "StatusBadge",
+        "Button"
+      ],
+      "states": [
+        {
+          "key": "A08-empty",
+          "label": "فارغ",
+          "drawn": true,
+          "when": {
+            "ui": "form = empty"
+          },
+          "ui": [
+            "النموذج"
+          ]
+        },
+        {
+          "key": "A08-filled",
+          "label": "معبّأ",
+          "drawn": true,
+          "when": {
+            "ui": "سطران"
+          },
+          "ui": [
+            "الدفعة المقترحة"
+          ]
+        },
+        {
+          "key": "A08-over-balance",
+          "label": "أكثر من الرصيد",
+          "drawn": true,
+          "when": {
+            "status": 422,
+            "codes": [
+              "validation_failed"
+            ]
+          },
+          "ui": [
+            "الخطأ تحت السطر"
+          ]
+        },
+        {
+          "key": "A08-payment-date-limit",
+          "label": "حد المهلة",
+          "drawn": true,
+          "when": {
+            "ui": "بعد اليوم + 30"
+          },
+          "ui": [
+            "أيام معطّلة"
+          ]
+        },
+        {
+          "key": "A08-review",
+          "label": "المراجعة",
+          "drawn": true,
+          "when": {
+            "ui": "step = review"
+          },
+          "ui": [
+            "الأسطر بسعر العلبة",
+            "Banner: القيمة عند التأكيد"
+          ]
+        },
+        {
+          "key": "A08-saved",
+          "label": "حُفظ",
+          "drawn": true,
+          "when": {
+            "api": "createDelivery",
+            "status": 201
+          },
+          "ui": [
+            "Banner success",
+            "القيمة التقديرية من الخادم"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "«فتح التسليم»",
+          "to": "A10"
+        }
+      ],
+      "after_mutation": {
+        "createDelivery": "UNPAID، والرصيد (A04) ينقص"
+      },
+      "notes": [
+        "إطاران: مكتب 1440 وموبايل 390 (SCREENS.md: كل شاشات الوكيل [موبايل]).",
+        "لا حقل سعر، والتاريخ لحظة التسجيل.",
+        "الدفعة الموقوفة لا تُسلَّم (القراران 2 و7).",
+        "§117."
+      ]
+    },
+    "A09": {
+      "id": "A09",
+      "name": "التسليمات",
+      "group": "agent",
+      "design_source": {
+        "view": "src/features/deliveries/views/DeliveriesListView.tsx",
+        "page": "src/app/agent/a09-deliveries/page.tsx"
+      },
+      "route": "/dashboard/deliveries",
+      "api": [
+        {
+          "id": "listDeliveries",
+          "method": "GET",
+          "path": "/deliveries",
+          "request": {
+            "status": "filters.status",
+            "payment_overdue": "filters.overdueOnly",
+            "from/to": "filters.range",
+            "page": "state"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<Delivery>"
+          }
+        }
+      ],
+      "view_props": {
+        "deliveries": "Loadable<{ data, meta }>",
+        "agents": "غائب للوكيل",
+        "filters": "DeliveryFilters"
+      },
+      "permissions": [
+        "deliveries.create"
+      ],
+      "components": [
+        "DeliveriesListView (M06)"
+      ],
+      "states": [
+        {
+          "key": "A09-default",
+          "label": "مختلطة",
+          "drawn": true,
+          "when": {
+            "api": "listDeliveries"
+          },
+          "ui": [
+            "كل الحالات"
+          ]
+        },
+        {
+          "key": "A09-filter-unpaid",
+          "label": "غير المسدد",
+          "drawn": true,
+          "when": {
+            "request": "status=UNPAID"
+          },
+          "ui": [
+            "فلتر الحالة"
+          ]
+        },
+        {
+          "key": "A09-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "listDeliveries",
+            "status": "pending"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "A09-empty",
+          "label": "لا توجد بيانات",
+          "drawn": true,
+          "when": {
+            "api": "listDeliveries",
+            "data": "data = []"
+          },
+          "ui": [
+            "EmptyState"
+          ]
+        },
+        {
+          "key": "A09-error",
+          "label": "خطأ",
+          "drawn": true,
+          "when": {
+            "api": "listDeliveries",
+            "status": "5xx/429"
+          },
+          "ui": [
+            "ErrorState + إعادة المحاولة"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "الصف",
+          "to": "A10"
+        }
+      ],
+      "after_mutation": {},
+      "notes": [
+        "إطاران: مكتب 1440 وموبايل 390 (SCREENS.md: كل شاشات الوكيل [موبايل]).",
+        "§118."
+      ]
+    },
+    "A10": {
+      "id": "A10",
+      "name": "تفاصيل التسليم",
+      "group": "agent",
+      "design_source": {
+        "view": "src/features/deliveries/views/DeliveryDetailsView.tsx",
+        "page": "src/app/agent/a10-delivery/page.tsx"
+      },
+      "route": "/dashboard/deliveries/{id}",
+      "api": [
+        {
+          "id": "getDelivery",
+          "method": "GET",
+          "path": "/deliveries/{id}",
+          "request": {},
+          "success": {
+            "status": 200,
+            "model": "Delivery"
+          },
+          "errors": {
+            "404": "not_found"
+          }
+        },
+        {
+          "id": "collect",
+          "method": "POST",
+          "path": "/deliveries/{id}/collect",
+          "request": {},
+          "success": {
+            "status": 200,
+            "model": "Delivery"
+          },
+          "errors": {
+            "409": "invalid_status"
+          }
+        },
+        {
+          "id": "requestApproval",
+          "method": "POST",
+          "path": "/deliveries/{id}/request-approval",
+          "request": {
+            "type": "CANCEL | WRITE_OFF",
+            "reason": "dialog.reason"
+          },
+          "success": {
+            "status": 200,
+            "model": "Delivery"
+          },
+          "errors": {
+            "409": "invalid_status",
+            "422": "validation_failed"
+          }
+        }
+      ],
+      "view_props": {
+        "delivery": "Loadable<Delivery>",
+        "canCollect": "deliveries.collect",
+        "canReturn": "agent_returns/customer_returns.create",
+        "dialog": "DeliveryDialog",
+        "errors": "validation_failed",
+        "actionError": "code"
+      },
+      "permissions": [
+        "deliveries.collect"
+      ],
+      "components": [
+        "DeliveryDetailsView (M06)",
+        "ConfirmDialog",
+        "Dialog",
+        "RadioCard",
+        "Textarea"
+      ],
+      "states": [
+        {
+          "key": "A10-unpaid",
+          "label": "غير مسدد",
+          "drawn": true,
+          "when": {
+            "data": "status = UNPAID"
+          },
+          "ui": [
+            "تأكيد التحصيل",
+            "مرتجع",
+            "طلب إلغاء أو شطب"
+          ]
+        },
+        {
+          "key": "A10-collect-confirm",
+          "label": "تأكيد التحصيل",
+          "drawn": true,
+          "when": {
+            "ui": "«تأكيد التحصيل»"
+          },
+          "ui": [
+            "ConfirmDialog"
+          ]
+        },
+        {
+          "key": "A10-paid",
+          "label": "مسدد",
+          "drawn": true,
+          "when": {
+            "data": "status = PAID"
+          },
+          "ui": [
+            "وقت السداد وشارة الموعد"
+          ]
+        },
+        {
+          "key": "A10-overdue",
+          "label": "متأخر",
+          "drawn": true,
+          "when": {
+            "data": "is_payment_overdue"
+          },
+          "ui": [
+            "Banner warning"
+          ]
+        },
+        {
+          "key": "A10-request-form",
+          "label": "نافذة الطلب",
+          "drawn": true,
+          "when": {
+            "ui": "«طلب إلغاء أو شطب»"
+          },
+          "ui": [
+            "Dialog: RadioCard والسبب"
+          ]
+        },
+        {
+          "key": "A10-approval-pending",
+          "label": "بانتظار الاعتماد",
+          "drawn": true,
+          "when": {
+            "data": "status = APPROVAL_PENDING"
+          },
+          "ui": [
+            "Banner info",
+            "بلا أفعال"
+          ]
+        },
+        {
+          "key": "A10-cancelled",
+          "label": "ملغى",
+          "drawn": true,
+          "when": {
+            "data": "status = CANCELLED"
+          },
+          "ui": [
+            "Banner: عادت البضاعة لرصيدي",
+            "DecisionRecord"
+          ]
+        },
+        {
+          "key": "A10-written-off",
+          "label": "مشطوب",
+          "drawn": true,
+          "when": {
+            "data": "status = WRITTEN_OFF"
+          },
+          "ui": [
+            "DecisionRecord"
+          ]
+        },
+        {
+          "key": "A10-request-rejected",
+          "label": "رُفض الطلب",
+          "drawn": true,
+          "when": {
+            "data": "UNPAID و decision.outcome = REJECTED"
+          },
+          "ui": [
+            "Banner warning",
+            "الأفعال متاحة"
+          ]
+        },
+        {
+          "key": "A10-referred",
+          "label": "أُحيل للقانوني",
+          "drawn": true,
+          "when": {
+            "data": "dispute_id"
+          },
+          "ui": [
+            "Banner info"
+          ]
+        },
+        {
+          "key": "A10-invalid-status",
+          "label": "تغيّرت الحالة",
+          "drawn": true,
+          "when": {
+            "status": 409,
+            "codes": [
+              "invalid_status"
+            ]
+          },
+          "ui": [
+            "Banner warning"
+          ]
+        },
+        {
+          "key": "A10-not-found",
+          "label": "غير موجود",
+          "drawn": true,
+          "when": {
+            "api": "getDelivery",
+            "status": 404
+          },
+          "ui": [
+            "NotFoundState"
+          ]
+        },
+        {
+          "key": "A10-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "getDelivery",
+            "status": "pending"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "A10-error",
+          "label": "خطأ",
+          "drawn": true,
+          "when": {
+            "api": "getDelivery",
+            "status": "5xx/429"
+          },
+          "ui": [
+            "ErrorState + إعادة المحاولة"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "«مرتجع»",
+          "to": "A12"
+        }
+      ],
+      "after_mutation": {
+        "collect": "PAID",
+        "requestApproval": "APPROVAL_PENDING"
+      },
+      "notes": [
+        "إطاران: مكتب 1440 وموبايل 390 (SCREENS.md: كل شاشات الوكيل [موبايل]).",
+        "لا دفعات جزئية، ووقت السداد لحظة التأكيد على الخادم.",
+        "§119."
+      ]
+    },
+    "A11": {
+      "id": "A11",
+      "name": "المستحقات",
+      "group": "agent",
+      "design_source": {
+        "view": "src/features/receivables/views/AgentReceivablesView.tsx",
+        "page": "src/app/agent/a11-receivables/page.tsx"
+      },
+      "route": "/dashboard/receivables",
+      "api": [
+        {
+          "id": "receivables",
+          "method": "GET",
+          "path": "/receivables",
+          "request": {},
+          "success": {
+            "status": 200,
+            "model": "Receivable[] (صف الوكيل)"
+          }
+        },
+        {
+          "id": "unpaid",
+          "method": "GET",
+          "path": "/deliveries",
+          "request": {
+            "status": "UNPAID"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<Delivery>"
+          }
+        }
+      ],
+      "view_props": {
+        "receivables": "Loadable<AgentReceivables>",
+        "today": "Asia/Damascus",
+        "dueSoonDays": "3"
+      },
+      "permissions": [
+        "deliveries.collect"
+      ],
+      "components": [
+        "PageHeader",
+        "KpiTile",
+        "Grid",
+        "Card",
+        "Badge",
+        "EmptyState",
+        "ErrorState"
+      ],
+      "states": [
+        {
+          "key": "A11-default",
+          "label": "الافتراضي",
+          "drawn": true,
+          "when": {
+            "data": "لا متأخر"
+          },
+          "ui": [
+            "الأيام الباقية"
+          ]
+        },
+        {
+          "key": "A11-due-soon",
+          "label": "مستحق قريباً",
+          "drawn": true,
+          "when": {
+            "data": "expected_payment_date − today ≤ 3"
+          },
+          "ui": [
+            "Badge warning"
+          ]
+        },
+        {
+          "key": "A11-overdue",
+          "label": "متأخر",
+          "drawn": true,
+          "when": {
+            "data": "is_payment_overdue"
+          },
+          "ui": [
+            "Badge danger أولاً"
+          ]
+        },
+        {
+          "key": "A11-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "receivables",
+            "status": "pending"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "A11-empty",
+          "label": "لا توجد بيانات",
+          "drawn": true,
+          "when": {
+            "api": "receivables",
+            "data": "data = []"
+          },
+          "ui": [
+            "EmptyState"
+          ]
+        },
+        {
+          "key": "A11-error",
+          "label": "خطأ",
+          "drawn": true,
+          "when": {
+            "api": "receivables",
+            "status": "5xx/429"
+          },
+          "ui": [
+            "ErrorState + إعادة المحاولة"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "السطر",
+          "to": "A10"
+        }
+      ],
+      "after_mutation": {},
+      "notes": [
+        "إطاران: مكتب 1440 وموبايل 390 (SCREENS.md: كل شاشات الوكيل [موبايل]).",
+        "§120."
+      ]
+    },
+    "A12": {
+      "id": "A12",
+      "name": "مرتجع من صيدلية",
+      "group": "agent",
+      "design_source": {
+        "view": "src/features/returns/views/CustomerReturnFormView.tsx",
+        "page": "src/app/agent/a12-customer-return/page.tsx"
+      },
+      "route": "/dashboard/returns/new",
+      "api": [
+        {
+          "id": "deliveries",
+          "method": "GET",
+          "path": "/deliveries",
+          "request": {},
+          "success": {
+            "status": 200,
+            "model": "Paginated<Delivery>"
+          }
+        },
+        {
+          "id": "reasons",
+          "method": "GET",
+          "path": "/lists/{key}",
+          "request": {},
+          "success": {
+            "status": 200,
+            "model": "ListEntry[] (§121.2)"
+          }
+        },
+        {
+          "id": "createReturn",
+          "method": "POST",
+          "path": "/customer-returns",
+          "request": {
+            "delivery_line_id": "form.lineId",
+            "quantity": "form.quantity",
+            "reason_id": "form.reasonId",
+            "note": "form.note"
+          },
+          "success": {
+            "status": 201,
+            "model": "CustomerReturn"
+          },
+          "errors": {
+            "422": "validation_failed | return_exceeds_delivered"
+          }
+        }
+      ],
+      "view_props": {
+        "deliveries": "Delivery[] (فيها قابل للإرجاع)",
+        "reasons": "ListEntry[]",
+        "recallReasonId": "معرّف «سحب دفعة»",
+        "form": "CustomerReturnForm",
+        "saved": "CustomerReturn | null"
+      },
+      "permissions": [
+        "returns.create"
+      ],
+      "components": [
+        "PageHeader",
+        "Card",
+        "Combobox",
+        "Select",
+        "NumberInput",
+        "Textarea",
+        "Banner",
+        "DescriptionList",
+        "StatusBadge"
+      ],
+      "states": [
+        {
+          "key": "A12-empty",
+          "label": "فارغ",
+          "drawn": true,
+          "when": {
+            "ui": "form = empty"
+          },
+          "ui": [
+            "النموذج"
+          ]
+        },
+        {
+          "key": "A12-over-returnable",
+          "label": "أكثر من المسموح",
+          "drawn": true,
+          "when": {
+            "ui": "quantity > returnable_quantity",
+            "codes": [
+              "return_exceeds_delivered"
+            ]
+          },
+          "ui": [
+            "الخطأ بالمسموح والمسلَّم والمقبول والمعلّق",
+            "الزر معطّل"
+          ]
+        },
+        {
+          "key": "A12-submitted",
+          "label": "معلّق",
+          "drawn": true,
+          "when": {
+            "api": "createReturn",
+            "status": 201
+          },
+          "ui": [
+            "Banner success",
+            "ملخص المرتجع"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "«المرتجعات والتالف»",
+          "to": "A13"
+        }
+      ],
+      "after_mutation": {
+        "createReturn": "PENDING، ويُضاف المعلّق إلى سطر التسليم"
+      },
+      "notes": [
+        "إطاران: مكتب 1440 وموبايل 390 (SCREENS.md: كل شاشات الوكيل [موبايل]).",
+        "القرار 7. «سحب دفعة» مفروض للدفعة الموقوفة.",
+        "§121."
+      ]
+    },
+    "A13": {
+      "id": "A13",
+      "name": "المرتجعات والتالف",
+      "group": "agent",
+      "design_source": {
+        "view": "src/features/returns/views/AgentReturnsDamageView.tsx",
+        "page": "src/app/agent/a13-returns/page.tsx"
+      },
+      "route": "/dashboard/returns",
+      "api": [
+        {
+          "id": "customerReturns",
+          "method": "GET",
+          "path": "/customer-returns",
+          "request": {
+            "page": "state"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<CustomerReturn>"
+          }
+        },
+        {
+          "id": "damageReports",
+          "method": "GET",
+          "path": "/damage-reports",
+          "request": {
+            "page": "state"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<DamageReport>"
+          }
+        }
+      ],
+      "view_props": {
+        "tab": "returns | damage",
+        "returns": "Loadable<Page<CustomerReturn>>",
+        "reports": "Loadable<Page<DamageReport>>",
+        "canCreate": "returns.create"
+      },
+      "permissions": [
+        "returns.create"
+      ],
+      "components": [
+        "PageHeader",
+        "Tabs",
+        "DataTable",
+        "StatusCell",
+        "Pagination",
+        "EmptyState"
+      ],
+      "states": [
+        {
+          "key": "A13-returns",
+          "label": "مرتجعات الصيدليات",
+          "drawn": true,
+          "when": {
+            "ui": "tab = returns"
+          },
+          "ui": [
+            "الحالات الأربع والقرار"
+          ]
+        },
+        {
+          "key": "A13-damage",
+          "label": "تقارير التالف",
+          "drawn": true,
+          "when": {
+            "ui": "tab = damage"
+          },
+          "ui": [
+            "الحالة والمسؤولية"
+          ]
+        },
+        {
+          "key": "A13-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "customerReturns",
+            "status": "pending"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "A13-empty",
+          "label": "لا توجد بيانات",
+          "drawn": true,
+          "when": {
+            "api": "customerReturns",
+            "data": "data = []"
+          },
+          "ui": [
+            "EmptyState"
+          ]
+        },
+        {
+          "key": "A13-error",
+          "label": "خطأ",
+          "drawn": true,
+          "when": {
+            "api": "customerReturns",
+            "status": "5xx/429"
+          },
+          "ui": [
+            "ErrorState + إعادة المحاولة"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "«مرتجع جديد»",
+          "to": "A12"
+        },
+        {
+          "on": "«تقرير تالف»",
+          "to": "A14"
+        }
+      ],
+      "after_mutation": {},
+      "notes": [
+        "إطاران: مكتب 1440 وموبايل 390 (SCREENS.md: كل شاشات الوكيل [موبايل]).",
+        "§122."
+      ]
+    },
+    "A14": {
+      "id": "A14",
+      "name": "تقرير تالف",
+      "group": "agent",
+      "design_source": {
+        "view": "src/features/damage/views/DamageReportFormView.tsx",
+        "page": "src/app/agent/a14-damage-report/page.tsx"
+      },
+      "route": "/dashboard/damage/new",
+      "api": [
+        {
+          "id": "createDamage",
+          "method": "POST",
+          "path": "/damage-reports",
+          "request": {
+            "location_id": "موقع الوكيل",
+            "reason_id": "form.reasonId",
+            "lines": "form.lines",
+            "attachment_ids": "form.attachments"
+          },
+          "success": {
+            "status": 201,
+            "model": "DamageReport"
+          },
+          "errors": {
+            "422": "validation_failed"
+          }
+        }
+      ],
+      "view_props": {
+        "options": "locations = [موقع الوكيل]",
+        "description": "وصف الوكيل"
+      },
+      "permissions": [
+        "returns.create"
+      ],
+      "components": [
+        "DamageReportFormView (W20)"
+      ],
+      "states": [
+        {
+          "key": "A14-empty",
+          "label": "فارغ",
+          "drawn": true,
+          "when": {
+            "ui": "form = empty"
+          },
+          "ui": [
+            "الموقع مقفل"
+          ]
+        },
+        {
+          "key": "A14-submitted",
+          "label": "معلّق",
+          "drawn": true,
+          "when": {
+            "api": "createDamage",
+            "status": 201
+          },
+          "ui": [
+            "ملخص التقرير"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "«كل التقارير»",
+          "to": "A13 (damage)"
+        }
+      ],
+      "after_mutation": {},
+      "notes": [
+        "إطاران: مكتب 1440 وموبايل 390 (SCREENS.md: كل شاشات الوكيل [موبايل]).",
+        "§123."
+      ]
+    },
+    "A15": {
+      "id": "A15",
+      "name": "طلب إرجاع للمستودع",
+      "group": "agent",
+      "design_source": {
+        "view": "src/features/returns/views/AgentReturnFormView.tsx",
+        "page": "src/app/agent/a15-agent-return/page.tsx"
+      },
+      "route": "/dashboard/agent-returns/new",
+      "api": [
+        {
+          "id": "createAgentReturn",
+          "method": "POST",
+          "path": "/agent-returns",
+          "request": {
+            "reason_id": "form.reasonId",
+            "note": "form.note",
+            "lines": "form.lines"
+          },
+          "success": {
+            "status": 201,
+            "model": "AgentReturn"
+          },
+          "errors": {
+            "422": "validation_failed"
+          }
+        }
+      ],
+      "view_props": {
+        "onBehalfOf": "null للوكيل",
+        "recallReasonId": "معرّف «سحب دفعة» (§124)",
+        "onOpenRequests": "إلى A16"
+      },
+      "permissions": [
+        "agent_returns.create"
+      ],
+      "components": [
+        "AgentReturnFormView (M03)"
+      ],
+      "states": [
+        {
+          "key": "A15-empty",
+          "label": "فارغ",
+          "drawn": true,
+          "when": {
+            "ui": "form = empty"
+          },
+          "ui": [
+            "النموذج"
+          ]
+        },
+        {
+          "key": "A15-recall-reason",
+          "label": "دفعة موقوفة",
+          "drawn": true,
+          "when": {
+            "ui": "سطر من دفعة SUSPENDED"
+          },
+          "ui": [
+            "السبب «سحب دفعة» مقفل",
+            "Banner info"
+          ]
+        },
+        {
+          "key": "A15-submitted",
+          "label": "بانتظار القرار",
+          "drawn": true,
+          "when": {
+            "api": "createAgentReturn",
+            "status": 201
+          },
+          "ui": [
+            "ملخص الطلب",
+            "«طلبات الإرجاع»"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "«طلبات الإرجاع»",
+          "to": "A16"
+        }
+      ],
+      "after_mutation": {
+        "createAgentReturn": "PENDING"
+      },
+      "notes": [
+        "إطاران: مكتب 1440 وموبايل 390 (SCREENS.md: كل شاشات الوكيل [موبايل]).",
+        "القرار 2: الإرجاع مسموح للدفعة الموقوفة.",
+        "§124."
+      ]
+    },
+    "A16": {
+      "id": "A16",
+      "name": "طلبات الإرجاع للمستودع",
+      "group": "agent",
+      "design_source": {
+        "view": "src/features/returns/views/AgentReturnRequestsView.tsx",
+        "page": "src/app/agent/a16-agent-returns/page.tsx"
+      },
+      "route": "/dashboard/agent-returns",
+      "api": [
+        {
+          "id": "listAgentReturns",
+          "method": "GET",
+          "path": "/agent-returns",
+          "request": {
+            "page": "state"
+          },
+          "success": {
+            "status": 200,
+            "model": "Paginated<AgentReturn>"
+          }
+        }
+      ],
+      "view_props": {
+        "requests": "Loadable<{ data, meta }>",
+        "canCreate": "agent_returns.create"
+      },
+      "permissions": [
+        "agent_returns.create"
+      ],
+      "components": [
+        "PageHeader",
+        "DataTable",
+        "StatusCell",
+        "Pagination",
+        "EmptyState"
+      ],
+      "states": [
+        {
+          "key": "A16-default",
+          "label": "الافتراضي",
+          "drawn": true,
+          "when": {
+            "api": "listAgentReturns"
+          },
+          "ui": [
+            "معلّق وبالطريق ومستلم ومرفوض بسببه"
+          ]
+        },
+        {
+          "key": "A16-loading",
+          "label": "تحميل",
+          "drawn": true,
+          "when": {
+            "api": "listAgentReturns",
+            "status": "pending"
+          },
+          "ui": [
+            "Skeleton"
+          ]
+        },
+        {
+          "key": "A16-empty",
+          "label": "لا توجد بيانات",
+          "drawn": true,
+          "when": {
+            "api": "listAgentReturns",
+            "data": "data = []"
+          },
+          "ui": [
+            "EmptyState"
+          ]
+        },
+        {
+          "key": "A16-error",
+          "label": "خطأ",
+          "drawn": true,
+          "when": {
+            "api": "listAgentReturns",
+            "status": "5xx/429"
+          },
+          "ui": [
+            "ErrorState + إعادة المحاولة"
+          ]
+        }
+      ],
+      "navigation": [
+        {
+          "on": "«طلب إرجاع»",
+          "to": "A15"
+        }
+      ],
+      "after_mutation": {},
+      "notes": [
+        "إطاران: مكتب 1440 وموبايل 390 (SCREENS.md: كل شاشات الوكيل [موبايل]).",
+        "§125."
+      ]
     }
   }
 }

@@ -60,6 +60,10 @@ type AgentReturnFormViewProps = {
   onSubmit?: () => void;
   onCancel?: () => void;
   onOpenAgent?: () => void;
+  /** معرّف سبب «سحب دفعة»: يُختار تلقائياً ويُقفل حين يكون في الأسطر دفعة موقوفة (A15، §124). */
+  recallReasonId?: string;
+  /** بعد الإنشاء للوكيل نفسه: «طلبات الإرجاع» (A16). */
+  onOpenRequests?: () => void;
   onRetry?: () => void;
 };
 
@@ -69,7 +73,7 @@ const NOTE_MAX = 500;
  * طلب إرجاع للمستودع (النموذج المشترك لـ A15 وM03): السبب، وأسطر بمنتجاتها ودفعاتها من رصيد الوكيل (الموقوفة مسموحة: تُرجع ولا تُوزَّع)، وملاحظة.
  * مدير المبيعات ينشئه عن وكيل معطَّل (`onBehalfOf`): يُعلَّم الطلب «أُنشئ عن الوكيل»، ويبقى بانتظار القرار في «قرارات المرتجع والتالف».
  */
-export function AgentReturnFormView({ options, batches, form, onFormChange, onBehalfOf, errors = {}, submitError, submitting = false, saved = null, today, onSubmit, onCancel, onOpenAgent, onRetry }: AgentReturnFormViewProps) {
+export function AgentReturnFormView({ options, batches, form, onFormChange, onBehalfOf, errors = {}, submitError, submitting = false, saved = null, today, onSubmit, onCancel, onOpenAgent, recallReasonId, onOpenRequests, onRetry }: AgentReturnFormViewProps) {
   const header = (
     <PageHeader
       title="طلب إرجاع للمستودع"
@@ -81,7 +85,7 @@ export function AgentReturnFormView({ options, batches, form, onFormChange, onBe
     return (
       <>
         {header}
-        <SavedSummary item={saved} today={today} onOpenAgent={onOpenAgent} />
+        <SavedSummary item={saved} today={today} onOpenAgent={onOpenAgent} onOpenRequests={onOpenRequests} />
       </>
     );
   }
@@ -125,6 +129,8 @@ export function AgentReturnFormView({ options, batches, form, onFormChange, onBe
     return batch !== undefined && line.quantity !== null && line.quantity > batch.available;
   });
   const hasSuspended = form.lines.some((line) => batchOf(line)?.status === "SUSPENDED");
+  const recallLocked = hasSuspended && recallReasonId !== undefined && form.reasonId === recallReasonId;
+  const recallName = reasonOptions.find((option) => option.value === recallReasonId)?.label;
 
   // سبب تعطيل «إنشاء الإرجاع»: يُعرض تحت الزر (الزر المعطّل بلا سبب ظاهر ممنوع).
   const disabledReason =
@@ -149,7 +155,7 @@ export function AgentReturnFormView({ options, batches, form, onFormChange, onBe
 
         <Card title="التفاصيل">
           <Field label="السبب" required error={errors.reason_id}>
-            <Select aria-label="السبب" placeholder="اختر سبب الإرجاع" options={reasonOptions} value={form.reasonId} onValueChange={(reasonId) => set({ reasonId })} />
+            <Select aria-label="السبب" placeholder="اختر سبب الإرجاع" options={reasonOptions} value={form.reasonId} onValueChange={(reasonId) => set({ reasonId })} locked={recallLocked} />
           </Field>
           <Field label="ملاحظة" optional hint={`حتى ${isolate(NOTE_MAX)} حرفاً.`} error={errors.note}>
             <Textarea aria-label="ملاحظة" maxLength={NOTE_MAX} value={form.note} onChange={(event) => set({ note: event.target.value })} />
@@ -157,7 +163,7 @@ export function AgentReturnFormView({ options, batches, form, onFormChange, onBe
         </Card>
 
         <Card title="المنتجات المُرجَعة">
-          {hasSuspended ? <Banner kind="info">في الأسطر دفعة موقوفة. تُرجع إلى المستودع ولا تُوزَّع.</Banner> : null}
+          {hasSuspended ? <Banner kind="info">{recallLocked && recallName ? `في الأسطر دفعة موقوفة: اختير السبب «${recallName}» تلقائياً. تُرجع إلى المستودع ولا تُوزَّع.` : "في الأسطر دفعة موقوفة. تُرجع إلى المستودع ولا تُوزَّع."}</Banner> : null}
           <LineItemsEditor lines={form.lines} onChange={(lines) => set({ lines })} items={items} batches={batches} errors={errors} allowSuspended today={today} readOnly={submitting} />
           {errors.lines ? (
             <p role="alert" className="text-label text-danger">
@@ -182,7 +188,7 @@ export function AgentReturnFormView({ options, batches, form, onFormChange, onBe
   );
 }
 
-function SavedSummary({ item, today, onOpenAgent }: { item: AgentReturn; today: IsoDate; onOpenAgent?: () => void }) {
+function SavedSummary({ item, today, onOpenAgent, onOpenRequests }: { item: AgentReturn; today: IsoDate; onOpenAgent?: () => void; onOpenRequests?: () => void }) {
   const lines = item.lines ?? [];
   const total = lines.reduce((sum, line) => sum + (line.quantity ?? 0), 0);
 
@@ -218,9 +224,15 @@ function SavedSummary({ item, today, onOpenAgent }: { item: AgentReturn; today: 
       </Card>
 
       <CaptureRow className="flex-wrap items-center gap-3">
-        <Button variant="primary" size="lg" onClick={onOpenAgent}>
-          صفحة الوكيل
-        </Button>
+        {onOpenRequests ? (
+          <Button variant="primary" size="lg" onClick={onOpenRequests}>
+            طلبات الإرجاع
+          </Button>
+        ) : (
+          <Button variant="primary" size="lg" onClick={onOpenAgent}>
+            صفحة الوكيل
+          </Button>
+        )}
       </CaptureRow>
     </div>
   );

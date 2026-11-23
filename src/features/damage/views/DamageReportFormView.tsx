@@ -80,6 +80,8 @@ type DamageReportFormViewProps = {
   onOpenReports?: () => void;
   onDownloadAttachment?: (id: string) => void;
   onRetry?: () => void;
+  /** وصف الرأس. الافتراضي للمستودع (W20)؛ الوكيل (A14) يمرّر وصفه. */
+  description?: string;
 };
 
 const NOTE_MAX = 500;
@@ -108,8 +110,9 @@ export function DamageReportFormView({
   onOpenReports,
   onDownloadAttachment,
   onRetry,
+  description,
 }: DamageReportFormViewProps) {
-  const header = <PageHeader title="تقرير تالف" description="بلّغ عن بضاعة تالفة في المستودع. يقرّر مدير المبيعات قبولها أو رفضها بعد الرفع." />;
+  const header = <PageHeader title="تقرير تالف" description={description ?? "بلّغ عن بضاعة تالفة في المستودع. يقرّر مدير المبيعات قبولها أو رفضها بعد الرفع."} />;
 
   if (saved) {
     return (
